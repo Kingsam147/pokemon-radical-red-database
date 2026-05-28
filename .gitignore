@@ -1,0 +1,52 @@
+# Dependencies
+node_modules/
+jspm_packages/
+.pnp
+.pnp.js
+
+# Environment & Secrets
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+*.env
+Backend/.env
+Frontend/.env.local
+
+# Build Outputs
+dist/
+build/
+out/
+.next/
+.eslintcache
+
+# Vercel
+.vercel
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Testing & Diagnostics
+coverage/
+.nyc_output/
+*.lcov
+report.[0-9]*
+
+# IDE & System Caches
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.json
+.idea/
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Claude & Tools
+.claude/
+CLAUDE.md
+.superpowers

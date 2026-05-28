@@ -1,0 +1,18 @@
+{
+  "version": 2,
+  "builds": [
+    { "src": "Backend/server.js", "use": "@vercel/node" },
+    { "src": "Frontend/package.json", "use": "@vercel/next" }
+  ],
+  "routes": [
+    { "src": "/activePokemon(.*)", "dest": "Backend/server.js" },
+    { "src": "/myBoxes(.*)", "dest": "Backend/server.js" },
+    { "src": "/teams(.*)", "dest": "Backend/server.js" },
+    { "src": "/misc(.*)", "dest": "Backend/server.js" },
+    { "src": "/(.*)", "dest": "Frontend/$1" }
+  ],
+  "env": {
+    "MONGODB_URI": "@mongodb_uri",
+    "MONGODB_DB": "Radical-Red-Database"
+  }
+}

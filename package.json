@@ -1,0 +1,14 @@
+{
+  "name": "pokemon-damage-calculator",
+  "version": "1.0.0",
+  "private": true,
+  "workspaces": [
+    "Frontend",
+    "Backend"
+  ],
+  "scripts": {
+    "build": "npm run build --workspace=my-v0-project && npm run build --workspace=pokemon_simulator",
+    "dev": "npm run dev --workspaces",
+    "start": "npm run start --workspaces"
+  }
+}
