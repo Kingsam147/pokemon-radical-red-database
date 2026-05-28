@@ -4,6 +4,11 @@
     { "src": "Backend/server.js", "use": "@vercel/node" },
     { "src": "Frontend/package.json", "use": "@vercel/next" }
   ],
+  "functions": {
+    "Backend/server.js": {
+      "maxDuration": 30
+    }
+  },
   "routes": [
     { "src": "/activePokemon(.*)", "dest": "Backend/server.js" },
     { "src": "/myBoxes(.*)", "dest": "Backend/server.js" },
