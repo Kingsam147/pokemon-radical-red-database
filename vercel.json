@@ -10,9 +10,5 @@
     { "src": "/teams(.*)", "dest": "Backend/server.js" },
     { "src": "/misc(.*)", "dest": "Backend/server.js" },
     { "src": "/(.*)", "dest": "Frontend/$1" }
-  ],
-  "env": {
-    "MONGODB_URI": "@mongodb_uri",
-    "MONGODB_DB": "Radical-Red-Database"
-  }
+  ]
 }
