@@ -23,11 +23,7 @@ app.use((_req, _res, next) => {
     pendingReqs.push(next);
 });
 
-const init = mongoose.connect(MONGODB_URI, { 
-    dbName: MONGODB_DB,
-    useNewUrlParser: true,
-    useUnifiedTopology: true 
-})
+const init = mongoose.connect(MONGODB_URI, { dbName: MONGODB_DB })
 .then(async () => {
     await loadModels();
 

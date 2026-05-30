@@ -74,8 +74,10 @@ export default function ToolSidebar ({
                     </Button>
                     </div>
                     <div className="space-y-2">
-                    <Label className="text-sm font-semibold">Import Pokemon Data</Label>
+                    <Label htmlFor="sidebar-import-text" className="text-sm font-semibold">Import Pokemon Data</Label>
                     <Textarea
+                        id="sidebar-import-text"
+                        title="Paste Pokemon import data"
                         placeholder="Paste Pokemon data here..."
                         value={importText}
                         onChange={(e) => setImportText(e.target.value)}
@@ -84,11 +86,13 @@ export default function ToolSidebar ({
                     
                     </div>
                     <div className="space-y-2">
-                    <Label className="text-sm font-semibold">Export Current State</Label>
+                    <Label htmlFor="sidebar-export-text" className="text-sm font-semibold">Export Current State</Label>
                     <Button onClick={handleExport} variant="secondary" className="w-full mb-2">
                         Generate Export
                     </Button>
                     <Textarea
+                        id="sidebar-export-text"
+                        title="Exported battle state data"
                         placeholder="Export data will appear here..."
                         value={exportText}
                         readOnly
@@ -98,8 +102,10 @@ export default function ToolSidebar ({
                 </div>
                 ) : (
                 <div className="space-y-2">
-                    <Label className="text-sm font-semibold">Battle Notes</Label>
+                    <Label htmlFor="sidebar-notes" className="text-sm font-semibold">Battle Notes</Label>
                     <Textarea
+                    id="sidebar-notes"
+                    title="Battle notes and observations"
                     placeholder="Type your battle notes here..."
                     value={notes}
                     onChange={(e) => setNotes(e.target.value)}

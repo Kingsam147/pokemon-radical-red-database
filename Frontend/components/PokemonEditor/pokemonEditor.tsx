@@ -168,16 +168,18 @@ export default function PokemonEditor ({
 
                     <div className="grid grid-cols-4 p-2 gap-x-2 border-b border-white mb-7">
                         {/* Incremental Hazard: Spikes */}
-                        <button 
+                        <button
                             onClick={() => toggleHazard(player as 1 | 2, "spikes")}
+                            title="Toggle Spikes (0-3 layers)"
                             className={`bg-gray-400 h-8 text-sm font-bold cursor-pointer transition-colors ${hazards.spikes > 0 ? "bg-gray-700 text-white" : "text-white hover:bg-white hover:text-gray-400"}`}
                         >
                             SPIKES: {hazards.spikes}
                         </button>
 
                         {/* Incremental Hazard: T-Spikes */}
-                        <button 
+                        <button
                             onClick={() => toggleHazard(player as 1 | 2, "tSpikes")}
+                            title="Toggle Toxic Spikes (0-2 layers)"
                             className={`bg-gray-400 h-8 text-sm font-bold cursor-pointer transition-colors ${hazards.tSpikes > 0 ? "bg-gray-700 text-white" : "text-white hover:bg-white hover:text-gray-400"}`}
                         >
                             T-SPIKES: {hazards.tSpikes}
@@ -186,11 +188,12 @@ export default function PokemonEditor ({
                         {/* Boolean Hazards */}
                         {[
                             { id: "stealthRocks", label: "STEALTH ROCKS" },
-                            { id: "stickyWebs", label: "STICKY WEBS" }, 
+                            { id: "stickyWebs", label: "STICKY WEBS" },
                         ].map((h) => (
                             <button
                                 key={h.id}
                                 onClick={() => toggleHazard(player as 1 | 2, h.id)}
+                                title={`Toggle ${h.label}`}
                                 className={`bg-gray-400 h-8 text-sm font-bold cursor-pointer transition-colors ${hazards[h.id as keyof typeof hazards] ? "bg-gray-700 text-white" : "text-white hover:bg-white hover:text-gray-400"}`}
                             >
                                 {h.label}
@@ -211,9 +214,12 @@ export default function PokemonEditor ({
                                 <div>
                                     <h3 className="font-bold text-lg">{pokemon.name}</h3>
                                     <div className="flex items-center gap-1">
-                                        <span className="text-sm text-muted-foreground">Lv.</span>
+                                        <label htmlFor={`pokemon-level-${player}-${slotIndex}`} className="text-sm text-muted-foreground">Lv.</label>
                                         <Input
+                                            id={`pokemon-level-${player}-${slotIndex}`}
                                             type="number"
+                                            title="Pokemon Level (1-100)"
+                                            placeholder="1"
                                             value={pokemon.level}
                                             onChange={(e) => updatePokemonLevel(player, slotIndex, e.target.value)}
                                             className="w-16 h-7 text-sm mb-2 px-1 py-0"
@@ -247,7 +253,7 @@ export default function PokemonEditor ({
                                         value={pokemon.form.formName} 
                                         onValueChange={(val) => updatePokemonForm(player, slotIndex, val)}
                                     >
-                                        <SelectTrigger className="h-7 w-full max-w-[200px]">
+                                        <SelectTrigger className="h-7 w-full max-w-[200px]" title="Select Pokemon Form">
                                             <SelectValue placeholder="Select Form" className="truncate" />
                                         </SelectTrigger>
 
@@ -266,8 +272,8 @@ export default function PokemonEditor ({
                                         value={pokemon.gender} 
                                         onValueChange={(val) => updatePokemonGender(player, slotIndex, val as Gender)}
                                     >
-                                        <SelectTrigger className="h-7">
-                                            <SelectValue placeholder="Select Form" />
+                                        <SelectTrigger className="h-7" title="Select Pokemon Gender">
+                                            <SelectValue placeholder="Select Gender" />
                                         </SelectTrigger>
 
                                         <SelectContent position="popper" side="bottom">
@@ -285,7 +291,7 @@ export default function PokemonEditor ({
                                 <span className="inline-flex items-center justify-center whitespace-nowrap w-fit px-2 py-1 bg-cyan-600 text-primary-foreground rounded-full">{pokemon.nature.name}</span>
                                 <span className="inline-flex items-center justify-center whitespace-nowrap gap-1 w-fit px-2 py-1 bg-primary text-primary-foreground rounded-full">
                                     {pokemon.item.name}
-                                    <img className="h-10 w-10" src={ITEM_SPRITE(pokemon.item.name)} alt={"image not found"}></img>
+                                    <img className="h-10 w-10" src={ITEM_SPRITE(pokemon.item.name)} alt={`${pokemon.item.name} icon`}></img>
                                 </span>
                                 <span className="inline-flex items-center justify-center whitespace-nowrap w-fit px-2 py-1 bg-emerald-700 text-primary-foreground rounded-full">{pokemon.ability.name}</span>
                             </div>
@@ -300,8 +306,12 @@ export default function PokemonEditor ({
                                 
                                 {/* Current HP Input & Fixed Max HP Label */}
                                 <div className="flex items-center gap-1">
+                                    <label htmlFor={`hp-current-${player}-${slotIndex}`} className="sr-only">Current HP</label>
                                     <Input
+                                        id={`hp-current-${player}-${slotIndex}`}
                                         type="number"
+                                        title="Current HP"
+                                        placeholder="HP"
                                         value={pokemon.currentHp}
                                         onChange={(e) => {
                                             const val = Math.max(0, Math.min(Number(e.target.value) || 0, pokemon.maxHp));
@@ -314,8 +324,12 @@ export default function PokemonEditor ({
 
                                 {/* Linked Percentage Input */}
                                 <div className="flex items-center gap-1">
+                                    <label htmlFor={`hp-percent-${player}-${slotIndex}`} className="sr-only">HP Percentage</label>
                                     <Input
+                                        id={`hp-percent-${player}-${slotIndex}`}
                                         type="number"
+                                        title="HP Percentage (0-100)"
+                                        placeholder="%"
                                         value={Math.round((pokemon.currentHp / pokemon.maxHp) * 100)}
                                         onChange={(e) => {
                                             const percent = Math.max(0, Math.min(Number(e.target.value) || 0, 100));
@@ -329,6 +343,7 @@ export default function PokemonEditor ({
                                     <Button
                                         size="sm"
                                         variant="destructive"
+                                        title={pokemon.status.name === "Fainted" ? "Restore this Pokemon from fainted" : "Faint this Pokemon"}
                                         className="h-6 px-2 text-[10px] font-bold transition-all hover:bg-red-700 hover:scale-105 active:scale-95"
                                         onClick={() => faintPokemon(player, slotIndex)}
                                     >
@@ -385,13 +400,13 @@ export default function PokemonEditor ({
                                                     <div className={`text-sm font-medium ${isIncrease ? "text-red-500 font-bold" : isDecrease ? "text-blue-500 font-bold" : "text-muted-foreground"}`}>
                                                         {statLabels[stat]}
                                                     </div>
-                                                    <Input type="number" value={pokemon.baseStats![stat]} onChange={(e) => updatePokemonStat(player, slotIndex, "baseStats", stat, e.target.value)} className="h-8 text-sm px-0.5 w-full text-center" />
-                                                    <Input type="number" value={Math.max(0, Math.min(pokemon.IVs[stat] || 0, 31))} onChange={(e) => updatePokemonStat(player, slotIndex, "IVs", stat, e.target.value)} className="h-7 text-sm px-0.5 w-full text-center" />
-                                                    <Input type="number" value={Math.max(0, Math.min(pokemon.EVs[stat] || 0, 252))} onChange={(e) => updatePokemonStat(player, slotIndex, "EVs", stat, e.target.value)} className="h-7 text-lg px-0.5 w-full p-3" />
+                                                    <Input type="number" aria-label={`${stat} Base Stat`} title={`${stat} Base Stat`} placeholder="Base" value={pokemon.baseStats![stat]} onChange={(e) => updatePokemonStat(player, slotIndex, "baseStats", stat, e.target.value)} className="h-8 text-sm px-0.5 w-full text-center" />
+                                                    <Input type="number" aria-label={`${stat} IV (0-31)`} title={`${stat} IV (0-31)`} placeholder="IV" value={Math.max(0, Math.min(pokemon.IVs[stat] || 0, 31))} onChange={(e) => updatePokemonStat(player, slotIndex, "IVs", stat, e.target.value)} className="h-7 text-sm px-0.5 w-full text-center" />
+                                                    <Input type="number" aria-label={`${stat} EV (0-252)`} title={`${stat} EV (0-252)`} placeholder="EV" value={Math.max(0, Math.min(pokemon.EVs[stat] || 0, 252))} onChange={(e) => updatePokemonStat(player, slotIndex, "EVs", stat, e.target.value)} className="h-7 text-lg px-0.5 w-full p-3" />
                                                     {stat === "HP" ? (
                                                         <div className="h-7" />
                                                     ) : (
-                                                        <select title="statBoosts" value={pokemon.statBoosts![stat] || ""} onChange={(e) => updatePokemonStat(player, slotIndex, "statBoosts", stat, e.target.value || "0")} className="h-7 text-sm px-0.5 w-full text-center border rounded bg-background">
+                                                        <select aria-label={`${stat} Stat Boost Stage`} title={`${stat} Stat Boost Stage`} value={pokemon.statBoosts![stat] || ""} onChange={(e) => updatePokemonStat(player, slotIndex, "statBoosts", stat, e.target.value || "0")} className="h-7 text-sm px-0.5 w-full text-center border rounded bg-background">
                                                             {[6,5,4,3,2,1,0,-1,-2,-3,-4,-5,-6].map((stage) => (
                                                                 <option key={stage} value={stage === 0 ? "" : stage.toString()}>
                                                                     {stage === 0 ? "--" : (stage > 0 ? `+${stage}` : stage)}
@@ -425,6 +440,7 @@ export default function PokemonEditor ({
                                         return (
                                             <button
                                                 key={moveIdx}
+                                                title={`Calculate damage for ${move.name || `Move ${moveIdx + 1}`}`}
                                                 onClick={async () => {
                                                     const isSame = isSelected;
                                                     setSelectedMove(isSame ? null : { player, slot: slotIndex, moveIdx });
@@ -454,7 +470,7 @@ export default function PokemonEditor ({
                                     <div className="grid grid-cols-[auto,1fr] gap-2 items-center">
                                         <Label className="font-semibold whitespace-nowrap text-cyan-600">Nature:</Label>
                                         <Select value={pokemon.nature.name} onValueChange={(val) => updatePokemonNature(player, slotIndex, val)}>
-                                            <SelectTrigger className="text-sm border rounded-md bg-background h-8 text-cyan-700 border-slate-300 focus:ring-2 focus:ring-cyan-500 outline-none">
+                                            <SelectTrigger className="text-sm border rounded-md bg-background h-8 text-cyan-700 border-slate-300 focus:ring-2 focus:ring-cyan-500 outline-none" title="Select Pokemon Nature">
                                                 <SelectValue placeholder="Select Nature"/>
                                             </SelectTrigger>
                                             <SelectContent position="popper" side="bottom">
@@ -467,7 +483,7 @@ export default function PokemonEditor ({
                                     <div className="grid grid-cols-[auto,1fr] gap-2 items-center">
                                         <Label className="font-semibold whitespace-nowrap text-primary">Item:</Label>
                                         <Select value={pokemon.item.name} onValueChange={val => updatePokemonItem(player, slotIndex, val)}>
-                                            <SelectTrigger className="text-sm border rounded-md bg-background h-8 text-primary border-slate-300 focus:ring-2 outline-none">
+                                            <SelectTrigger className="text-sm border rounded-md bg-background h-8 text-primary border-slate-300 focus:ring-2 outline-none" title="Select Held Item">
                                                 <SelectValue placeholder="Select Item"/>
                                             </SelectTrigger>
                                             <SelectContent position="popper" side="bottom">
@@ -481,7 +497,7 @@ export default function PokemonEditor ({
                                         <Label className="font-semibold whitespace-nowrap text-emerald-700">Ability:</Label>
                                         <div className="flex flex-row gap-2">
                                             <Select value={pokemon.ability.name} onValueChange={val => updatePokemonAbility(player, slotIndex, val)}>
-                                                <SelectTrigger className="text-sm border rounded-md bg-background h-8 text-emerald-700 border-slate-300 focus:ring-2 focus:ring-emerald-500 outline-none">
+                                                <SelectTrigger className="text-sm border rounded-md bg-background h-8 text-emerald-700 border-slate-300 focus:ring-2 focus:ring-emerald-500 outline-none" title="Select Pokemon Ability">
                                                     <SelectValue placeholder="Select Ability"/>
                                                 </SelectTrigger>
                                                 <SelectContent position="popper" side="bottom">
@@ -491,13 +507,15 @@ export default function PokemonEditor ({
                                                 </SelectContent>
                                             </Select>
                                             {pokemon.ability.toggle && (
-                                                <label className="flex items-center gap-1 text-xs mt-1">
+                                                <label className="flex items-center gap-1 text-xs mt-1" title="Toggle ability effect on/off">
                                                     <input
                                                         type="checkbox"
+                                                        title="Toggle ability effect"
                                                         checked={getAbilityToggle(player, slotIndex, pokemon.ability)}
                                                         onChange={(e) => updateAbilityToggle(player, slotIndex, e.target.checked)}
                                                         className="cursor-pointer"
                                                     />
+                                                    Active
                                                 </label>
                                             )}
                                         </div>
@@ -505,7 +523,7 @@ export default function PokemonEditor ({
                                     <div className="grid grid-cols-[auto,1fr] gap-2 items-center">
                                         <Label className="font-semibold whitespace-nowrap">Status:</Label>
                                         <Select value={pokemon.status.name} onValueChange={(val) => updatePokemonStatus(player, slotIndex, val)}>
-                                            <SelectTrigger className="text-sm px-2 py-1 border rounded bg-background h-8">
+                                            <SelectTrigger className="text-sm px-2 py-1 border rounded bg-background h-8" title="Select Pokemon Status">
                                                 <SelectValue placeholder="Select Status"/>
                                             </SelectTrigger>
                                             <SelectContent position="popper" side="bottom">
@@ -528,7 +546,7 @@ export default function PokemonEditor ({
                                         return (
                                             <div key={moveIdx} className="flex items-center gap-1">
                                                 <Select value={move.name} onValueChange={(val) => updatePokemonMove(player, slotIndex, moveIdx, val, undefined, undefined)}>
-                                                    <SelectTrigger className="h-7 text-sm border-slate-300 w-37 flex-shrink-0">
+                                                    <SelectTrigger className="h-7 text-sm border-slate-300 w-37 flex-shrink-0" title={`Move ${moveIdx + 1} Name`}>
                                                         <SelectValue placeholder={`Move ${moveIdx + 1}`} />
                                                     </SelectTrigger>
                                                     <SelectContent>
@@ -544,10 +562,10 @@ export default function PokemonEditor ({
                                                 </div>
 
                                                 <Select value={move.type ?? "Normal"} onValueChange={(val) => updatePokemonMove(player, slotIndex, moveIdx, undefined, val, undefined)}>
-                                                    <SelectTrigger className="h-8 w-8 p-0 rounded-full border-2 border-slate-300 flex-shrink-0 overflow-hidden [&>svg]:hidden aspect-square">
+                                                    <SelectTrigger className="h-8 w-8 p-0 rounded-full border-2 border-slate-300 flex-shrink-0 overflow-hidden [&>svg]:hidden aspect-square" title={`Move ${moveIdx + 1} Type`}>
                                                         <img
                                                             src={TYPE_ICONS(move.type ?? "Normal")}
-                                                            alt={move.type?.name ?? "Normal"}
+                                                            alt={`${move.type ?? "Normal"} type`}
                                                             className="w-full h-full object-cover rounded-full"
                                                             onError={(e) => { (e.target as HTMLImageElement).style.display = 'none' }}
                                                         />
@@ -565,7 +583,7 @@ export default function PokemonEditor ({
                                                 </Select>
 
                                                 <Select value={move.category ?? "Physical"} onValueChange={(val) => updatePokemonMove(player, slotIndex, moveIdx, undefined, undefined, val)}>
-                                                    <SelectTrigger className="h-7 text-xs border-slate-300 w-24 flex-shrink-0">
+                                                    <SelectTrigger className="h-7 text-xs border-slate-300 w-24 flex-shrink-0" title={`Move ${moveIdx + 1} Category`}>
                                                         <SelectValue />
                                                     </SelectTrigger>
                                                     <SelectContent>
@@ -577,6 +595,7 @@ export default function PokemonEditor ({
 
                                                 <button
                                                     onClick={() => toggleMoveCrit(moveKey, moveIdx)}
+                                                    title="Toggle critical hit"
                                                     className={`h-7 px-2 text-xs font-bold rounded border transition-colors cursor-pointer flex-shrink-0 ${isCrit ? "bg-yellow-400 text-black border-yellow-500" : "bg-muted text-muted-foreground border-slate-300 hover:bg-yellow-100"}`}
                                                 >
                                                     Crit
@@ -584,6 +603,7 @@ export default function PokemonEditor ({
 
                                                 <button
                                                     onClick={() => toggleMoveZ(moveKey, moveIdx)}
+                                                    title="Toggle Z-Power"
                                                     className={`h-7 px-2 text-xs font-bold rounded border transition-colors cursor-pointer flex-shrink-0 ${isZ ? "bg-purple-500 text-white border-purple-600" : "bg-muted text-muted-foreground border-slate-300 hover:bg-purple-100"}`}
                                                 >
                                                     Z
@@ -603,21 +623,19 @@ export default function PokemonEditor ({
                         {[
                             { id: "reflect", label: "REFLECT" },
                             { id: "lightScreen", label: "LIGHT SCREEN" },
-                            { id: "auroraVeil", label: "AURORA VEIL"}, 
-                            
-                            { id: "leechSeed", label: "LEECH SEED"}, 
-                            { id: "tailWind", label: "TAILWIND"}, 
-                            { id: "protect", label: "PROTECT"}, 
-                            { id: "switchingOut", label: "SWITCHING OUT"},
-
-                            // DOUBLES
-                            { id: "helpingHand", label: "HELPING HAND"}, 
-                            { id: "flowerGift", label: "FLOWER GIFT"}, 
-                            { id: "friendGuard", label: "FRIEND GUARD"}, 
+                            { id: "auroraVeil", label: "AURORA VEIL" },
+                            { id: "leechSeed", label: "LEECH SEED" },
+                            { id: "tailWind", label: "TAILWIND" },
+                            { id: "protect", label: "PROTECT" },
+                            { id: "switchingOut", label: "SWITCHING OUT" },
+                            { id: "helpingHand", label: "HELPING HAND" },
+                            { id: "flowerGift", label: "FLOWER GIFT" },
+                            { id: "friendGuard", label: "FRIEND GUARD" },
                         ].map((h) => (
                             <button
                                 key={h.id}
                                 onClick={() => toggleHazard(player as 1 | 2, h.id)}
+                                title={`Toggle ${h.label}`}
                                 className={`bg-gray-400 h-8 text-sm font-bold cursor-pointer transition-colors ${hazards[h.id as keyof typeof hazards] ? "bg-gray-700 text-white" : "text-white hover:bg-white hover:text-gray-400"}`}
                             >
                                 {h.label}

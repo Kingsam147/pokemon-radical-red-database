@@ -16,10 +16,12 @@ export default function ImportModal ({ isOpen, onClose, onImport }: Props) {
       <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
         <div className="bg-background border rounded-lg p-6 w-[500px] flex flex-col gap-4 shadow-xl">
           <h2 className="text-lg font-semibold">Import Pokemon</h2>
-          <p className="text-sm text-muted-foreground">
+          <label htmlFor="import-modal-text" className="text-sm text-muted-foreground">
             Paste your import text below. You can import multiple Pokemon at once.
-          </p>
+          </label>
           <Textarea
+            id="import-modal-text"
+            title="Pokemon import text"
             value={importModalText}
             onChange={(e) => setImportModalText(e.target.value)}
             placeholder="Paste Pokemon import text here..."

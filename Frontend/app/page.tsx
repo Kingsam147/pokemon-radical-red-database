@@ -860,7 +860,10 @@ export default function PokemonBattleSimulator() {
                 {/* Player 1 Section */}
                 <div className="space-y-4">
                   <div className="flex items-center gap-2">
+                    <label htmlFor="p1-team-select" className="sr-only">Player 1 Team</label>
                     <select
+                      id="p1-team-select"
+                      title="Select Player 1 Team"
                       className="bg-white-800 p-2 rounded border border-secondary text-xl font-bold flex-grow"
                       value={p1SelectedTeamIndex}
                       onChange={(e) => handleTeamChange(1, e.target.value)}
@@ -957,12 +960,15 @@ export default function PokemonBattleSimulator() {
                                   {pokemon.ability.name}
                                 </Badge>
                                 {pokemon.ability.toggle && (
-                                  <input
-                                    type="checkbox"
-                                    checked={pokemon.ability.toggledOn ?? false}
-                                    onChange={(e) => updateAbilityToggle(1, index, e.target.checked)}
-                                    className="cursor-pointer ml-1"
-                                  />
+                                  <label className="cursor-pointer ml-1" title="Toggle ability effect">
+                                    <input
+                                      type="checkbox"
+                                      title="Toggle ability effect"
+                                      checked={pokemon.ability.toggledOn ?? false}
+                                      onChange={(e) => updateAbilityToggle(1, index, e.target.checked)}
+                                      className="cursor-pointer"
+                                    />
+                                  </label>
                                 )}
                                 <span className="flex flex-row gap-2 justify-center">
                                   <Badge variant="outline" className="text-xs mt-1 mr-3">
@@ -979,6 +985,7 @@ export default function PokemonBattleSimulator() {
                                 <Button
                                   variant="ghost"
                                   size="icon"
+                                  title={`Remove ${pokemon.name} from bench`}
                                   className="h-6 w-6 mt-1 text-destructive"
                                   onClick={() => removePokemonFromBench(1, index)}
                                 >
@@ -1002,19 +1009,19 @@ export default function PokemonBattleSimulator() {
               <div className="h-30"></div>
               {[
                 "Electric Terrain", "Grassy Terrain", "Misty Terrain", "Psychic Terrain",
-                "Sun", "Rain", "Sand", "Snow", "Harsh Sunshine", "Heavy Rain", 
+                "Sun", "Rain", "Sand", "Snow", "Harsh Sunshine", "Heavy Rain",
                 "Strong Winds", "Magic Room", "Wonder Room", "Gravity"
               ].map((effect) => {
                 const isActive = activeEffects.includes(effect);
-                
                 return (
                   <button
                     key={effect}
                     onClick={() => toggleEffect(effect)}
+                    title={`Toggle ${effect}`}
                     className={`
                       w-full h-13 border border-white bg-gray-400 cursor-pointer transition-colors duration-200
-                      ${isActive 
-                        ? "bg-gray-700 text-white" 
+                      ${isActive
+                        ? "bg-gray-700 text-white"
                         : "text-white hover:bg-white hover:text-gray-400"
                       }
                     `}
@@ -1034,8 +1041,11 @@ export default function PokemonBattleSimulator() {
                 {/* Player 2 Section */}
                 <div className="space-y-4">
                   <div className="flex items-center gap-2">
-                    <button onClick={() => navigateP2Teams('prev')} className="p-2 rounded hover:bg-primary/20 transition-colors cursor-pointer" aria-label="Previous Team"><ChevronLeft /></button>                    
+                    <button onClick={() => navigateP2Teams('prev')} title="Previous Team" className="p-2 rounded hover:bg-primary/20 transition-colors cursor-pointer" aria-label="Previous Team"><ChevronLeft /></button>
+                    <label htmlFor="p2-team-select" className="sr-only">Player 2 Team</label>
                     <select
+                      id="p2-team-select"
+                      title="Select Player 2 Team"
                       className="p-2 rounded border border-primary text-xl font-bold flex-grow"
                       value={p2SelectedTeamIndex}
                       onChange={(e) => handleTeamChange(2, e.target.value)}
@@ -1045,7 +1055,7 @@ export default function PokemonBattleSimulator() {
                         <option key={teamName} value={teamName}>{teamName}</option>
                       ))}
                     </select>
-                    <button onClick={() => navigateP2Teams('next')} className="p-2 rounded hover:bg-primary/20 transition-colors cursor-pointer" aria-label="Next Team"><ChevronRight /></button>
+                    <button onClick={() => navigateP2Teams('next')} title="Next Team" className="p-2 rounded hover:bg-primary/20 transition-colors cursor-pointer" aria-label="Next Team"><ChevronRight /></button>
                   </div>
                   {/* Render Player 2 Bench here using player2Bench state */}
                 </div>
@@ -1144,12 +1154,15 @@ export default function PokemonBattleSimulator() {
                                   {pokemon.ability ? pokemon.ability.name : "None"}
                                 </Badge>
                                 {pokemon.ability.toggle && (
-                                  <input
-                                    type="checkbox"
-                                    checked={pokemon.ability.toggledOn ?? false}
-                                    onChange={(e) => updateAbilityToggle(2, index, e.target.checked)}
-                                    className="cursor-pointer ml-1"
-                                  />
+                                  <label className="cursor-pointer ml-1" title="Toggle ability effect">
+                                    <input
+                                      type="checkbox"
+                                      title="Toggle ability effect"
+                                      checked={pokemon.ability.toggledOn ?? false}
+                                      onChange={(e) => updateAbilityToggle(2, index, e.target.checked)}
+                                      className="cursor-pointer"
+                                    />
+                                  </label>
                                 )}
                                 <span className="flex flex-row gap-2 justify-center">
                                   <Badge variant="outline" className="text-xs mt-1 mr-3">
@@ -1165,6 +1178,7 @@ export default function PokemonBattleSimulator() {
                                 <Button
                                   variant="ghost"
                                   size="icon"
+                                  title={`Remove ${pokemon.name} from bench`}
                                   className="h-6 w-6 mt-1 text-destructive"
                                   onClick={() => removePokemonFromBench(2, index)}
                                 >
@@ -1191,21 +1205,21 @@ export default function PokemonBattleSimulator() {
                 <CardTitle>Pokemon Box</CardTitle>
                 <div className="flex gap-2 items-center">
 
-                  <button onClick={addBox} className="w-30 h-10 p-2 bg-[#4E9152] rounded hover:bg-green-600" aria-label="Add Box">
+                  <button onClick={addBox} title="Add a new Pokemon box" className="w-30 h-10 p-2 bg-[#4E9152] rounded hover:bg-green-600" aria-label="Add Box">
                     <div className="flex items-center gap-2 flex-row">
                       <p>Add Box</p>
                       <Plus size={20} />
                     </div>
                   </button>
 
-                  <button onClick={clearBox} className="w-30 h-10 p-2 bg-[#FADA5E] rounded hover:bg-[#BA8E23]">
+                  <button onClick={clearBox} title="Clear all Pokemon from current box" aria-label="Clear Box" className="w-30 h-10 p-2 bg-[#FADA5E] rounded hover:bg-[#BA8E23]">
                     <div className="flex items-center gap-2 flex-row">
                       <p>Clear Box</p>
                       <Trash2 size={20} />
                     </div>
                   </button>
 
-                  <button onClick={removeBox} className="w-35 h-10 p-2 bg-[#FF746C] rounded hover:bg-red-500">
+                  <button onClick={removeBox} title="Delete the current box permanently" aria-label="Delete Box" className="w-35 h-10 p-2 bg-[#FF746C] rounded hover:bg-red-500">
                     <div className="flex items-center gap-2 flex-row">
                       <p>Delete Box</p>
                       <X/>
@@ -1214,6 +1228,8 @@ export default function PokemonBattleSimulator() {
 
                   <button
                     onClick={() => setImportModalOpen(true)}
+                    title="Import Pokemon from import text"
+                    aria-label="Import Pokemon"
                     className="w-35 h-15 p-2 bg-[#6A9BD8] text-white rounded hover:bg-blue-500"
                   >
                     <div className="flex h-10 items-center gap-2 flex-row">
@@ -1224,6 +1240,8 @@ export default function PokemonBattleSimulator() {
 
                   <button
                     onClick={() => setRemoveMode(prev => !prev)}
+                    title={removeMode ? "Cancel remove mode" : "Enter remove mode to delete Pokemon from box"}
+                    aria-label={removeMode ? "Cancel Remove" : "Remove Pokemon"}
                     className={`w-35 text-white p-2 rounded ${removeMode ? "bg-red-600 hover:bg-red-700" : "bg-[#A0522D] hover:bg-[#7B3F00]"}`}
                   >
                     <div className="flex items-center gap-2 flex-row">
@@ -1312,7 +1330,7 @@ export default function PokemonBattleSimulator() {
                               {pokemon.types.map((type) => (
                                 <div
                                   key={type.name}
-                                  className="text-xs px-2 py-1 rounded-full text-white font-medium type-bg-${type.name.toLowerCase()}"
+                                  className={`text-xs px-2 py-1 rounded-full text-white font-medium border type-bg-${type.name.toLowerCase()} type-border-${type.name.toLowerCase()}`}
                                 >
                                   {type.name}
                                 </div>
@@ -1322,6 +1340,7 @@ export default function PokemonBattleSimulator() {
                             <Button
                               size="sm"
                               variant={isInBench(pokemon, 1) ? "destructive" : "default"}
+                              title={isInBench(pokemon, 1) ? `Remove ${pokemon.name} from team` : `Add ${pokemon.name} to team`}
                               className="h-4 bg-[#504B3A] shadow-sm text-[8px] px-1 py-0 cursor-pointer"
                               onClick={() => togglePokemonInBench(pokemon, 1)}
                             >
