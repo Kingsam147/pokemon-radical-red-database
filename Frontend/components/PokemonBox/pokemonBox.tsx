@@ -74,6 +74,7 @@ export default function PokemonBox({
               title="Import Pokemon from import text"
               aria-label="Import Pokemon"
               className="pokemon-box-import-button"
+              data-testid="open-import-modal"
             >
               <div className="pokemon-box-button-inner-tall">
                 <p>Import Pokemon</p>

@@ -22,6 +22,7 @@ export default function ImportModal({ isOpen, onClose, onImport }: Props) {
                 </label>
                 <Textarea
                     id="import-modal-text"
+                    data-testid="import-modal-textarea"
                     title="Pokemon import text"
                     value={importModalText}
                     onChange={(e) => setImportModalText(e.target.value)}
@@ -33,6 +34,7 @@ export default function ImportModal({ isOpen, onClose, onImport }: Props) {
                         type="button"
                         onClick={() => { onClose(); setImportModalText(""); }}
                         className="import-modal-cancel-button"
+                        data-testid="import-modal-cancel"
                     >
                         Cancel
                     </button>
@@ -40,6 +42,7 @@ export default function ImportModal({ isOpen, onClose, onImport }: Props) {
                         type="button"
                         onClick={() => onImport(importModalText)}
                         className="import-modal-confirm-button"
+                        data-testid="import-modal-confirm"
                     >
                         Import
                     </button>

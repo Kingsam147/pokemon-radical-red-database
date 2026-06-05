@@ -31,6 +31,7 @@ export default function BoxPokemonCard({
   return (
     <div
       className={`box-pokemon-card ${removeMode ? "box-pokemon-card-remove-mode" : ""}`}
+      data-testid={`pokemon-card-${pokemon.name}`}
       onClick={async () => {
         if (!removeMode) return;
         if (!window.confirm(`Remove ${pokemon.name} from this box?`)) return;
@@ -72,6 +73,7 @@ export default function BoxPokemonCard({
         variant={isInBench ? "destructive" : "default"}
         title={isInBench ? `Remove ${pokemon.name} from team` : `Add ${pokemon.name} to team`}
         className="box-pokemon-bench-button"
+        data-testid={`bench-toggle-${pokemon.name}`}
         onClick={() => onToggleInBench()}
       >
         {isInBench ? (

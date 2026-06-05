@@ -31,6 +31,9 @@ app.use(cookieParser(process.env.GUEST_COOKIE_SECRET));
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 
+// Health check responds immediately — before the readiness gate
+app.get('/health', (_req, res) => res.json({ ok: true }));
+
 // Hold incoming requests until DB + models are ready (serverless compatible)
 let ready = false;
 const pendingReqs = [];

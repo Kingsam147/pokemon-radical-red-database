@@ -1,18 +1,13 @@
 FROM node:24-alpine AS base
 
-WORKDIR /app
+WORKDIR /app/Backend
 
-# Copy root and workspace manifests for layer caching
-COPY package*.json ./
-COPY Backend/package*.json ./Backend/
-COPY Frontend/package*.json ./Frontend/
+COPY Backend/package.json ./
 
-# Install all workspace dependencies
-RUN npm ci
+RUN npm install --omit=dev --ignore-scripts
 
-# Copy backend source
-COPY Backend/ ./Backend/
+COPY Backend/ ./
 
 EXPOSE 3500
 
-CMD ["node", "Backend/server.js"]
+CMD ["node", "server.js"]

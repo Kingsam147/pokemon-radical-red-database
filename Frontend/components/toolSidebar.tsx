@@ -73,6 +73,7 @@ export default function ToolSidebar({
                                 <Label htmlFor="sidebar-import-text" className="tool-sidebar-label">Import Pokemon Data</Label>
                                 <Textarea
                                     id="sidebar-import-text"
+                                    data-testid="sidebar-import-textarea"
                                     title="Paste Pokemon import data"
                                     placeholder="Paste Pokemon data here..."
                                     value={importText}
@@ -82,11 +83,12 @@ export default function ToolSidebar({
                             </div>
                             <div className="tool-sidebar-field">
                                 <Label htmlFor="sidebar-export-text" className="tool-sidebar-label">Export Current State</Label>
-                                <Button onClick={handleExport} variant="secondary" className="tool-sidebar-export-button">
+                                <Button onClick={handleExport} variant="secondary" className="tool-sidebar-export-button" data-testid="export-button">
                                     Generate Export
                                 </Button>
                                 <Textarea
                                     id="sidebar-export-text"
+                                    data-testid="export-output"
                                     title="Exported battle state data"
                                     placeholder="Export data will appear here..."
                                     value={exportText}
