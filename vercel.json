@@ -1,14 +1,20 @@
 {
   "version": 2,
   "builds": [
-    { "src": "Backend/server.js", "use": "@vercel/node" },
+    {
+      "src": "Backend/server.js",
+      "use": "@vercel/node",
+      "config": { "maxDuration": 30 }
+    },
     { "src": "Frontend/package.json", "use": "@vercel/next" }
   ],
   "routes": [
+    { "src": "/api/(.*)", "dest": "Backend/server.js" },
     { "src": "/activePokemon(.*)", "dest": "Backend/server.js" },
     { "src": "/myBoxes(.*)", "dest": "Backend/server.js" },
     { "src": "/teams(.*)", "dest": "Backend/server.js" },
     { "src": "/misc(.*)", "dest": "Backend/server.js" },
+    { "src": "/health", "dest": "Backend/server.js" },
     { "src": "/(.*)", "dest": "Frontend/$1" }
   ]
 }
