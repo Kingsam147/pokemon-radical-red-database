@@ -1,0 +1,37 @@
+@reference "../app/globals.css";
+
+.header-bar {
+  @apply flex items-center justify-between;
+}
+
+.header-title {
+  @apply text-3xl font-bold text-center bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent;
+}
+
+.header-auth-section {
+  @apply flex items-center gap-2;
+}
+
+.header-login-button {
+  @apply bg-gradient-to-r from-primary to-secondary text-white font-semibold px-4 rounded-full hover:opacity-90 transition-opacity cursor-pointer;
+}
+
+.header-avatar {
+  @apply w-8 h-8 rounded-full border-2 border-primary;
+}
+
+.header-username {
+  @apply text-sm font-medium max-w-[120px] truncate hidden sm:block;
+}
+
+.header-logout-button {
+  @apply cursor-pointer;
+}
+
+.header-battle-mode-row {
+  @apply flex justify-center mb-6;
+}
+
+.header-battle-mode-tabs {
+  @apply grid w-64 grid-cols-2;
+}

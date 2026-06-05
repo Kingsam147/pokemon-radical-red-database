@@ -1,0 +1,73 @@
+@reference "../app/globals.css";
+
+.tool-sidebar {
+  @apply fixed top-0 left-0 h-full bg-card border-r border-border transition-transform duration-300 z-50 w-80;
+}
+
+.tool-sidebar-open {
+  @apply translate-x-0;
+}
+
+.tool-sidebar-closed {
+  @apply -translate-x-full;
+}
+
+.tool-sidebar-inner {
+  @apply p-4 h-full flex flex-col;
+}
+
+.tool-sidebar-header {
+  @apply flex items-center justify-between mb-4;
+}
+
+.tool-sidebar-title {
+  @apply text-xl font-bold;
+}
+
+.tool-sidebar-view-toggle {
+  @apply flex gap-2 mb-4;
+}
+
+.tool-sidebar-view-button {
+  @apply flex-1;
+}
+
+.tool-sidebar-content {
+  @apply flex-1 overflow-auto;
+}
+
+.tool-sidebar-section {
+  @apply space-y-4;
+}
+
+.tool-sidebar-field {
+  @apply space-y-2;
+}
+
+.tool-sidebar-label {
+  @apply text-sm font-semibold;
+}
+
+.tool-sidebar-clear-button {
+  @apply w-full;
+}
+
+.tool-sidebar-import-textarea {
+  @apply min-h-[150px];
+}
+
+.tool-sidebar-export-button {
+  @apply w-full mb-2;
+}
+
+.tool-sidebar-export-textarea {
+  @apply min-h-[150px];
+}
+
+.tool-sidebar-notes-field {
+  @apply space-y-2;
+}
+
+.tool-sidebar-notes-textarea {
+  @apply min-h-[400px];
+}

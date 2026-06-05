@@ -1,0 +1,19 @@
+name = "pokemon-rr-security"
+main = "workers/security-worker.js"
+compatibility_date = "2024-09-23"
+compatibility_flags = ["nodejs_compat"]
+
+# Bind the Vercel origin URL as an environment variable
+[vars]
+ORIGIN_URL = "https://pokemon-damage-calculator-gamma.vercel.app"
+
+# Routes — update to match your custom domain if you have one
+# [[routes]]
+# pattern = "yourdomain.com/*"
+# zone_name = "yourdomain.com"
+
+[observability]
+enabled = true
+
+[[tail_consumers]]
+service = "pokemon-rr-security"

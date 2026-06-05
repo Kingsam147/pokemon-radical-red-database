@@ -1,0 +1,24 @@
+services:
+  backend:
+    build: .
+    ports:
+      - "3500:3500"
+    environment:
+      NODE_ENV: development
+      PORT: 3500
+      REDIS_URL: redis://redis:6379
+    env_file:
+      - Backend/.env
+    depends_on:
+      - redis
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    command: redis-server --appendonly yes
+
+volumes:
+  redis_data:

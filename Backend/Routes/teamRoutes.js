@@ -1,9 +1,10 @@
 const express = require('express'); 
 const router = express.Router(); 
-const { getTeam, getAllTeams, addTeam, removeTeam, removeAllTeams } = require('../Controllers/teamControllers')
+const { getTeam, getAllTeams, addTeam, removeTeam, removeAllTeams, saveFullTeam } = require('../Controllers/teamControllers')
 
 router.route('/:player/:teamName')
     .get(getTeam)
+    .put(saveFullTeam)
     .delete(removeTeam)
 
 router.route('/:player')

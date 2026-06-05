@@ -1,0 +1,61 @@
+@reference "../../app/globals.css";
+
+.pokemon-box-header {
+  @apply flex flex-row justify-between;
+}
+
+.pokemon-box-actions {
+  @apply flex gap-2 items-center;
+}
+
+.pokemon-box-button-inner {
+  @apply flex items-center gap-2 flex-row;
+}
+
+.pokemon-box-button-inner-tall {
+  @apply flex h-10 items-center gap-2 flex-row;
+}
+
+.pokemon-box-add-button {
+  @apply w-30 h-10 p-2 bg-[#4E9152] rounded hover:bg-green-600;
+}
+
+.pokemon-box-clear-button {
+  @apply w-30 h-10 p-2 bg-[#FADA5E] rounded hover:bg-[#BA8E23];
+}
+
+.pokemon-box-delete-button {
+  @apply w-35 h-10 p-2 bg-[#FF746C] rounded hover:bg-red-500;
+}
+
+.pokemon-box-import-button {
+  @apply w-35 h-15 p-2 bg-[#6A9BD8] text-white rounded hover:bg-blue-500;
+}
+
+.pokemon-box-remove-button {
+  @apply w-35 text-white p-2 rounded;
+}
+
+.pokemon-box-remove-button-active {
+  @apply bg-red-600 hover:bg-red-700;
+}
+
+.pokemon-box-remove-button-inactive {
+  @apply bg-[#A0522D] hover:bg-[#7B3F00];
+}
+
+.pokemon-box-tabs-list {
+  @apply flex w-full;
+}
+
+.pokemon-box-tab-trigger {
+  @apply flex-1 min-w-0 cursor-pointer hover:bg-white hover:text-black;
+}
+
+.pokemon-box-grid {
+  @apply grid grid-cols-6 gap-2 p-2;
+}
+
+.pokemon-box-empty-slot {
+  @apply flex flex-col items-center justify-center gap-1 w-24 h-24 border-2 border-dashed border-muted rounded-lg opacity-20;
+}

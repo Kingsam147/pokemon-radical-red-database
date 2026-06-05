@@ -1,0 +1,17 @@
+@reference "../app/globals.css";
+
+.turn-view-container {
+  @apply space-y-4;
+}
+
+.turn-view-content {
+  @apply text-center;
+}
+
+.turn-view-badge {
+  @apply text-lg px-4 py-2 bg-primary text-primary-foreground;
+}
+
+.turn-view-action {
+  @apply text-sm text-muted-foreground mt-2;
+}

@@ -1,0 +1,33 @@
+@reference "../app/globals.css";
+
+.import-modal-overlay {
+  @apply fixed inset-0 bg-black/50 flex items-center justify-center z-50;
+}
+
+.import-modal-panel {
+  @apply bg-background border rounded-lg p-6 w-[500px] flex flex-col gap-4 shadow-xl;
+}
+
+.import-modal-title {
+  @apply text-lg font-semibold;
+}
+
+.import-modal-description {
+  @apply text-sm text-muted-foreground;
+}
+
+.import-modal-textarea {
+  @apply min-h-[200px] max-h-[300px] overflow-y-auto resize-none font-mono text-sm;
+}
+
+.import-modal-actions {
+  @apply flex gap-2 justify-end;
+}
+
+.import-modal-cancel-button {
+  @apply px-4 py-2 rounded bg-muted hover:bg-muted/80;
+}
+
+.import-modal-confirm-button {
+  @apply px-4 py-2 rounded bg-[#4E9152] hover:bg-green-600 text-white;
+}

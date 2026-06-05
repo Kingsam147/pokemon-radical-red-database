@@ -1,14 +1,15 @@
-import { Badge } from "@/components/ui/badge";
+import { Badge } from "@/components/ui/badge"
 import { TurnData } from "@/lib/utils/types.ts"
+import "./turnView.css"
 
-export default function TurnViewComponent ({ turn }: {turn: TurnData}) {
+export default function TurnViewComponent({ turn }: { turn: TurnData }) {
     return (
-        <div className="space-y-4">
-            <div className="text-center">
-            <Badge variant="secondary" className="text-lg px-4 py-2 bg-primary text-primary-foreground">
-                Turn {turn.turnNumber}
-            </Badge>
-            <p className="text-sm text-muted-foreground mt-2">{turn.action}</p>
+        <div className="turn-view-container">
+            <div className="turn-view-content">
+                <Badge variant="secondary" className="turn-view-badge">
+                    Turn {turn.turnNumber}
+                </Badge>
+                <p className="turn-view-action">{turn.action}</p>
             </div>
         </div>
     )

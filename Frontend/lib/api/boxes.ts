@@ -21,65 +21,38 @@ import { pokemonPayload,
   TurnData, createPokemon} from "@/lib/utils/types.ts";
 
   import {POKEMON_SPRITES} from "@/lib/utils/sprites.ts";
+import apiClient from "@/lib/infrastructure/apiClient";
 
-const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? '';
-
-  async function fetchMyBoxes() {
-  const res = await fetch(`${API_BASE}/myBoxes`, {
-    method: "GET"
-  });
-
-  if (!res.ok) throw new Error (`Request failed: ${res.status}`);
-
-  return res.json()
+async function fetchMyBoxes() {
+  const res = await apiClient.get('/myBoxes');
+  return res.data;
 }
 
 export async function fetchAddBox() {
-  const res = await fetch(`${API_BASE}/myBoxes`, {
-    method: "POST"
-  });
-
-  if (!res.ok) throw new Error (`Request failed: ${res.status}`);
-
-  return res.json()
+  const res = await apiClient.post('/myBoxes');
+  return res.data;
 }
 
 export async function fetchRemoveBox(index: string) {
-  const res = await fetch(`${API_BASE}/myBoxes/${index}`, {
-    method: "DELETE"
-  });
-
-  if (!res.ok) throw new Error (`Request failed: ${res.status}`);
-
-  return res.json()
+  const res = await apiClient.delete(`/myBoxes/${index}`);
+  return res.data;
 }
 
 export async function fetchClearBox(index: string) {
-  const res = await fetch(`${API_BASE}/myBoxes/${index}`, {
-    method: "PUT"
-  });
-  if (!res.ok) throw new Error (`Request failed: ${res.status}`); 
-  return res.json();
+  const res = await apiClient.put(`/myBoxes/${index}`);
+  return res.data;
 }
 
 async function fetchAddToBox(boxIndex: string, payload: pokemonPayload) {
-  const res = await fetch(`${API_BASE}/myBoxes/${boxIndex}`, {
-    method: "POST", 
-    headers: {
-      "Content-Type": "application/json"
-    }, 
-    body: JSON.stringify(payload)});
-
-    if (!res.ok) throw new Error (`Request failed: ${res.status}`);
-
-    return res.json();
+  const res = await apiClient.post(`/myBoxes/${boxIndex}`, payload);
+  return res.data;
 }
 
 export async function addPokemon(boxIndex: string, pokemonData: string) {
   const newPokemonJSON = await fetchAddToBox(boxIndex, { pokemonData });
   return {
-    addPokemon: newPokemonJSON.addedPokemon,
-    updatedBox: newPokemonJSON.allBoxes
+    addedPokemon: newPokemonJSON.addedPokemon,
+    allBoxes: newPokemonJSON.allBoxes
   }
 }
 
@@ -149,12 +122,12 @@ export async function loadMyBoxes(abilityList: Abilities, itemsList: Items, natu
 }
 
 export function resolveBoxes(
-    rawBoxes: any[], 
+    rawBoxes: any[],
     abilityList: Record<string, any>,
-    itemsList: Record<string, any>, 
-    movesList: Record<string, any>, 
-    naturesList: Record<string, any>, 
-    typeList: Record<string, any>, 
+    itemsList: Record<string, any>,
+    naturesList: Record<string, any>,
+    movesList: Record<string, any>,
+    typeList: Record<string, any>,
 ): Box[] {
     return rawBoxes.map(box => {
         const newBox: Box = {};

@@ -1,0 +1,388 @@
+@reference "../../app/globals.css";
+
+/* ── Card ───────────────────────────────────────────────── */
+.pokemon-editor-card {
+  @apply relative overflow-hidden border-2 flex flex-col transition-all duration-300;
+}
+.pokemon-editor-card-doubles {
+  @apply h-[450px];
+}
+.pokemon-editor-card-singles {
+  @apply h-auto;
+}
+.pokemon-editor-switch-score {
+  @apply mx-auto text-xl font-bold;
+}
+.pokemon-editor-scroll-wrapper-doubles {
+  @apply overflow-y-auto flex-1 p-1;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(0, 0, 0, 0.2) transparent;
+  &::-webkit-scrollbar {
+    width: 4px;
+  }
+  &::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  &::-webkit-scrollbar-thumb {
+    background-color: rgba(0, 0, 0, 0.2);
+    border-radius: 9999px;
+  }
+}
+
+/* ── Hazard buttons ─────────────────────────────────────── */
+.pokemon-editor-hazard-grid {
+  @apply grid grid-cols-4 p-2 gap-x-2 border-b border-white mb-7;
+}
+.pokemon-editor-hazard-button {
+  @apply bg-gray-400 h-8 text-sm font-bold cursor-pointer transition-colors;
+}
+.pokemon-editor-hazard-button-active {
+  @apply bg-gray-700 text-white;
+}
+.pokemon-editor-hazard-button-inactive {
+  @apply text-white hover:bg-white hover:text-gray-400;
+}
+.pokemon-editor-hazard-grid-bottom {
+  @apply grid grid-cols-3;
+}
+
+/* ── Pokemon header ─────────────────────────────────────── */
+.pokemon-editor-header-sticky {
+  @apply sticky top-0 z-10 bg-white p-1.5;
+}
+.pokemon-editor-header-standard {
+  @apply p-3;
+}
+.pokemon-editor-header-row-doubles {
+  @apply flex items-center justify-between gap-2;
+}
+.pokemon-editor-header-row-singles {
+  @apply flex items-center justify-between mb-3;
+}
+.pokemon-editor-header-left {
+  @apply flex items-center gap-2;
+}
+.pokemon-editor-sprite {
+  @apply w-25 h-25;
+}
+.pokemon-editor-pokemon-name {
+  @apply font-bold text-lg;
+}
+.pokemon-editor-level-row {
+  @apply flex items-center gap-1;
+}
+.pokemon-editor-level-label {
+  @apply text-sm text-muted-foreground;
+}
+.pokemon-editor-level-input {
+  @apply w-16 h-7 text-sm mb-2 px-1 py-0;
+}
+.pokemon-editor-type-sprites-column {
+  @apply flex flex-col gap-0.5 mt-1;
+}
+.pokemon-editor-type-sprite-doubles {
+  @apply h-4 w-24 cursor-help shadow-sm transition-transform hover:scale-105;
+}
+.pokemon-editor-type-sprite-singles {
+  @apply h-5 w-24 cursor-help shadow-sm transition-transform hover:scale-105;
+}
+.pokemon-editor-tooltip-content {
+  @apply bg-white/95 backdrop-blur-md border shadow-xl p-0;
+}
+.pokemon-editor-form-gender-grid {
+  @apply grid grid-cols-[auto,1fr] gap-x-4 gap-y-2 items-center;
+}
+.pokemon-editor-select-label {
+  @apply font-semibold mt-2.5;
+}
+.pokemon-editor-form-trigger {
+  @apply h-7 w-full max-w-[200px];
+}
+.pokemon-editor-gender-trigger {
+  @apply h-7;
+}
+
+/* ── Info pills ─────────────────────────────────────────── */
+.pokemon-editor-pills-column {
+  @apply flex flex-col gap-1 mr-7;
+}
+.pokemon-editor-nature-pill {
+  @apply inline-flex items-center justify-center whitespace-nowrap w-fit px-2 py-1 bg-cyan-600 text-primary-foreground rounded-full;
+}
+.pokemon-editor-item-pill {
+  @apply inline-flex items-center justify-center whitespace-nowrap gap-1 w-fit px-2 py-1 bg-primary text-primary-foreground rounded-full;
+}
+.pokemon-editor-item-pill-sprite {
+  @apply h-10 w-10;
+}
+.pokemon-editor-ability-pill {
+  @apply inline-flex items-center justify-center whitespace-nowrap w-fit px-2 py-1 bg-emerald-700 text-primary-foreground rounded-full;
+}
+.pokemon-editor-save-button {
+  @apply mt-1 h-7 px-3 text-xs font-bold transition-all text-white;
+}
+.pokemon-editor-save-button-idle {
+  @apply bg-slate-700 hover:bg-slate-800;
+}
+.pokemon-editor-save-button-saved {
+  @apply bg-green-600 hover:bg-green-700;
+}
+.pokemon-editor-save-button-error {
+  @apply bg-red-600 hover:bg-red-700;
+}
+
+/* ── HP section ─────────────────────────────────────────── */
+.pokemon-editor-hp-row {
+  @apply flex items-center gap-2;
+}
+.pokemon-editor-hp-label-doubles {
+  @apply font-semibold text-[10px] w-6;
+}
+.pokemon-editor-hp-label-singles {
+  @apply font-semibold text-sm w-10;
+}
+.pokemon-editor-hp-inputs-wrapper {
+  @apply flex-1 flex flex-col gap-1;
+}
+.pokemon-editor-hp-inputs-row {
+  @apply flex items-center justify-between text-xs;
+}
+.pokemon-editor-hp-current-section {
+  @apply flex items-center gap-1;
+}
+.pokemon-editor-hp-current-input-doubles {
+  @apply h-6 w-13 text-[10px] px-1 py-0 text-center border-slate-300;
+}
+.pokemon-editor-hp-current-input-singles {
+  @apply h-6 w-16 px-1 py-0 text-center border-slate-300;
+}
+.pokemon-editor-hp-max-label {
+  @apply text-muted-foreground font-bold;
+}
+.pokemon-editor-hp-percent-section {
+  @apply flex items-center gap-1;
+}
+.pokemon-editor-hp-percent-input {
+  @apply h-6 w-13 px-1 py-0 text-center border-slate-300;
+}
+.pokemon-editor-hp-percent-label {
+  @apply text-muted-foreground font-bold;
+}
+.pokemon-editor-faint-button {
+  @apply h-6 px-2 text-[10px] font-bold transition-all hover:bg-red-700 hover:scale-105 active:scale-95;
+}
+.pokemon-editor-health-bar-wrapper {
+  @apply h-2 w-full bg-gray-100 rounded-full overflow-hidden border border-gray-300 mb-3;
+}
+.pokemon-editor-health-bar-fill {
+  @apply h-full transition-all duration-300;
+  width: var(--health-width, 100%);
+}
+.pokemon-editor-health-bar-high {
+  @apply bg-green-500;
+}
+.pokemon-editor-health-bar-medium {
+  @apply bg-yellow-400;
+}
+.pokemon-editor-health-bar-low {
+  @apply bg-red-500;
+}
+
+/* ── Damage rolls ───────────────────────────────────────── */
+.pokemon-editor-damage-rolls-label {
+  @apply text-xs text-muted-foreground px-1;
+}
+
+/* ── Stats section ──────────────────────────────────────── */
+.pokemon-editor-stats-section {
+  @apply flex flex-col gap-3 border-t pt-2 mb-2;
+}
+.pokemon-editor-stats-moves-row {
+  @apply flex gap-6 items-center;
+}
+.pokemon-editor-stats-container {
+  @apply flex-shrink-0;
+}
+.pokemon-editor-stats-label {
+  @apply text-sm font-semibold mb-1 block;
+}
+.pokemon-editor-stats-grid {
+  @apply grid grid-cols-[40px_50px_50px_60px_60px_60px] gap-x-1 gap-y-1 items-center text-[10px];
+}
+.pokemon-editor-stats-header-cell {
+  @apply text-muted-foreground font-medium text-center;
+}
+.pokemon-editor-stat-label-neutral {
+  @apply text-sm font-medium text-muted-foreground;
+}
+.pokemon-editor-stat-label-increase {
+  @apply text-sm font-medium text-red-500 font-bold;
+}
+.pokemon-editor-stat-label-decrease {
+  @apply text-sm font-medium text-blue-500 font-bold;
+}
+.pokemon-editor-base-stat-input {
+  @apply h-8 text-sm px-0.5 w-full text-center;
+}
+.pokemon-editor-iv-input {
+  @apply h-7 text-sm px-0.5 w-full text-center;
+}
+.pokemon-editor-ev-input {
+  @apply h-7 text-sm px-0.5 w-full;
+}
+.pokemon-editor-boost-select {
+  @apply h-7 text-sm px-0.5 w-full text-center border rounded bg-background;
+}
+.pokemon-editor-final-stat-cell {
+  @apply h-7 text-sm px-1 border rounded bg-muted flex items-center justify-center font-semibold w-full;
+}
+
+/* ── Move display buttons ───────────────────────────────── */
+.pokemon-editor-moves-container {
+  @apply flex-1 space-y-1 max-w-[225px];
+}
+.pokemon-editor-moves-label {
+  @apply text-sm font-semibold mb-1 block;
+}
+.pokemon-editor-move-button {
+  @apply flex items-center justify-between w-full rounded border px-3 py-1.5 text-base transition-all cursor-pointer;
+}
+.pokemon-editor-move-button-selected {
+  @apply border-blue-500 bg-blue-100 ring-2 ring-blue-300;
+}
+.pokemon-editor-move-button-unselected {
+  @apply border-border hover:shadow-md;
+}
+.pokemon-editor-move-button-low-accuracy {
+  @apply bg-orange-100/60;
+}
+.pokemon-editor-move-button-mid-accuracy {
+  @apply bg-yellow-100/60;
+}
+.pokemon-editor-move-name-span {
+  @apply max-w-[100px] truncate flex-1 font-medium;
+}
+.pokemon-editor-move-name-status {
+  @apply text-yellow-600 font-semibold;
+}
+.pokemon-editor-move-name-secondary {
+  @apply text-blue-600 font-semibold;
+}
+.pokemon-editor-move-name-default {
+  @apply text-foreground;
+}
+.pokemon-editor-move-result-span {
+  @apply text-sm text-muted-foreground ml-2 whitespace-nowrap;
+}
+.pokemon-editor-move-result-status {
+  @apply mx-auto;
+}
+
+/* ── Dropdown section ───────────────────────────────────── */
+.pokemon-editor-dropdowns-row {
+  @apply flex items-start border-t pt-2;
+}
+.pokemon-editor-dropdowns-left {
+  @apply flex-shrink-0 space-y-1 w-42;
+}
+.pokemon-editor-dropdown-grid {
+  @apply grid grid-cols-[auto,1fr] gap-2 items-center;
+}
+.pokemon-editor-nature-label {
+  @apply font-semibold whitespace-nowrap text-cyan-600;
+}
+.pokemon-editor-nature-trigger {
+  @apply text-sm border rounded-md bg-background h-8 text-cyan-700 border-slate-300 focus:ring-2 focus:ring-cyan-500 outline-none;
+}
+.pokemon-editor-nature-option {
+  @apply text-sm text-cyan-700;
+}
+.pokemon-editor-item-label {
+  @apply font-semibold whitespace-nowrap text-primary;
+}
+.pokemon-editor-item-trigger {
+  @apply text-sm border rounded-md bg-background h-8 text-primary border-slate-300 focus:ring-2 outline-none;
+}
+.pokemon-editor-item-option {
+  @apply text-sm text-primary;
+}
+.pokemon-editor-ability-label {
+  @apply font-semibold whitespace-nowrap text-emerald-700;
+}
+.pokemon-editor-ability-row {
+  @apply flex flex-row gap-2;
+}
+.pokemon-editor-ability-trigger {
+  @apply text-sm border rounded-md bg-background h-8 text-emerald-700 border-slate-300 focus:ring-2 focus:ring-emerald-500 outline-none;
+}
+.pokemon-editor-ability-option {
+  @apply text-sm text-emerald-700;
+}
+.pokemon-editor-ability-toggle-label {
+  @apply flex items-center gap-1 text-xs mt-1;
+}
+.pokemon-editor-ability-toggle-input {
+  @apply cursor-pointer;
+}
+.pokemon-editor-status-label {
+  @apply font-semibold whitespace-nowrap;
+}
+.pokemon-editor-status-trigger {
+  @apply text-sm px-2 py-1 border rounded bg-background h-8;
+}
+
+/* ── Move editor rows ───────────────────────────────────── */
+.pokemon-editor-move-editor-rows {
+  @apply flex-1 space-y-1 self-center flex flex-col items-center mx-auto;
+}
+.pokemon-editor-move-editor-row {
+  @apply flex items-center gap-1;
+}
+.pokemon-editor-move-name-trigger {
+  @apply h-7 text-sm border-slate-300 w-37 flex-shrink-0;
+}
+.pokemon-editor-move-none-option {
+  @apply text-sm text-muted-foreground;
+}
+.pokemon-editor-move-option {
+  @apply text-xs;
+}
+.pokemon-editor-move-base-power-cell {
+  @apply h-7 w-8 text-xs border rounded bg-muted flex items-center justify-center font-semibold flex-shrink-0;
+}
+.pokemon-editor-move-type-trigger {
+  @apply h-8 w-8 p-0 rounded-full border-2 border-slate-300 flex-shrink-0 overflow-hidden [&>svg]:hidden aspect-square;
+}
+.pokemon-editor-move-type-image {
+  @apply w-full h-full object-cover rounded-full;
+}
+.pokemon-editor-move-type-option-image {
+  @apply h-5 w-4 object-cover rounded-full;
+}
+.pokemon-editor-move-type-option-wrapper {
+  @apply flex items-center gap-2;
+}
+.pokemon-editor-move-category-trigger {
+  @apply h-7 text-xs border-slate-300 w-24 flex-shrink-0;
+}
+.pokemon-editor-move-category-option {
+  @apply text-xs;
+}
+.pokemon-editor-crit-button {
+  @apply h-7 px-2 text-xs font-bold rounded border transition-colors cursor-pointer flex-shrink-0;
+}
+.pokemon-editor-crit-button-active {
+  @apply bg-yellow-400 text-black border-yellow-500;
+}
+.pokemon-editor-crit-button-inactive {
+  @apply bg-muted text-muted-foreground border-slate-300 hover:bg-yellow-100;
+}
+.pokemon-editor-z-button {
+  @apply h-7 px-2 text-xs font-bold rounded border transition-colors cursor-pointer flex-shrink-0;
+}
+.pokemon-editor-z-button-active {
+  @apply bg-purple-500 text-white border-purple-600;
+}
+.pokemon-editor-z-button-inactive {
+  @apply bg-muted text-muted-foreground border-slate-300 hover:bg-purple-100;
+}

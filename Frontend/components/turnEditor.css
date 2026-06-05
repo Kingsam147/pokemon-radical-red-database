@@ -1,0 +1,17 @@
+@reference "../app/globals.css";
+
+.turn-editor-header {
+  @apply flex flex-row items-center justify-between;
+}
+
+.turn-editor-heal-button {
+  @apply border-emerald-500 text-emerald-700 hover:bg-emerald-50;
+}
+
+.turn-editor-tabs-list {
+  @apply flex w-full;
+}
+
+.turn-editor-tab-trigger {
+  @apply flex-1 min-w-0 cursor-pointer hover:bg-white hover:text-black;
+}

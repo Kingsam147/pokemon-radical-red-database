@@ -1,0 +1,143 @@
+@reference "../app/globals.css";
+
+/* Card */
+.team-bench-card-p2 {
+  @apply flex flex-col;
+}
+
+/* Title */
+.team-bench-title-p1 {
+  @apply text-secondary;
+}
+.team-bench-title-p2 {
+  @apply text-primary;
+}
+
+/* Team selector */
+.team-bench-selector-row {
+  @apply space-y-4;
+}
+.team-bench-selector-controls {
+  @apply flex items-center gap-2;
+}
+.team-bench-nav-button {
+  @apply p-2 rounded hover:bg-primary/20 transition-colors cursor-pointer;
+}
+.team-bench-select {
+  @apply p-2 rounded text-xl font-bold flex-grow;
+}
+.team-bench-select-p1 {
+  @apply border border-secondary bg-white;
+}
+.team-bench-select-p2 {
+  @apply border border-primary;
+}
+.team-bench-save-button {
+  @apply p-2 bg-blue-600 rounded hover:bg-blue-500;
+}
+.team-bench-delete-button {
+  @apply p-2 bg-red-600 rounded hover:bg-red-500;
+}
+
+/* Trainer info (P2 only) */
+.team-bench-trainer-info {
+  @apply flex flex-row font-bold text-2xl text-primary gap-1 ml-3;
+}
+.team-bench-trainer-info-label {
+  @apply text-black;
+}
+
+/* Active pokemon area */
+.team-bench-active-area {
+  @apply flex flex-col rounded-lg p-2 min-h-[200px] w-[630px];
+}
+.team-bench-active-area-p1 {
+  @apply border-3 border-secondary/30 bg-secondary/5;
+}
+.team-bench-active-area-p2 {
+  @apply border-2 border-primary/30 bg-primary/5;
+}
+.team-bench-active-area-label {
+  @apply text-xs text-muted-foreground mb-2;
+}
+
+/* Bench grid */
+.team-bench-section-label {
+  @apply text-sm font-semibold mb-2;
+}
+.team-bench-grid {
+  @apply grid grid-cols-3 gap-2;
+}
+
+/* Bench slots */
+.team-bench-slot {
+  @apply relative border-2 border-dashed rounded-lg p-2 min-h-[100px];
+}
+.team-bench-slot-p1 {
+  @apply border-secondary/20 bg-secondary/5;
+}
+.team-bench-slot-p2 {
+  @apply border-primary/20 bg-primary/5;
+}
+.team-bench-slot-p2-partner {
+  @apply border-primary/20 bg-primary/30;
+}
+
+/* Mega symbol */
+.team-bench-mega-symbol {
+  @apply absolute top-1 right-1 w-9 h-10 z-10 drop-shadow-md;
+}
+
+/* Pokemon card content */
+.team-bench-pokemon-card {
+  @apply text-center;
+}
+.team-bench-pokemon-sprite {
+  @apply w-20 h-20 mx-auto;
+}
+
+/* Status banner */
+.team-bench-status-banner-wrapper {
+  @apply inset-0 flex items-center justify-center pointer-events-none z-20 rounded-lg;
+}
+.team-bench-status-banner {
+  @apply w-full mb-2 py-1 text-center font-black text-[10px] uppercase shadow-md border-y border-black/10 opacity-95;
+}
+
+/* Pokemon info */
+.team-bench-pokemon-name {
+  @apply text-xs font-semibold truncate;
+}
+.team-bench-pokemon-level {
+  @apply text-xs text-muted-foreground;
+}
+.team-bench-ability-badge {
+  @apply text-xs mt-1 mr-3;
+}
+.team-bench-ability-toggle-label {
+  @apply cursor-pointer ml-1;
+}
+.team-bench-ability-toggle-input {
+  @apply cursor-pointer;
+}
+.team-bench-item-wrapper {
+  @apply flex flex-row gap-2 justify-center;
+}
+.team-bench-item-badge {
+  @apply text-xs mt-1 mr-3;
+}
+.team-bench-item-sprite {
+  @apply w-6 h-6;
+}
+.team-bench-status-pill {
+  @apply text-[10px] font-bold px-1.5 py-0.5 rounded-full mt-1 inline-block;
+}
+.team-bench-remove-button {
+  @apply h-6 w-6 mt-1 text-destructive;
+}
+.team-bench-remove-icon {
+  @apply h-3 w-3;
+}
+.team-bench-empty-slot {
+  @apply flex items-center justify-center h-full text-xs text-muted-foreground;
+}

@@ -14,13 +14,17 @@
   "license": "ISC",
   "type": "commonjs",
   "dependencies": {
+    "@sentry/node": "^10.56.0",
     "@smogon/calc": "^0.10.0",
+    "cookie-parser": "^1.4.7",
     "cors": "^2.8.5",
     "dotenv": "^17.4.2",
     "express": "^5.2.1",
+    "express-oauth2-jwt-bearer": "^1.9.0",
     "mongodb": "^7.1.1",
     "mongoose": "^9.6.1",
-    "start": "^5.1.0"
+    "start": "^5.1.0",
+    "uuid": "^14.0.0"
   },
   "devDependencies": {
     "nodemon": "^3.1.11",

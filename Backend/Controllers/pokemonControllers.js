@@ -5,14 +5,14 @@ const { loadTeams, saveTeams, findTeam } = require("../Config/jsonOptions");
 
 const addPokemon = async (req, res) => {
     try {
-        // needs pokemon import text
+        const { userId } = req;
         const player = Number(req.params.player);
         if (player !== 1 && player !== 2) return res.status(400).json({message: `player variable must be a 1 or 2 not ${player}`})
 
         const teamName = req.params.teamName;
-        const { pokemonData } = req.body; 
-        const currentBox = await loadTeams(player)
-        const currentTeam = await findTeam(player, teamName);
+        const { pokemonData } = req.body;
+        const currentBox = await loadTeams(player, userId);
+        const currentTeam = await findTeam(player, teamName, userId);
 
         const newPokemons = pokemonData
             .trim()
@@ -33,25 +33,24 @@ const addPokemon = async (req, res) => {
             currentTeam[pokemon.name] = pokemon; 
         }); 
 
-        // update the team we added to in the box file
         currentBox[teamName] = currentTeam;
-        await saveTeams(player, currentBox); 
+        await saveTeams(player, userId, currentBox);
 
-        // if any duplicates sends an erorr message
         if (player === 1 && duplicates.length > 0) {
+            const updated = await loadTeams(player, userId);
             return res.status(409).json({
                 partialSuccess: `still added ${validPokemon.map(p => p.name).join(', ')} to ${player === 1 ? `${teamName} in my box` : `${teamName} in enemy box`}`,
-                error: `${duplicates.map(pokemon => pokemon.name).join(', ')} already exists in ${teamName}`, 
-                updatedTeam: await loadTeams(player)[teamName]
+                error: `${duplicates.map(pokemon => pokemon.name).join(', ')} already exists in ${teamName}`,
+                updatedTeam: updated[teamName]
             })
         }
 
-        // assuming that there were no duplicates then it returns a complete success message
+        const updated = await loadTeams(player, userId);
         return res.status(201).json({
-            message: `Successfully added ${newPokemons.map(p => p.name)} to ${player === 1 ? `${teamName} my box` : `${teamName} enemy box`}`, 
+            message: `Successfully added ${newPokemons.map(p => p.name)} to ${player === 1 ? `${teamName} my box` : `${teamName} enemy box`}`,
             addedPokemon: validPokemon,
-            updatedTeam: await loadTeams(player)[teamName]
-        }); 
+            updatedTeam: updated[teamName]
+        });
 
     } catch (err) {
         return res.status(err.statusCode || 500).json({message: err.message || "Failed to add pokemon, double check the imported text"})
@@ -60,13 +59,13 @@ const addPokemon = async (req, res) => {
 } 
 
 const findPokemon = async (req, res) => {
-    // needs a pokemon name
-    const player = Number(req.params.player)
+    const { userId } = req;
+    const player = Number(req.params.player);
     if (player !== 1 && player !== 2) return res.status(400).json({message: `player variable must be a 1 or 2 not ${player}`})
 
     const teamName = req.params.teamName;
-    const pokemonName =  req.params.pokemonName
-    const currentTeam = await findTeam(player, teamName); 
+    const pokemonName = req.params.pokemonName;
+    const currentTeam = await findTeam(player, teamName, userId);
 
     const pokemon = currentTeam[pokemonName];
 
@@ -78,77 +77,75 @@ const findPokemon = async (req, res) => {
 } 
 
 const deletePokemon = async (req, res) => {
-    // needs a pokemon name
+    const { userId } = req;
     const player = Number(req.params.player);
     if (player !== 1 && player !== 2) return res.status(400).json({message: `player variable must be a 1 or 2 not ${player}`})
 
     const teamName = req.params.teamName;
-    const pokemonName =  req.params.pokemonName; 
-    const currentBox = await loadTeams(player); 
-    const currentTeam = await findTeam(player, teamName);
+    const pokemonName = req.params.pokemonName;
+    const currentBox = await loadTeams(player, userId);
+    const currentTeam = await findTeam(player, teamName, userId);
 
     if (!currentTeam[pokemonName]) return res.status(404).json({message: `${pokemonName} not found in ${teamName} in ${player === 1 ? "my box": "the enemy box"}`})
 
     const oldPokemon = currentTeam[pokemonName];
     delete currentTeam[pokemonName];
     currentBox[teamName] = currentTeam;
-    await saveTeams(player, currentBox);
+    await saveTeams(player, userId, currentBox);
 
     return res.status(200).json({
-            message: `${pokemonName} successfully deleted from ${teamName} in ${player === 1 ? "my box" : "the enemy box"}`, 
-            deletedPokemon: oldPokemon,
-            updatedBox: Object.keys(await loadTeams(player))
-        });
+        message: `${pokemonName} successfully deleted from ${teamName} in ${player === 1 ? "my box" : "the enemy box"}`,
+        deletedPokemon: oldPokemon,
+        updatedBox: Object.keys(await loadTeams(player, userId))
+    });
 
-} 
+}
 
 const updatePokemon = async (req, res) => {
-    try{ 
-        // needs pokemon import text
+    try {
+        const { userId } = req;
         const player = Number(req.params.player);
         if (player !== 1 && player !== 2) return res.status(400).json({message: `player variable must be a 1 or 2 not ${player}`})
 
         const teamName = req.params.teamName;
-        const pokemonName  = req.params.pokemonName;
-        const { pokemonData } = req.body; 
-        const currentBox = await loadTeams(player); 
-        const currentTeam = await findTeam(player, teamName)
+        const pokemonName = req.params.pokemonName;
+        const { pokemonData } = req.body;
+        const currentBox = await loadTeams(player, userId);
+        const currentTeam = await findTeam(player, teamName, userId);
 
         if (!currentTeam[pokemonName]) return res.status(404).json({message: `${pokemonName} doesn't exists in ${teamName} in ${player === 1 ? "my box" : "the enemy box"}`})
-        const updatedPokemon = await createPokemon(pokemonData, player); 
+        const updatedPokemon = await createPokemon(pokemonData, player);
 
-
-        currentTeam[pokemonName] = updatedPokemon; 
+        currentTeam[pokemonName] = updatedPokemon;
         currentBox[teamName] = currentTeam;
-        await saveTeams(player, currentBox); 
+        await saveTeams(player, userId, currentBox);
 
         res.status(200).json({
-            message: `${updatedPokemon.name} was successfully updated in ${teamName} in ${player === 1 ? "my box" : "the enemy box"}`, 
-            theUpdatedPokemon: updatedPokemon, 
-            updatedBox: Object.keys(await loadTeams(player))
+            message: `${updatedPokemon.name} was successfully updated in ${teamName} in ${player === 1 ? "my box" : "the enemy box"}`,
+            theUpdatedPokemon: updatedPokemon,
+            updatedBox: Object.keys(await loadTeams(player, userId))
         });
 
-
     } catch (err) {
-        res.status(err.statusCode || 500).json({message: err.message || `failed to add pokemon to ${teamName}`})
+        res.status(err.statusCode || 500).json({message: err.message || `failed to update pokemon in ${req.params.teamName}`})
     }
 }
 
 const clearAllPokemon = async (req, res) => {
-    const player = Number(req.params.player); 
+    const { userId } = req;
+    const player = Number(req.params.player);
     if (player !== 1 && player !== 2) return res.status(400).json({message: `player variable must be a 1 or 2 not ${player}`})
 
     const teamName = req.params.teamName;
-    const currentBox = await loadTeams(player); 
-    const currentTeam = await findTeam(player, teamName)
-    
+    const currentBox = await loadTeams(player, userId);
+    await findTeam(player, teamName, userId);
+
     currentBox[teamName] = {};
-    await saveTeams(player, currentBox); 
+    await saveTeams(player, userId, currentBox);
 
     res.status(200).json({
-        message: `${teamName} in ${player === 1 ? "my box" : "the enemy box"} was successfully cleared`, 
-        "current team names": Object.keys(loadTeams(player)),
-        updatedBox: await loadTeams(player)
+        message: `${teamName} in ${player === 1 ? "my box" : "the enemy box"} was successfully cleared`,
+        updatedBox: await loadTeams(player, userId)
     });
 }
 
