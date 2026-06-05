@@ -69,6 +69,15 @@ const init = mongoose.connect(MONGODB_URI, { dbName: MONGODB_DB })
 
     ready = true;
     pendingReqs.splice(0).forEach(next => next());
+})
+.catch((err) => {
+    const initError = Object.assign(new Error('Service unavailable — database failed to initialise'), { status: 503 });
+    pendingReqs.splice(0).forEach(next => next(initError));
+    if (require.main === module) {
+        const logger = require('./infrastructure/logger/logger');
+        const { SYSTEM_EVENTS } = require('./infrastructure/logger/events');
+        logger.error(err, { event: SYSTEM_EVENTS.DB_ERROR });
+    }
 });
 
 Sentry.setupExpressErrorHandler(app);
@@ -99,8 +108,6 @@ if (require.main === module) {
         app.listen(PORT, () => {
             logger.info(SYSTEM_EVENTS.SERVER_STARTED, { port: PORT, env: process.env.NODE_ENV });
         });
-    }).catch((err) => {
-        logger.error(err, { event: SYSTEM_EVENTS.DB_ERROR });
     });
 }
 
