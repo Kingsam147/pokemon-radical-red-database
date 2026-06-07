@@ -5,7 +5,10 @@ if (!process.env.MONGODB_URI) {
     throw new Error('MONGODB_URI environment variable is not set');
 }
 
-const client = new MongoClient(process.env.MONGODB_URI);
+const client = new MongoClient(process.env.MONGODB_URI, {
+    serverSelectionTimeoutMS: 10000,
+    connectTimeoutMS: 10000,
+});
 const db = client.db(process.env.MONGODB_DB || 'Radical-Red-Database');
 
 const fetchModels = async () => {

@@ -1,5 +1,5 @@
-const SessionService = require('../../domain/session/SessionService');
-const CalculationDomainService = require('../../domain/pokemon/CalculationDomainService');
+const SessionService = require('../../Domain/session/SessionService');
+const CalculationDomainService = require('../../Domain/pokemon/CalculationDomainService');
 const TeamRepository = require('../../infrastructure/repositories/TeamRepository');
 
 const activate = async (req, res) => {

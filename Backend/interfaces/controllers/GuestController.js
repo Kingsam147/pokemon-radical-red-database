@@ -1,4 +1,4 @@
-const { v4: uuidv4 } = require('uuid');
+const { randomUUID } = require('crypto');
 const logger = require('../../infrastructure/logger/logger');
 const { AUTH_EVENTS } = require('../../infrastructure/logger/events');
 
@@ -11,7 +11,7 @@ const initGuest = (req, res) => {
     return res.status(200).json({ guestId: existingGuestId });
   }
 
-  const guestId = uuidv4();
+  const guestId = randomUUID();
   const isProduction = process.env.NODE_ENV === 'production';
 
   res.cookie('guest_id', guestId, {

@@ -13,71 +13,80 @@ const app = express();
 const cors = require('cors');
 const cookieParser = require('cookie-parser');
 const mongoose = require("mongoose");
-const { loadModels } = require('./Config/jsonOptions');
-const HydrationService = require('./infrastructure/hydration/HydrationService');
 const jwtCheck = require('./infrastructure/auth/jwtCheck');
 const resolveIdentity = require('./infrastructure/auth/resolveIdentity');
 
 const PORT = process.env.PORT || 3500;
 const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/pokemonDB';
-const MONGODB_DB = process.env.MONGODB_DB || 'pokemonDB';
+const MONGODB_DB = process.env.MONGODB_DB || 'Radical-Red-Database';
 
 // middleware
+const allowedOrigins = (process.env.CORS_ORIGIN || 'http://localhost:3000').split(',').map(o => o.trim());
 app.use(cors({
-  origin: process.env.CORS_ORIGIN || 'http://localhost:3000',
+  origin: (origin, callback) => {
+    if (!origin || allowedOrigins.includes(origin) || origin.endsWith('.vercel.app')) {
+      callback(null, true);
+    } else {
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
   credentials: true,
 }));
 app.use(cookieParser(process.env.GUEST_COOKIE_SECRET));
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 
-// Health check responds immediately — before the readiness gate
-app.get('/health', (_req, res) => res.json({ ok: true }));
-
-// Hold incoming requests until DB + models are ready (serverless compatible)
 let ready = false;
+let initFailed = false;
 const pendingReqs = [];
+
+app.get('/health', (_req, res) => res.json({ ok: true, ready }));
 
 app.use((_req, _res, next) => {
     if (ready) return next();
+    if (initFailed) return next(Object.assign(new Error('Service unavailable — initialisation failed'), { status: 503 }));
     pendingReqs.push(next);
 });
 
-const init = mongoose.connect(MONGODB_URI, { dbName: MONGODB_DB })
+const initTimeoutId = setTimeout(() => {
+    if (!ready && pendingReqs.length > 0) {
+        initFailed = true;
+        const timeoutError = Object.assign(new Error('Service unavailable — initialisation timed out'), { status: 503 });
+        pendingReqs.splice(0).forEach(next => next(timeoutError));
+        console.error('[DB_INIT_TIMEOUT] Drained pending requests after 15s');
+    }
+}, 15000);
+
+const init = mongoose.connect(MONGODB_URI, {
+    dbName: MONGODB_DB,
+    serverSelectionTimeoutMS: 10000,
+    connectTimeoutMS: 10000,
+    socketTimeoutMS: 10000,
+})
 .then(async () => {
+    const { loadModels } = require('./Config/jsonOptions');
+    const HydrationService = require('./infrastructure/hydration/HydrationService');
     await loadModels();
     HydrationService.load();
 
-    // Routes must be registered after loadModels() — services use getModels() at load time
-    // Public reference data — no auth required
     app.use('/misc', require('./Routes/miscRoutes'));
-
-    // Guest identity — no auth required
     app.use('/api/guest', require('./interfaces/routes/guestRoutes'));
-
-    // Auth routes — require real Auth0 JWT
     app.use('/api/auth', jwtCheck, require('./interfaces/routes/authRoutes'));
-
-    // Session routes require a real Auth0 JWT (guests do not use session editing)
     app.use('/api/pokemon', jwtCheck, require('./interfaces/routes/pokemonSessionRoutes'));
     app.use('/activePokemon', jwtCheck, require('./Routes/activePokemonRoutes'));
-
-    // Data routes accept either a valid JWT or a signed guest cookie
     app.use('/myBoxes', resolveIdentity, require('./Routes/myBoxRoutes'));
     app.use('/teams', resolveIdentity, require('./Routes/teamRoutes'));
     app.use('/', resolveIdentity, require('./Routes/pokemonRoutes'));
 
+    clearTimeout(initTimeoutId);
     ready = true;
     pendingReqs.splice(0).forEach(next => next());
 })
 .catch((err) => {
+    initFailed = true;
     const initError = Object.assign(new Error('Service unavailable — database failed to initialise'), { status: 503 });
     pendingReqs.splice(0).forEach(next => next(initError));
-    if (require.main === module) {
-        const logger = require('./infrastructure/logger/logger');
-        const { SYSTEM_EVENTS } = require('./infrastructure/logger/events');
-        logger.error(err, { event: SYSTEM_EVENTS.DB_ERROR });
-    }
+    console.error('[DB_INIT_ERROR]', err.message, err.code ?? '');
 });
 
 Sentry.setupExpressErrorHandler(app);
