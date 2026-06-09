@@ -53,4 +53,9 @@ const del = async (key) => {
   }
 };
 
-module.exports = { connect, get, set, del };
+const sendCommand = (...args) => {
+  if (!available || !client) throw new Error('Redis unavailable');
+  return client.call(...args);
+};
+
+module.exports = { connect, get, set, del, sendCommand };

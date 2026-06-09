@@ -15,6 +15,7 @@ const cookieParser = require('cookie-parser');
 const mongoose = require("mongoose");
 const jwtCheck = require('./infrastructure/auth/jwtCheck');
 const resolveIdentity = require('./infrastructure/auth/resolveIdentity');
+const { globalLimiter, calcLimiter, guestInitLimiter } = require('./infrastructure/rateLimit/rateLimiter');
 
 const PORT = process.env.PORT || 3500;
 const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/pokemonDB';
@@ -35,6 +36,7 @@ app.use(cors({
 app.use(cookieParser(process.env.GUEST_COOKIE_SECRET));
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
+app.use(globalLimiter);
 
 let ready = false;
 let initFailed = false;
@@ -71,7 +73,9 @@ const init = mongoose.connect(MONGODB_URI, {
     await loadModels();
     HydrationService.load();
 
+    app.use('/misc/damage', calcLimiter);
     app.use('/misc', require('./Routes/miscRoutes'));
+    app.use('/api/guest/init', guestInitLimiter);
     app.use('/api/guest', require('./interfaces/routes/guestRoutes'));
     app.use('/api/auth', jwtCheck, require('./interfaces/routes/authRoutes'));
     app.use('/api/pokemon', jwtCheck, require('./interfaces/routes/pokemonSessionRoutes'));
