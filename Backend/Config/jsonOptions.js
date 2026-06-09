@@ -1,9 +1,11 @@
 const fs = require("fs");
 const path = require('path');
 const { fetchModels, db } = require('./mongodbOptions');
+const redis = require('../infrastructure/redis/redisClient');
 
+const P2_TEAMS_KEY = 'p2:teams';
+const P2_TEAMS_TTL = 86400; // 24 hours
 
-// // the path to the folder with the JSON files
 let models = {};
 const loadModels = async () => {
     models = await fetchModels();
@@ -29,11 +31,21 @@ const saveMyBoxes = async (userId, newBoxes) => {
 }
 
 const loadTeams = async (player, userId) => {
+    if (player === 2) {
+        const cached = await redis.get(P2_TEAMS_KEY);
+        if (cached) return cached;
+    }
+
     const collectionName = player === 1 ? 'myTeamSets' : 'enemyTeamSets';
     const query = player === 1 ? { userId } : {};
     const doc = await db.collection(collectionName).findOne(query);
     if (!doc) return {};
     const { _id, userId: _uid, ...teams } = doc;
+
+    if (player === 2) {
+        await redis.set(P2_TEAMS_KEY, teams, P2_TEAMS_TTL);
+    }
+
     return teams;
 }
 
@@ -43,6 +55,7 @@ const saveTeams = async (player, userId, newTeams) => {
         await db.collection(collectionName).replaceOne({ userId }, { ...newTeams, userId }, { upsert: true });
     } else {
         await db.collection(collectionName).replaceOne({}, newTeams, { upsert: true });
+        await redis.del(P2_TEAMS_KEY);
     }
 }
 

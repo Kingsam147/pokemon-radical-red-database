@@ -1,5 +1,5 @@
 const { getModels } = require('../Config/jsonOptions.js');
-const {items, natures, movesList,  typeChart, abilities, statuses } = getModels(); 
+const {items, natures, movesList,  typeChart, abilities, statuses } = getModels();
 const { finalHP, finalStats } = require('../Domain/statCalculator.js')
 const calcDefenseTypes = require('../Domain/typeInteractions');
 
@@ -72,6 +72,6 @@ const getDefenseTypes = (req, res) => {
     }
 }
 
+const getVersion = (_req, res) => res.status(200).json({ version: process.env.DATA_VERSION || 'v1' });
 
-
-module.exports = { getItems, getNatures, getMoves, getTypes, getAbilities, calcStats, getStatuses, getDefenseTypes }
+module.exports = { getItems, getNatures, getMoves, getTypes, getAbilities, calcStats, getStatuses, getDefenseTypes, getVersion }

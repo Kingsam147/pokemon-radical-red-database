@@ -23,13 +23,13 @@
     "dotenv": "^17.4.2",
     "express": "^5.2.1",
     "express-oauth2-jwt-bearer": "^1.9.0",
+    "ioredis": "^5.11.1",
     "mongodb": "^7.1.1",
     "mongoose": "^9.6.1",
     "start": "^5.1.0",
     "uuid": "^14.0.0"
   },
   "devDependencies": {
-    "ioredis": "^5.11.1",
     "jest": "^30.4.2",
     "mongodb-memory-server": "^11.2.0",
     "nodemon": "^3.1.11",

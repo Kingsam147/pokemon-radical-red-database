@@ -1,7 +1,7 @@
-const express = require('express'); 
-const router = express.Router(); 
-const { getItems, getNatures, getMoves, getTypes, getAbilities, calcStats, getStatuses, getDefenseTypes } = require('../Controllers/miscControllers'); 
-const {calculateDamage} = require('../Controllers/damageController');
+const express = require('express');
+const router = express.Router();
+const { getItems, getNatures, getMoves, getTypes, getAbilities, calcStats, getStatuses, getDefenseTypes, getVersion } = require('../Controllers/miscControllers');
+const { calculateDamage } = require('../Controllers/damageController');
 
 router.route('/items')
     .get(getItems)
@@ -29,5 +29,8 @@ router.route('/damage')
 
 router.route('/calcTypes/:type1/:type2')
     .get(getDefenseTypes)
+
+router.route('/version')
+    .get(getVersion)
 
 module.exports = router;

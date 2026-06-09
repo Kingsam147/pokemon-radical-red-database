@@ -1,28 +1,5 @@
-import { pokemonPayload,
-  teamPayload,
-  PokemonType, 
-  PokemonTypes,
-  Nature, 
-  Natures, 
-  Item, 
-  Items, 
-  Ability, 
-  Abilities, 
-  PokemonStats, 
-  PokemonMove, 
-  PokemonMoves,
-  PokemonForm, 
-  PokemonForms, 
-  Gender, 
-  PokemonStatus,
-  Pokemon, 
-  Team,
-  Teams, 
-  Box, 
-  TurnData, 
-  createPokemon,
-  TrainerInfo} from "@/lib/utils/types"; 
-
+import React from "react";
+import { Pokemon } from "@/lib/utils/types";
 import { fetchCalculateDamage } from "@/lib/api/misc"
 
 const buildField = (player: number, p1Hazards: any, p2Hazards: any, activeEffects: string[]) => {
@@ -70,7 +47,8 @@ export const runCalc = async (
   abilityToggles: Record<string, boolean>,
   moveCrits: Record<string, boolean[]>,
   moveZPowered: Record<string, boolean[]>,
-  setDamageResults: React.Dispatch<React.SetStateAction<Record<string, any>>>
+  setDamageResults: React.Dispatch<React.SetStateAction<Record<string, any>>>,
+  setCalcLoadingKeys?: React.Dispatch<React.SetStateAction<Set<string>>>
 ) => {
   const defenderBench = player === 1 ? player2Bench : player1Bench;
   const defenderIdx = defenderBench.findIndex(p => p !== null);
@@ -82,6 +60,8 @@ export const runCalc = async (
   const isZ = moveZPowered[moveKey]?.[idx] ?? false;
   const key = `p${player}-${slotIndex}-move${idx}`;
 
+  setCalcLoadingKeys?.(prev => new Set(prev).add(key));
+
   try {
     const res = await fetchCalculateDamage(
       pokemon, player, slotIndex,
@@ -91,8 +71,14 @@ export const runCalc = async (
       abilityToggles
     );
     setDamageResults(prev => ({ ...prev, [key]: res.calculation }));
-  } catch (err) {
-    console.error("Damage calc failed:", err);
+  } catch {
+    // Calc failures are non-fatal — the move button stays at "—"
+  } finally {
+    setCalcLoadingKeys?.(prev => {
+      const next = new Set(prev);
+      next.delete(key);
+      return next;
+    });
   }
 };
 
@@ -105,13 +91,14 @@ export const runAllCalcs = async (
   abilityToggles: Record<string, boolean>,
   moveCrits: Record<string, boolean[]>,
   moveZPowered: Record<string, boolean[]>,
-  setDamageResults: React.Dispatch<React.SetStateAction<Record<string, any>>>
+  setDamageResults: React.Dispatch<React.SetStateAction<Record<string, any>>>,
+  setCalcLoadingKeys?: React.Dispatch<React.SetStateAction<Set<string>>>
 ) => {
   const p1 = player1Bench[0];
   const p2 = player2Bench[0];
   if (!p1 || !p2) return;
 
-  const args = [player1Bench, player2Bench, p1Hazards, p2Hazards, activeEffects, abilityToggles, moveCrits, moveZPowered, setDamageResults] as const;
+  const args = [player1Bench, player2Bench, p1Hazards, p2Hazards, activeEffects, abilityToggles, moveCrits, moveZPowered, setDamageResults, setCalcLoadingKeys] as const;
 
   for (let idx = 0; idx < p1.moveset.length; idx++) {
     await runCalc(1, 0, idx, p1, ...args);

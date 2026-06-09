@@ -171,8 +171,14 @@ export const TYPE_OPTIONS = async () => {
 }
 
 export const STATUS_OPTIONS = async () => {
-  const statusListJSON = await fetchStatuses(); 
+  const statusListJSON = await fetchStatuses();
   const statusList = statusListJSON.statuses;
   return statusList;
 }
 
+export const MISC_VERSION = async (): Promise<string> => {
+  const res = await fetch(`${API_BASE}/misc/version`, { method: 'GET' });
+  if (!res.ok) throw new Error(`Request failed: ${res.status}`);
+  const json = await res.json();
+  return json.version as string;
+}

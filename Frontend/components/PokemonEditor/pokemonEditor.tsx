@@ -95,6 +95,7 @@ export default function PokemonEditor({
     const [abilityToggles, setAbilityToggles] = useState<Record<string, boolean>>({});
     const [selectedMove, setSelectedMove] = useState<{ player: Number, slot: Number, moveIdx: number } | null>(null)
     const [damageResults, setDamageResults] = useState<Record<string, { range: [string, string], damage: number[], description: string } | null>>({});
+    const [calcLoadingKeys, setCalcLoadingKeys] = useState<Set<string>>(new Set());
 
     const [sessionId, setSessionId] = useState<string | null>(null);
     const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
@@ -182,7 +183,7 @@ export default function PokemonEditor({
 
     useEffect(() => {
         if (!pokemon) return;
-        runAllCalcs(player1Bench, player2Bench, p1Hazards, p2Hazards, activeEffects, abilityToggles, moveCrits, moveZPowered, setDamageResults)
+        runAllCalcs(player1Bench, player2Bench, p1Hazards, p2Hazards, activeEffects, abilityToggles, moveCrits, moveZPowered, setDamageResults, setCalcLoadingKeys)
     }, [
         player1Bench[0]?.name, player2Bench[0]?.name,
         player1Bench[0]?.level, player2Bench[0]?.level,
@@ -426,15 +427,19 @@ export default function PokemonEditor({
                         </div>
                     </div>
 
-                    <p className="pokemon-editor-damage-rolls-label">
+                    <div className="pokemon-editor-damage-rolls-label">
                         {(() => {
                             const activeMoveIdx = selectedMove?.player === player && selectedMove?.slot === slotIndex ? selectedMove.moveIdx : null;
                             if (activeMoveIdx === null) return "Damage Rolls: click a move";
-                            const result = damageResults[`p${player}-${slotIndex}-move${activeMoveIdx}`];
+                            const activeKey = `p${player}-${slotIndex}-move${activeMoveIdx}`;
+                            if (calcLoadingKeys.has(activeKey)) {
+                                return <span className="pokemon-editor-calc-shimmer" />;
+                            }
+                            const result = damageResults[activeKey];
                             if (!result) return "Damage Rolls: —";
                             return `Damage Rolls: (${result.damage.join(", ")})`;
                         })()}
-                    </p>
+                    </div>
 
                     {pokemon.baseStats && pokemon.statBoosts && (
                         <div className="pokemon-editor-stats-section">
@@ -497,6 +502,7 @@ export default function PokemonEditor({
                                         const isStatus = move.category === "Status";
                                         const resultKey = `p${player}-${slotIndex}-move${moveIdx}`;
                                         const result = damageResults[resultKey];
+                                        const isCalcLoading = calcLoadingKeys.has(resultKey);
                                         const isSelected = selectedMove?.player === player && selectedMove?.slot === slotIndex && selectedMove?.moveIdx === moveIdx;
 
                                         const accuracyClass = isStatus ? "" : accuracy !== null && accuracy < 90
@@ -518,13 +524,18 @@ export default function PokemonEditor({
                                                 onClick={async () => {
                                                     const isSame = isSelected;
                                                     setSelectedMove(isSame ? null : { player, slot: slotIndex, moveIdx });
-                                                    await runCalc(player, slotIndex, moveIdx, pokemon, player1Bench, player2Bench, p1Hazards, p2Hazards, activeEffects, abilityToggles, moveCrits, moveZPowered, setDamageResults);
+                                                    await runCalc(player, slotIndex, moveIdx, pokemon, player1Bench, player2Bench, p1Hazards, p2Hazards, activeEffects, abilityToggles, moveCrits, moveZPowered, setDamageResults, setCalcLoadingKeys);
                                                 }}
                                                 className={`pokemon-editor-move-button ${isSelected ? "pokemon-editor-move-button-selected" : `pokemon-editor-move-button-unselected ${accuracyClass}`}`}
                                             >
                                                 <span className={`pokemon-editor-move-name-span ${moveNameClass}`}>{move.name || `Move ${moveIdx + 1}`}</span>
                                                 <span className={`pokemon-editor-move-result-span ${isStatus ? "pokemon-editor-move-result-status" : ""}`}>
-                                                    {result && move.category !== "Status" ? `${result.range[0]} – ${result.range[1]}` : "—"}
+                                                    {isCalcLoading && !isStatus
+                                                        ? <span className="pokemon-editor-calc-shimmer" />
+                                                        : result && move.category !== "Status"
+                                                            ? `${result.range[0]} – ${result.range[1]}`
+                                                            : "—"
+                                                    }
                                                 </span>
                                             </button>
                                         );

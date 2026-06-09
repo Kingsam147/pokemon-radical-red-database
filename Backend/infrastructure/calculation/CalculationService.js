@@ -1,11 +1,7 @@
-const crypto = require('crypto');
 const { calculate: smogonCalculate, Pokemon, Move, Field, Side, Generations } = require('@smogon/calc');
 const { getModels } = require('../../Config/jsonOptions');
 const { items: smogonItems, abilities: smogonAbilities } = require('../../Config/tsOptions');
 const calcDefenseType = require('../../Domain/typeInteractions');
-
-const CACHE_TTL_MS = 60 * 60 * 1000; // 1 hour
-const cache = new Map();
 
 const STATUS_MAP = {
   Healthy: '', Burn: 'brn', Burned: 'brn', Freeze: 'frz', Frozen: 'frz',
@@ -21,39 +17,6 @@ const WEATHER_MAP = {
 const TERRAIN_MAP = {
   'Electric Terrain': 'Electric', 'Grassy Terrain': 'Grassy',
   'Misty Terrain': 'Misty', 'Psychic Terrain': 'Psychic',
-};
-
-// ─── Cache helpers ────────────────────────────────────────────────────────────
-
-const stableStringify = (value) => {
-  if (value === null || typeof value !== 'object') return JSON.stringify(value);
-  if (Array.isArray(value)) return `[${value.map(stableStringify).join(',')}]`;
-  return `{${Object.keys(value).sort().map(k => `${JSON.stringify(k)}:${stableStringify(value[k])}`).join(',')}}`;
-};
-
-const buildCacheKey = (attacker, move, defender, field, abilityToggles) => {
-  const hash = (obj) => crypto.createHash('sha1').update(stableStringify(obj)).digest('hex').slice(0, 8);
-  const slugify = (name) => (name ?? '').replace(/[^a-z0-9]/gi, '_').toLowerCase();
-
-  const pokemonId = `${slugify(attacker.name)}_${hash({ attacker, field, abilityToggles })}`;
-  const moveId = slugify(move?.name ?? 'unknown');
-  const targetId = `${slugify(defender.name)}_${hash(defender)}`;
-
-  return `calc:${pokemonId}:${moveId}:${targetId}`;
-};
-
-const cacheGet = (key) => {
-  const record = cache.get(key);
-  if (!record) return null;
-  if (Date.now() > record.expiresAt) {
-    cache.delete(key);
-    return null;
-  }
-  return record.result;
-};
-
-const cacheSet = (key, result) => {
-  cache.set(key, { result, expiresAt: Date.now() + CACHE_TTL_MS });
 };
 
 // ─── Smogon helpers ───────────────────────────────────────────────────────────
@@ -306,17 +269,4 @@ const performCalculation = ({ attacker, defender, move, field, abilityToggles = 
   };
 };
 
-// ─── Cache-Aside facade ───────────────────────────────────────────────────────
-
-const calculate = ({ attacker, defender, move, field, abilityToggles }) => {
-  const key = buildCacheKey(attacker, move, defender, field, abilityToggles);
-
-  const cached = cacheGet(key);
-  if (cached) return cached;
-
-  const result = performCalculation({ attacker, defender, move, field, abilityToggles });
-  cacheSet(key, result);
-  return result;
-};
-
-module.exports = { calculate };
+module.exports = { calculate: performCalculation };

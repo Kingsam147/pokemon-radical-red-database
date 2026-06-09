@@ -1,10 +1,11 @@
 "use client"
 
-import { useEffect } from "react"
+import { useEffect, useState } from "react"
 import { Pokemon, Teams, Box, TrainerInfo } from "@/lib/utils/types.ts"
 import { addPokemon, loadMyBoxes, resolveBoxes } from "@/lib/api/boxes"
-import { MOVES_OPTIONS, ABILITY_OPTIONS, ITEMS_OPTIONS, NATURE_OPTIONS, TYPE_OPTIONS, STATUS_OPTIONS } from "@/lib/api/misc"
+import { MOVES_OPTIONS, ABILITY_OPTIONS, ITEMS_OPTIONS, NATURE_OPTIONS, TYPE_OPTIONS, STATUS_OPTIONS, MISC_VERSION } from "@/lib/api/misc"
 import { loadMyTeams, loadEnemyTeams, removeTeam, saveFullTeam } from "@/lib/api/teams"
+import { readMiscCache, writeMiscCache } from "@/lib/cache/miscCache"
 import { useAuth0 } from "@auth0/auth0-react"
 import { toast } from "sonner"
 import apiClient from "@/lib/infrastructure/apiClient"
@@ -15,6 +16,8 @@ import Header from "@/components/header"
 import TurnEditor from "@/components/turnEditor"
 import TeamBench from "@/components/teamBench"
 import PokemonBox from "@/components/PokemonBox/pokemonBox"
+import TeamBenchSkeleton from "@/components/skeletons/TeamBenchSkeleton"
+import PokemonBoxSkeleton from "@/components/skeletons/PokemonBoxSkeleton"
 
 import { useBattleOptions } from "@/lib/hooks/useBattleOptions"
 import { useBoxManager } from "@/lib/hooks/useBoxManager"
@@ -25,6 +28,7 @@ import { useUIState } from "@/lib/hooks/useUIState"
 
 export default function PokemonBattleSimulator() {
   const { isAuthenticated, isLoading } = useAuth0()
+  const [isInitializing, setIsInitializing] = useState(true)
 
   const options = useBattleOptions()
   const boxManager = useBoxManager({
@@ -49,12 +53,43 @@ export default function PokemonBattleSimulator() {
 
     async function loadInitialData() {
       try {
-        const abilityList = await ABILITY_OPTIONS()
-        const itemsList = await ITEMS_OPTIONS()
-        const naturesList = await NATURE_OPTIONS()
-        const movesList = await MOVES_OPTIONS()
-        const typesList = await TYPE_OPTIONS()
-        const statusList = await STATUS_OPTIONS()
+        let abilityList: any
+        let itemsList: any
+        let naturesList: any
+        let movesList: any
+        let typesList: any
+        let statusList: any
+
+        const version = await MISC_VERSION().catch(() => null)
+        const cached = version ? readMiscCache(version) : null
+
+        if (cached) {
+          abilityList = cached.abilities
+          itemsList = cached.items
+          naturesList = cached.natures
+          movesList = cached.moves
+          typesList = cached.types
+          statusList = cached.statuses
+        } else {
+          [abilityList, itemsList, naturesList, movesList, typesList, statusList] = await Promise.all([
+            ABILITY_OPTIONS(),
+            ITEMS_OPTIONS(),
+            NATURE_OPTIONS(),
+            MOVES_OPTIONS(),
+            TYPE_OPTIONS(),
+            STATUS_OPTIONS(),
+          ])
+          if (version) {
+            writeMiscCache(version, {
+              abilities: abilityList,
+              items: itemsList,
+              natures: naturesList,
+              moves: movesList,
+              types: typesList,
+              statuses: statusList,
+            })
+          }
+        }
 
         options.setAbilityOptions(abilityList)
         options.setItemOptions(itemsList)
@@ -90,6 +125,8 @@ export default function PokemonBattleSimulator() {
         }
       } catch (err) {
         toast.error(`Failed to load data: ${err}`)
+      } finally {
+        setIsInitializing(false)
       }
     }
 
@@ -430,43 +467,47 @@ export default function PokemonBattleSimulator() {
           <TurnEditor healTeam={healTeam} player1Active={player1Active} player2Active={player2Active} />
 
           <div className="flex flex-row items-start justify-center w-full flex-nowrap">
-            <TeamBench
-              player={1}
-              teamNames={Object.keys(teams.p1Teams)}
-              selectedTeamIndex={teams.p1SelectedTeamIndex}
-              bench={bench.player1Bench}
-              player1Bench={bench.player1Bench}
-              player2Bench={bench.player2Bench}
-              activeIndices={field.activeIndices}
-              battleMode={field.battleMode}
-              doublesType={field.doublesType}
-              p1Hazards={field.p1Hazards}
-              p2Hazards={field.p2Hazards}
-              activeEffects={field.activeEffects}
-              natureOptions={options.natureOptions}
-              itemOptions={options.itemOptions}
-              statusOptions={options.statusOptions}
-              onTeamChange={handleTeamChange}
-              onSaveTeam={saveCurrentTeam}
-              onDeleteTeam={deleteP1Team}
-              onDragStart={bench.handleDragStart}
-              onDragOver={bench.handleDragOver}
-              onDropOnBench={handleDropOnBench}
-              onRemoveFromBench={removePokemonFromBench}
-              toggleHazard={field.toggleHazard}
-              updatePokemonForm={bench.updatePokemonForm}
-              updatePokemonHp={bench.updatePokemonHp}
-              updatePokemonStatus={bench.updatePokemonStatus}
-              updatePokemonNature={bench.updatePokemonNature}
-              updatePokemonItem={bench.updatePokemonItem}
-              updatePokemonAbility={bench.updatePokemonAbility}
-              updateAbilityToggle={bench.updateAbilityToggle}
-              updatePokemonMove={bench.updatePokemonMove}
-              updatePokemonGender={bench.updatePokemonGender}
-              updatePokemonStat={bench.updatePokemonStat}
-              updatePokemonLevel={bench.updatePokemonLevel}
-              faintPokemon={bench.faintPokemon}
-            />
+            {isInitializing ? (
+              <TeamBenchSkeleton />
+            ) : (
+              <TeamBench
+                player={1}
+                teamNames={Object.keys(teams.p1Teams)}
+                selectedTeamIndex={teams.p1SelectedTeamIndex}
+                bench={bench.player1Bench}
+                player1Bench={bench.player1Bench}
+                player2Bench={bench.player2Bench}
+                activeIndices={field.activeIndices}
+                battleMode={field.battleMode}
+                doublesType={field.doublesType}
+                p1Hazards={field.p1Hazards}
+                p2Hazards={field.p2Hazards}
+                activeEffects={field.activeEffects}
+                natureOptions={options.natureOptions}
+                itemOptions={options.itemOptions}
+                statusOptions={options.statusOptions}
+                onTeamChange={handleTeamChange}
+                onSaveTeam={saveCurrentTeam}
+                onDeleteTeam={deleteP1Team}
+                onDragStart={bench.handleDragStart}
+                onDragOver={bench.handleDragOver}
+                onDropOnBench={handleDropOnBench}
+                onRemoveFromBench={removePokemonFromBench}
+                toggleHazard={field.toggleHazard}
+                updatePokemonForm={bench.updatePokemonForm}
+                updatePokemonHp={bench.updatePokemonHp}
+                updatePokemonStatus={bench.updatePokemonStatus}
+                updatePokemonNature={bench.updatePokemonNature}
+                updatePokemonItem={bench.updatePokemonItem}
+                updatePokemonAbility={bench.updatePokemonAbility}
+                updateAbilityToggle={bench.updateAbilityToggle}
+                updatePokemonMove={bench.updatePokemonMove}
+                updatePokemonGender={bench.updatePokemonGender}
+                updatePokemonStat={bench.updatePokemonStat}
+                updatePokemonLevel={bench.updatePokemonLevel}
+                faintPokemon={bench.faintPokemon}
+              />
+            )}
 
             <div className="flex flex-col w-52 p-2 gap-1">
               <div className="h-30"></div>
@@ -493,63 +534,71 @@ export default function PokemonBattleSimulator() {
               })}
             </div>
 
-            <TeamBench
-              player={2}
-              teamNames={Object.keys(teams.p2Teams)}
-              selectedTeamIndex={teams.p2SelectedTeamIndex}
-              bench={bench.player2Bench}
-              player1Bench={bench.player1Bench}
-              player2Bench={bench.player2Bench}
-              activeIndices={field.activeIndices}
-              battleMode={field.battleMode}
-              doublesType={field.doublesType}
-              p1Hazards={field.p1Hazards}
-              p2Hazards={field.p2Hazards}
-              activeEffects={field.activeEffects}
-              natureOptions={options.natureOptions}
-              itemOptions={options.itemOptions}
-              statusOptions={options.statusOptions}
-              onTeamChange={handleTeamChange}
-              onNavigate={navigateP2Teams}
-              trainerInfo={teams.p2SelectedTeamIndex && teams.p2Teams[teams.p2SelectedTeamIndex]
-                ? teams.p2Teams[teams.p2SelectedTeamIndex].trainerInfo as TrainerInfo
-                : undefined}
-              onDragStart={bench.handleDragStart}
-              onDragOver={bench.handleDragOver}
-              onDropOnBench={handleDropOnBench}
-              onRemoveFromBench={removePokemonFromBench}
-              toggleHazard={field.toggleHazard}
-              updatePokemonForm={bench.updatePokemonForm}
-              updatePokemonHp={bench.updatePokemonHp}
-              updatePokemonStatus={bench.updatePokemonStatus}
-              updatePokemonNature={bench.updatePokemonNature}
-              updatePokemonItem={bench.updatePokemonItem}
-              updatePokemonAbility={bench.updatePokemonAbility}
-              updateAbilityToggle={bench.updateAbilityToggle}
-              updatePokemonMove={bench.updatePokemonMove}
-              updatePokemonGender={bench.updatePokemonGender}
-              updatePokemonStat={bench.updatePokemonStat}
-              updatePokemonLevel={bench.updatePokemonLevel}
-              faintPokemon={bench.faintPokemon}
-            />
+            {isInitializing ? (
+              <TeamBenchSkeleton />
+            ) : (
+              <TeamBench
+                player={2}
+                teamNames={Object.keys(teams.p2Teams)}
+                selectedTeamIndex={teams.p2SelectedTeamIndex}
+                bench={bench.player2Bench}
+                player1Bench={bench.player1Bench}
+                player2Bench={bench.player2Bench}
+                activeIndices={field.activeIndices}
+                battleMode={field.battleMode}
+                doublesType={field.doublesType}
+                p1Hazards={field.p1Hazards}
+                p2Hazards={field.p2Hazards}
+                activeEffects={field.activeEffects}
+                natureOptions={options.natureOptions}
+                itemOptions={options.itemOptions}
+                statusOptions={options.statusOptions}
+                onTeamChange={handleTeamChange}
+                onNavigate={navigateP2Teams}
+                trainerInfo={teams.p2SelectedTeamIndex && teams.p2Teams[teams.p2SelectedTeamIndex]
+                  ? teams.p2Teams[teams.p2SelectedTeamIndex].trainerInfo as TrainerInfo
+                  : undefined}
+                onDragStart={bench.handleDragStart}
+                onDragOver={bench.handleDragOver}
+                onDropOnBench={handleDropOnBench}
+                onRemoveFromBench={removePokemonFromBench}
+                toggleHazard={field.toggleHazard}
+                updatePokemonForm={bench.updatePokemonForm}
+                updatePokemonHp={bench.updatePokemonHp}
+                updatePokemonStatus={bench.updatePokemonStatus}
+                updatePokemonNature={bench.updatePokemonNature}
+                updatePokemonItem={bench.updatePokemonItem}
+                updatePokemonAbility={bench.updatePokemonAbility}
+                updateAbilityToggle={bench.updateAbilityToggle}
+                updatePokemonMove={bench.updatePokemonMove}
+                updatePokemonGender={bench.updatePokemonGender}
+                updatePokemonStat={bench.updatePokemonStat}
+                updatePokemonLevel={bench.updatePokemonLevel}
+                faintPokemon={bench.faintPokemon}
+              />
+            )}
           </div>
 
-          <PokemonBox
-            p1Boxes={boxManager.p1Boxes}
-            p1BoxNames={boxManager.p1BoxNames}
-            activeBoxIndex={boxManager.activeBoxIndex}
-            removeMode={ui.removeMode}
-            onActiveBoxChange={boxManager.setActiveBoxIndex}
-            isInBench={bench.isInBench}
-            onDragStart={bench.handleDragStart}
-            onTogglePokemonInBench={togglePokemonInBench}
-            onRemoveFromBox={handleRemovePokemonFromBox}
-            onAddBox={boxManager.addBox}
-            onClearBox={boxManager.clearBox}
-            onRemoveBox={boxManager.removeBox}
-            onImportOpen={() => ui.setImportModalOpen(true)}
-            onToggleRemoveMode={() => ui.setRemoveMode(prev => !prev)}
-          />
+          {isInitializing ? (
+            <PokemonBoxSkeleton />
+          ) : (
+            <PokemonBox
+              p1Boxes={boxManager.p1Boxes}
+              p1BoxNames={boxManager.p1BoxNames}
+              activeBoxIndex={boxManager.activeBoxIndex}
+              removeMode={ui.removeMode}
+              onActiveBoxChange={boxManager.setActiveBoxIndex}
+              isInBench={bench.isInBench}
+              onDragStart={bench.handleDragStart}
+              onTogglePokemonInBench={togglePokemonInBench}
+              onRemoveFromBox={handleRemovePokemonFromBox}
+              onAddBox={boxManager.addBox}
+              onClearBox={boxManager.clearBox}
+              onRemoveBox={boxManager.removeBox}
+              onImportOpen={() => ui.setImportModalOpen(true)}
+              onToggleRemoveMode={() => ui.setRemoveMode(prev => !prev)}
+            />
+          )}
         </div>
       </main>
 

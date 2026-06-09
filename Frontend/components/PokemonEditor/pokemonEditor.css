@@ -192,6 +192,9 @@
 .pokemon-editor-damage-rolls-label {
   @apply text-xs text-muted-foreground px-1;
 }
+.pokemon-editor-calc-shimmer {
+  @apply inline-block h-3 w-16 rounded bg-gray-200 animate-pulse align-middle;
+}
 
 /* ── Stats section ──────────────────────────────────────── */
 .pokemon-editor-stats-section {
