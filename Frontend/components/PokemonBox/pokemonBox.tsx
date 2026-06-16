@@ -3,15 +3,16 @@
 import React from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs"
-import { X, Plus, Trash2 } from "lucide-react"
+import { X, Plus, Trash2, Loader2 } from "lucide-react"
 import { Pokemon, Box } from "@/lib/utils/types.ts"
 import BoxPokemonCard from "@/components/PokemonBox/boxPokemonCard"
 import "./pokemonBox.css"
 
 type PokemonBoxProps = {
-  p1Boxes: Box[];
+  p1Boxes: (Box | null)[];
   p1BoxNames: string[];
   activeBoxIndex: number;
+  isBoxLoading: boolean;
   removeMode: boolean;
   onActiveBoxChange: (index: number) => void;
   isInBench: (pokemon: Pokemon, player: 1 | 2) => boolean;
@@ -29,6 +30,7 @@ export default function PokemonBox({
   p1Boxes,
   p1BoxNames,
   activeBoxIndex,
+  isBoxLoading,
   removeMode,
   onActiveBoxChange,
   isInBench,
@@ -106,6 +108,9 @@ export default function PokemonBox({
                 value={`box-${index}`}
                 className="pokemon-box-tab-trigger"
               >
+                {isBoxLoading && index === activeBoxIndex
+                  ? <Loader2 size={14} className="animate-spin inline mr-1" />
+                  : null}
                 {p1BoxNames[index] ?? `Box ${index + 1}`}
               </TabsTrigger>
             ))}
@@ -113,31 +118,39 @@ export default function PokemonBox({
 
           {p1Boxes.map((box, boxIndex) => (
             <TabsContent key={boxIndex} value={`box-${boxIndex}`}>
-              <div className="pokemon-box-grid">
-                {Object.entries(box).map(([slotKey, pokemon]) => {
-                  if (!pokemon) {
+              {box === null || (isBoxLoading && boxIndex === activeBoxIndex) ? (
+                <div className="pokemon-box-grid">
+                  {Array.from({ length: 30 }).map((_, i) => (
+                    <div key={i} className="pokemon-box-skeleton-slot animate-pulse" />
+                  ))}
+                </div>
+              ) : (
+                <div className="pokemon-box-grid">
+                  {Object.entries(box).map(([slotKey, pokemon]) => {
+                    if (!pokemon) {
+                      return (
+                        <div
+                          key={slotKey}
+                          className="pokemon-box-empty-slot"
+                        />
+                      );
+                    }
                     return (
-                      <div
+                      <BoxPokemonCard
                         key={slotKey}
-                        className="pokemon-box-empty-slot"
+                        pokemon={pokemon}
+                        slotKey={slotKey}
+                        boxIndex={boxIndex}
+                        removeMode={removeMode}
+                        isInBench={isInBench(pokemon, 1)}
+                        onDragStart={onDragStart}
+                        onToggleInBench={() => onTogglePokemonInBench(pokemon, 1)}
+                        onRemoveFromBox={() => onRemoveFromBox(boxIndex, pokemon.name)}
                       />
                     );
-                  }
-                  return (
-                    <BoxPokemonCard
-                      key={slotKey}
-                      pokemon={pokemon}
-                      slotKey={slotKey}
-                      boxIndex={boxIndex}
-                      removeMode={removeMode}
-                      isInBench={isInBench(pokemon, 1)}
-                      onDragStart={onDragStart}
-                      onToggleInBench={() => onTogglePokemonInBench(pokemon, 1)}
-                      onRemoveFromBox={() => onRemoveFromBox(boxIndex, pokemon.name)}
-                    />
-                  );
-                })}
-              </div>
+                  })}
+                </div>
+              )}
             </TabsContent>
           ))}
         </Tabs>

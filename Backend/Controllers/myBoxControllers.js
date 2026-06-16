@@ -1,6 +1,11 @@
 const { createPokemon, hasDuplicate } = require('../Services/pokemonService');
 const { checkMega, addMega } = require('../Services/formService');
-const { saveMyBoxes, findMyBox, loadMyBoxes } = require('../Config/jsonOptions');
+const { saveMyBoxes, findMyBox, loadMyBoxes, loadBox, invalidateBoxCache, invalidateAllBoxCache } = require('../Config/jsonOptions');
+
+const parseBoxIndex = (param) => {
+    const index = Number(param);
+    return Number.isInteger(index) && index >= 0 ? index : null;
+};
 const logger = require('../infrastructure/logger/logger');
 const { USER_ACTION_EVENTS } = require('../infrastructure/logger/events');
 
@@ -12,15 +17,26 @@ const getAllMyBoxes = async (req, res) => {
     });
 }
 
+const getBoxCount = async (req, res) => {
+    const { userId } = req;
+    let allBoxes = await loadMyBoxes(userId);
+    if (allBoxes.length === 0) {
+        allBoxes.push({});
+        await saveMyBoxes(userId, allBoxes);
+        logger.info(USER_ACTION_EVENTS.BOX_CREATED, { userId, newBoxIndex: 0, reason: 'auto_init' });
+    }
+    return res.status(200).json({ count: allBoxes.length });
+}
+
 const findBox = async (req, res) => {
     const { userId } = req;
-    const index = Number(req.params.index);
-    const allBoxes = await loadMyBoxes(userId);
-    if (!allBoxes[index]) return res.status(404).json({ message: `Box ${index} not found` });
+    const index = parseBoxIndex(req.params.index);
+    if (index === null) return res.status(400).json({ message: `Invalid box index: "${req.params.index}"` });
+    const box = await loadBox(userId, index);
+    if (!box) return res.status(404).json({ message: `Box ${index} not found` });
     res.status(200).json({
-        message: "Successfuly found my box",
-        box: allBoxes[index],
-        'allBoxes': allBoxes
+        message: "Successfully found my box",
+        box,
     })
 }
 
@@ -34,22 +50,30 @@ const addBox = async (req, res) => {
     logger.info(USER_ACTION_EVENTS.BOX_CREATED, { userId, newBoxIndex: allBoxes.length - 1 });
     return res.status(200).json({
         message: "a box was successfully added",
-        allBoxes: await loadMyBoxes(userId)
+        count: allBoxes.length
     });
 }
 
 const removeBox = async (req, res) => {
     const { userId } = req;
-    const index = Number(req.params.index);
+    const index = parseBoxIndex(req.params.index);
+    if (index === null) return res.status(400).json({ message: `Invalid box index: "${req.params.index}"` });
 
     const allBoxes = await loadMyBoxes(userId);
     allBoxes.splice(index, 1);
+    if (allBoxes.length === 0) {
+        allBoxes.push({});
+        logger.info(USER_ACTION_EVENTS.BOX_CREATED, { userId, newBoxIndex: 0, reason: 'auto_restore' });
+    }
     await saveMyBoxes(userId, allBoxes);
+    await invalidateAllBoxCache(userId);
 
+    const newActiveIndex = Math.min(index, allBoxes.length - 1);
     logger.info(USER_ACTION_EVENTS.BOX_REMOVED, { userId, removedIndex: index });
     return res.status(200).json({
         message: "removed the box",
-        allBoxes: await loadMyBoxes(userId)
+        count: allBoxes.length,
+        newActiveIndex
     });
 }
 
@@ -57,7 +81,8 @@ const addToBox = async (req, res) => {
     try {
 
         const { userId } = req;
-        const index = Number(req.params.index);
+        const index = parseBoxIndex(req.params.index);
+        if (index === null) return res.status(400).json({ message: `Invalid box index: "${req.params.index}"` });
 
         const { pokemonData } = req.body;
         const allBoxes = await loadMyBoxes(userId);
@@ -78,6 +103,7 @@ const addToBox = async (req, res) => {
 
         allBoxes[index] = currentBox;
         await saveMyBoxes(userId, allBoxes);
+        await invalidateBoxCache(userId, index);
 
         if (duplicates.length > 0) {
             logger.warn(USER_ACTION_EVENTS.POKEMON_IMPORTED, {
@@ -92,7 +118,6 @@ const addToBox = async (req, res) => {
                 error: `${duplicates.map(pokemon => pokemon.name).join(', ')} already exists in my box`,
                 addedPokemon: validPokemon,
                 updatedBox: currentBox,
-                allBoxes: await loadMyBoxes(userId)
             })
         }
 
@@ -106,7 +131,6 @@ const addToBox = async (req, res) => {
             message: `Successfully added ${newPokemons.map(p => p.name)} to my box`,
             addedPokemon: validPokemon,
             updatedBox: currentBox,
-            allBoxes: await loadMyBoxes(userId)
         });
 
     } catch (err) {
@@ -117,7 +141,8 @@ const addToBox = async (req, res) => {
 
 const findInBox = async (req, res) => {
     const { userId } = req;
-    const index = Number(req.params.index);
+    const index = parseBoxIndex(req.params.index);
+    if (index === null) return res.status(400).json({ message: `Invalid box index: "${req.params.index}"` });
     const pokemonName = req.params.pokemonName;
     const allBoxes = await loadMyBoxes(userId);
     if (!allBoxes[index]) return res.status(404).json({ message: `Box ${index} not found` });
@@ -134,7 +159,8 @@ const findInBox = async (req, res) => {
 
 const deleteInBox = async (req, res) => {
     const { userId } = req;
-    const index = Number(req.params.index);
+    const index = parseBoxIndex(req.params.index);
+    if (index === null) return res.status(400).json({ message: `Invalid box index: "${req.params.index}"` });
     const pokemonName = req.params.pokemonName;
     const allBoxes = await loadMyBoxes(userId);
     if (!allBoxes[index]) return res.status(404).json({ message: `Box ${index} not found` });
@@ -146,13 +172,13 @@ const deleteInBox = async (req, res) => {
     delete currentBox[pokemonName];
     allBoxes[index] = currentBox;
     await saveMyBoxes(userId, allBoxes);
+    await invalidateBoxCache(userId, index);
 
     logger.info(USER_ACTION_EVENTS.POKEMON_DELETED, { userId, boxIndex: index, pokemonName });
     return res.status(200).json({
         message: `${pokemonName} successfully deleted from my box`,
         deletedPokemon: oldPokemon,
         updatedBox: currentBox,
-        allBoxes: await loadMyBoxes(userId)
     });
 
 }
@@ -160,7 +186,8 @@ const deleteInBox = async (req, res) => {
 const updateInBox = async (req, res) => {
     try {
         const { userId } = req;
-        const index = Number(req.params.index);
+        const index = parseBoxIndex(req.params.index);
+        if (index === null) return res.status(400).json({ message: `Invalid box index: "${req.params.index}"` });
 
         const pokemonName = req.params.pokemonName;
         const { pokemonData } = req.body;
@@ -188,17 +215,18 @@ const updateInBox = async (req, res) => {
 
 const clearMyBox = async (req, res) => {
     const { userId } = req;
-    const index = Number(req.params.index);
+    const index = parseBoxIndex(req.params.index);
+    if (index === null) return res.status(400).json({ message: `Invalid box index: "${req.params.index}"` });
     const allBoxes = await loadMyBoxes(userId);
     if (!allBoxes[index]) return res.status(404).json({ message: `Box ${index} not found` });
     allBoxes[index] = {};
     await saveMyBoxes(userId, allBoxes);
+    await invalidateBoxCache(userId, index);
 
     logger.info(USER_ACTION_EVENTS.BOX_CLEARED, { userId, boxIndex: index });
     res.status(200).json({
         message: `my box was successfully cleared`,
         updatedBox: allBoxes[index],
-        allBoxes: await loadMyBoxes(userId)
     });
 }
 
@@ -213,4 +241,4 @@ const clearMyBoxes = async (req, res) => {
     });
 }
 
-module.exports = { getAllMyBoxes, findBox, addBox, removeBox, addToBox, findInBox, deleteInBox, updateInBox, clearMyBox, clearMyBoxes }
+module.exports = { getAllMyBoxes, getBoxCount, findBox, addBox, removeBox, addToBox, findInBox, deleteInBox, updateInBox, clearMyBox, clearMyBoxes }

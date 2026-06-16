@@ -30,6 +30,28 @@ const saveMyBoxes = async (userId, newBoxes) => {
     }
 }
 
+const BOX_CACHE_TTL = 600;
+const boxCacheKey = (userId, index) => `box:${userId}:${index}`;
+
+const loadBox = async (userId, index) => {
+    const key = boxCacheKey(userId, index);
+    const cached = await redis.get(key);
+    if (cached) return cached;
+    const docs = await db.collection('myBoxes').find({ userId }).sort({ _id: 1 }).skip(index).limit(1).toArray();
+    if (!docs.length) return undefined;
+    const { _id, userId: _uid, ...box } = docs[0];
+    await redis.set(key, box, BOX_CACHE_TTL);
+    return box;
+};
+
+const invalidateBoxCache = async (userId, index) => {
+    await redis.del(boxCacheKey(userId, index));
+};
+
+const invalidateAllBoxCache = async (userId) => {
+    await redis.delPattern(`box:${userId}:*`);
+};
+
 const loadTeams = async (player, userId) => {
     if (player === 2) {
         const cached = await redis.get(P2_TEAMS_KEY);
@@ -67,5 +89,6 @@ const findTeam = async (player, teamName, userId) => {
 
 module.exports = {
     loadModels, getModels, avaliableTMS, megaStones,
-    loadMyBoxes, saveMyBoxes, loadTeams, saveTeams, findTeam
+    loadMyBoxes, saveMyBoxes, loadBox, invalidateBoxCache, invalidateAllBoxCache,
+    loadTeams, saveTeams, findTeam
 };

@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react"
 import { Pokemon, Teams, Box, TrainerInfo } from "@/lib/utils/types.ts"
-import { addPokemon, loadMyBoxes, resolveBoxes } from "@/lib/api/boxes"
+import { addPokemon, fetchBoxCount, loadSingleBox, resolveSingleBox } from "@/lib/api/boxes"
 import { MOVES_OPTIONS, ABILITY_OPTIONS, ITEMS_OPTIONS, NATURE_OPTIONS, TYPE_OPTIONS, STATUS_OPTIONS, MISC_VERSION } from "@/lib/api/misc"
 import { loadMyTeams, loadEnemyTeams, removeTeam, saveFullTeam } from "@/lib/api/teams"
 import { readMiscCache, writeMiscCache } from "@/lib/cache/miscCache"
@@ -98,12 +98,23 @@ export default function PokemonBattleSimulator() {
         options.setTypesOptions(typesList)
         options.setStatusOptions(statusList)
 
-        const myBoxes = await loadMyBoxes(abilityList, itemsList, naturesList, movesList, typesList)
-        boxManager.setP1Boxes(myBoxes)
+        const boxCount = await fetchBoxCount()
         const savedNames = JSON.parse(localStorage.getItem("p1BoxNames") || "[]")
-        const defaultNames = myBoxes.map((_: any, i: number) => savedNames[i] ?? `Box ${i + 1}`)
+        const defaultNames = Array.from({ length: boxCount }, (_, i) => savedNames[i] ?? `Box ${i + 1}`)
         boxManager.setP1BoxNames(defaultNames)
         localStorage.setItem("p1BoxNames", JSON.stringify(defaultNames))
+
+        // Initialize placeholders then eagerly load only box 0
+        const placeholders: (Box | null)[] = new Array(boxCount).fill(null)
+        boxManager.setP1Boxes(placeholders)
+        if (boxCount > 0) {
+          const box0 = await loadSingleBox(0, abilityList, itemsList, naturesList, movesList, typesList)
+          boxManager.setP1Boxes(prev => {
+            const updated = [...prev]
+            updated[0] = box0
+            return updated
+          })
+        }
 
         const resolvedP1Teams = await loadMyTeams(abilityList, itemsList, naturesList, movesList, typesList)
         teams.setP1Teams(resolvedP1Teams)
@@ -275,8 +286,9 @@ export default function PokemonBattleSimulator() {
           : { ...pokemon, currentHp: pokemon.maxHp, status: options.statusOptions["Healthy"], statBoosts: { Atk: 0, Def: 0, SpA: 0, SpD: 0, Spe: 0 } }
         boxManager.setP1Boxes(prev => {
           const updated = [...prev]
-          if (!updated[boxIndex]) return prev
-          updated[boxIndex] = { ...updated[boxIndex], [boxKey]: resetPokemon }
+          const box = updated[boxIndex]
+          if (!box) return prev
+          updated[boxIndex] = { ...box, [boxKey]: resetPokemon }
           return updated
         })
         boxManager.setOriginalPokemon(prev => {
@@ -327,7 +339,8 @@ export default function PokemonBattleSimulator() {
         }
         boxManager.setP1Boxes(prev => {
           const updated = [...prev]
-          const newBox: Box = { ...updated[boxManager.activeBoxIndex] }
+          const existingBox = updated[boxManager.activeBoxIndex]
+          const newBox: Box = { ...(existingBox ?? {}) }
           newBox[pokemon.boxKey!] = resetPokemon
           updated[boxManager.activeBoxIndex] = newBox
           return updated
@@ -342,6 +355,7 @@ export default function PokemonBattleSimulator() {
       if (emptySlot === -1) return
 
       const currentBox = boxManager.p1Boxes[boxManager.activeBoxIndex]
+      if (!currentBox) return
       const boxEntry = Object.entries(currentBox).find(([_, p]) => p?.ID === pokemon.ID)
       if (!boxEntry) return
       const [key] = boxEntry
@@ -378,7 +392,9 @@ export default function PokemonBattleSimulator() {
       boxManager.setP1Boxes((prev) => {
         const updated = [...prev]
         const boxIdx = parseInt(parts[1])
-        const newBox = { ...updated[boxIdx] };
+        const existingBox = updated[boxIdx]
+        if (!existingBox) return prev
+        const newBox = { ...existingBox };
         (newBox as any)[boxKey] = null
         updated[boxIdx] = newBox
         return updated
@@ -423,12 +439,17 @@ export default function PokemonBattleSimulator() {
     if (!ui.importModalText.trim()) return
     try {
       const result = await addPokemon(String(boxManager.activeBoxIndex), ui.importModalText)
-      if (result.allBoxes) {
-        boxManager.setP1Boxes(resolveBoxes(
-          result.allBoxes,
+      if (result.updatedBox) {
+        const resolved = resolveSingleBox(
+          result.updatedBox,
           options.abilityOptions, options.itemOptions, options.natureOptions,
           options.movesOptions, options.typesOptions
-        ))
+        )
+        boxManager.setP1Boxes(prev => {
+          const updated = [...prev]
+          updated[boxManager.activeBoxIndex] = resolved
+          return updated
+        })
       }
       ui.setImportModalText("")
       ui.setImportModalOpen(false)
@@ -586,8 +607,9 @@ export default function PokemonBattleSimulator() {
               p1Boxes={boxManager.p1Boxes}
               p1BoxNames={boxManager.p1BoxNames}
               activeBoxIndex={boxManager.activeBoxIndex}
+              isBoxLoading={boxManager.isBoxLoading}
               removeMode={ui.removeMode}
-              onActiveBoxChange={boxManager.setActiveBoxIndex}
+              onActiveBoxChange={boxManager.switchBox}
               isInBench={bench.isInBench}
               onDragStart={bench.handleDragStart}
               onTogglePokemonInBench={togglePokemonInBench}

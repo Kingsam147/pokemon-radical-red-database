@@ -81,6 +81,7 @@ const buildApp = () => {
   };
 
   application.get('/myBoxes', authMiddleware, myBoxControllers.getAllMyBoxes);
+  application.get('/myBoxes/count', authMiddleware, myBoxControllers.getBoxCount);
   application.post('/myBoxes', authMiddleware, myBoxControllers.addBox);
   application.post('/myBoxes/:index', authMiddleware, myBoxControllers.addToBox);
   application.delete('/myBoxes/:index/:pokemonName', authMiddleware, myBoxControllers.deleteInBox);
@@ -122,12 +123,34 @@ describe('Express API — Box routes (integration)', () => {
   test('POST /myBoxes adds a new box', async () => {
     const res = await request(app).post('/myBoxes').set('Cookie', GUEST_COOKIE);
     expect(res.status).toBe(200);
-    expect(res.body.allBoxes).toHaveLength(1);
+    expect(res.body.count).toBe(1);
   });
 
   test('GET /myBoxes returns 401 without authentication', async () => {
     const res = await request(app).get('/myBoxes');
     expect(res.status).toBe(401);
+  });
+});
+
+describe('Express API — GET /myBoxes/count (integration)', () => {
+  const COUNT_COOKIE = signGuestCookie('guest-count-001');
+
+  test('returns 401 without authentication', async () => {
+    const res = await request(app).get('/myBoxes/count');
+    expect(res.status).toBe(401);
+  });
+
+  test('auto-creates one box and returns count 1 when user has no boxes', async () => {
+    const res = await request(app).get('/myBoxes/count').set('Cookie', COUNT_COOKIE);
+    expect(res.status).toBe(200);
+    expect(res.body.count).toBe(1);
+  });
+
+  test('returns correct count when user already has boxes', async () => {
+    await request(app).post('/myBoxes').set('Cookie', COUNT_COOKIE);
+    const res = await request(app).get('/myBoxes/count').set('Cookie', COUNT_COOKIE);
+    expect(res.status).toBe(200);
+    expect(res.body.count).toBe(2);
   });
 });
 

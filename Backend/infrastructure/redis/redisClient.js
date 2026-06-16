@@ -53,9 +53,25 @@ const del = async (key) => {
   }
 };
 
+const delPattern = async (pattern) => {
+  if (!available || !client) return;
+  try {
+    const keys = [];
+    const stream = client.scanStream({ match: pattern, count: 100 });
+    await new Promise((resolve, reject) => {
+      stream.on('data', (batch) => keys.push(...batch));
+      stream.on('end', resolve);
+      stream.on('error', reject);
+    });
+    if (keys.length > 0) await client.del(keys);
+  } catch {
+    // Non-critical — cache will expire naturally
+  }
+};
+
 const sendCommand = (...args) => {
   if (!available || !client) throw new Error('Redis unavailable');
   return client.call(...args);
 };
 
-module.exports = { connect, get, set, del, sendCommand };
+module.exports = { connect, get, set, del, delPattern, sendCommand };
