@@ -1,6 +1,6 @@
 const { createPokemon, hasDuplicate } = require('../Services/pokemonService');
 const { checkMega, addMega } = require('../Services/formService');
-const { saveMyBoxes, findMyBox, loadMyBoxes, loadBox, invalidateBoxCache, invalidateAllBoxCache } = require('../Config/jsonOptions');
+const { saveMyBoxes, findMyBox, loadMyBoxes, loadBox, invalidateBoxCache, invalidateAllBoxCache, getCachedBoxCount, setBoxCountCache, invalidateBoxCountCache, preWarmBoxCache } = require('../Config/jsonOptions');
 
 const parseBoxIndex = (param) => {
     const index = Number(param);
@@ -19,12 +19,22 @@ const getAllMyBoxes = async (req, res) => {
 
 const getBoxCount = async (req, res) => {
     const { userId } = req;
+
+    const cached = await getCachedBoxCount(userId);
+    if (cached !== null) {
+        return res.status(200).json({ count: cached });
+    }
+
     let allBoxes = await loadMyBoxes(userId);
     if (allBoxes.length === 0) {
         allBoxes.push({});
         await saveMyBoxes(userId, allBoxes);
         logger.info(USER_ACTION_EVENTS.BOX_CREATED, { userId, newBoxIndex: 0, reason: 'auto_init' });
     }
+
+    await setBoxCountCache(userId, allBoxes.length);
+    preWarmBoxCache(userId, allBoxes).catch(() => {});
+
     return res.status(200).json({ count: allBoxes.length });
 }
 
@@ -46,6 +56,7 @@ const addBox = async (req, res) => {
     allBoxes.push({});
 
     await saveMyBoxes(userId, allBoxes);
+    await invalidateBoxCountCache(userId);
 
     logger.info(USER_ACTION_EVENTS.BOX_CREATED, { userId, newBoxIndex: allBoxes.length - 1 });
     return res.status(200).json({
@@ -67,6 +78,7 @@ const removeBox = async (req, res) => {
     }
     await saveMyBoxes(userId, allBoxes);
     await invalidateAllBoxCache(userId);
+    await invalidateBoxCountCache(userId);
 
     const newActiveIndex = Math.min(index, allBoxes.length - 1);
     logger.info(USER_ACTION_EVENTS.BOX_REMOVED, { userId, removedIndex: index });

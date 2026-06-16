@@ -51,6 +51,10 @@ const buildApp = () => {
 
   jsonOptions.loadMyBoxes = async (userId) => boxStore[userId] ?? [];
   jsonOptions.saveMyBoxes = async (userId, boxes) => { boxStore[userId] = boxes; };
+  jsonOptions.getCachedBoxCount = async () => null;
+  jsonOptions.setBoxCountCache = async () => {};
+  jsonOptions.invalidateBoxCountCache = async () => {};
+  jsonOptions.preWarmBoxCache = async () => {};
   jsonOptions.loadTeams = async (player, userId) => teamStore[`${player}:${userId}`] ?? {};
   jsonOptions.saveTeams = async (player, userId, teams) => { teamStore[`${player}:${userId}`] = teams; };
   jsonOptions.findTeam = async (player, teamName, userId) => {

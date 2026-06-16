@@ -114,6 +114,9 @@ export default function PokemonBattleSimulator() {
             updated[0] = box0
             return updated
           })
+          if (boxCount > 1) {
+            boxManager.prefetchRemainingBoxes(boxCount)
+          }
         }
 
         const resolvedP1Teams = await loadMyTeams(abilityList, itemsList, naturesList, movesList, typesList)

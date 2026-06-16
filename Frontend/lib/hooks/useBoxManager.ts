@@ -101,6 +101,24 @@ export function useBoxManager({ abilityOptions, itemOptions, natureOptions, move
     }
   }
 
+  const prefetchRemainingBoxes = async (totalCount: number) => {
+    for (let i = 1; i < totalCount; i++) {
+      if (p1Boxes[i] !== null) continue;
+      try {
+        const rawBox = await fetchSingleBox(i);
+        const resolved = resolveSingleBox(rawBox, abilityOptions, itemOptions, natureOptions, movesOptions, typesOptions);
+        setP1Boxes(prev => {
+          if (prev[i] !== null) return prev;
+          const updated = [...prev];
+          updated[i] = resolved;
+          return updated;
+        });
+      } catch {
+        // Will load on demand when user clicks the tab
+      }
+    }
+  };
+
   const removePokemonFromBox = async (boxIndex: number, pokemonName: string) => {
     try {
       const json = (await apiClient.delete(`/myBoxes/${boxIndex}/${pokemonName}`)).data
@@ -123,6 +141,7 @@ export function useBoxManager({ abilityOptions, itemOptions, natureOptions, move
     originalPokemon, setOriginalPokemon,
     updateActiveBox,
     switchBox,
+    prefetchRemainingBoxes,
     addBox,
     removeBox,
     clearBox,

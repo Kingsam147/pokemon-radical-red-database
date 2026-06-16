@@ -63,3 +63,7 @@
 .pokemon-box-skeleton-slot {
   @apply w-24 h-24 rounded-lg bg-muted;
 }
+
+.pokemon-box-button-disabled {
+  @apply opacity-40 cursor-not-allowed pointer-events-none;
+}

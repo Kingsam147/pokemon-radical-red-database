@@ -63,7 +63,14 @@ export default function PokemonBox({
               </div>
             </button>
 
-            <button type="button" onClick={onRemoveBox} title="Delete the current box permanently" aria-label="Delete Box" className="pokemon-box-delete-button">
+            <button
+              type="button"
+              onClick={onRemoveBox}
+              disabled={isBoxLoading}
+              title={isBoxLoading ? "Cannot delete while box is loading" : "Delete the current box permanently"}
+              aria-label="Delete Box"
+              className={`pokemon-box-delete-button ${isBoxLoading ? "pokemon-box-button-disabled" : ""}`}
+            >
               <div className="pokemon-box-button-inner">
                 <p>Delete Box</p>
                 <X />

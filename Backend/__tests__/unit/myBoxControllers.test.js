@@ -5,6 +5,10 @@ jest.mock('../../Config/jsonOptions', () => ({
   loadBox: jest.fn(),
   invalidateBoxCache: jest.fn(),
   invalidateAllBoxCache: jest.fn(),
+  getCachedBoxCount: jest.fn(),
+  setBoxCountCache: jest.fn(),
+  invalidateBoxCountCache: jest.fn(),
+  preWarmBoxCache: jest.fn(),
 }));
 
 jest.mock('../../Services/pokemonService', () => ({
@@ -22,7 +26,7 @@ jest.mock('../../infrastructure/logger/logger', () => ({
   security: jest.fn(), setUser: jest.fn(), clearUser: jest.fn(),
 }));
 
-const { loadMyBoxes, saveMyBoxes, loadBox, invalidateBoxCache, invalidateAllBoxCache } = require('../../Config/jsonOptions');
+const { loadMyBoxes, saveMyBoxes, loadBox, invalidateBoxCache, invalidateAllBoxCache, getCachedBoxCount, setBoxCountCache, invalidateBoxCountCache, preWarmBoxCache } = require('../../Config/jsonOptions');
 const { createPokemon, hasDuplicate } = require('../../Services/pokemonService');
 const { checkMega } = require('../../Services/formService');
 const {
@@ -49,6 +53,10 @@ describe('myBoxControllers', () => {
     jest.clearAllMocks();
     invalidateBoxCache.mockResolvedValue();
     invalidateAllBoxCache.mockResolvedValue();
+    invalidateBoxCountCache.mockResolvedValue();
+    setBoxCountCache.mockResolvedValue();
+    preWarmBoxCache.mockResolvedValue();
+    getCachedBoxCount.mockResolvedValue(null);
   });
 
   describe('getAllMyBoxes', () => {
@@ -62,12 +70,22 @@ describe('myBoxControllers', () => {
   });
 
   describe('getBoxCount', () => {
-    test('returns count when boxes already exist', async () => {
+    test('returns cached count without hitting MongoDB', async () => {
+      getCachedBoxCount.mockResolvedValue(5);
+      const req = { userId };
+      await getBoxCount(req, res);
+      expect(res.status).toHaveBeenCalledWith(200);
+      expect(res.json).toHaveBeenCalledWith({ count: 5 });
+      expect(loadMyBoxes).not.toHaveBeenCalled();
+    });
+
+    test('returns count from DB on cache miss and writes cache', async () => {
       loadMyBoxes.mockResolvedValue([fakeBox, {}]);
       const req = { userId };
       await getBoxCount(req, res);
       expect(res.status).toHaveBeenCalledWith(200);
       expect(res.json).toHaveBeenCalledWith({ count: 2 });
+      expect(setBoxCountCache).toHaveBeenCalledWith(userId, 2);
       expect(saveMyBoxes).not.toHaveBeenCalled();
     });
 
@@ -77,8 +95,16 @@ describe('myBoxControllers', () => {
       const req = { userId };
       await getBoxCount(req, res);
       expect(saveMyBoxes).toHaveBeenCalledWith(userId, [{}]);
+      expect(setBoxCountCache).toHaveBeenCalledWith(userId, 1);
       expect(res.status).toHaveBeenCalledWith(200);
       expect(res.json).toHaveBeenCalledWith({ count: 1 });
+    });
+
+    test('fires preWarmBoxCache in the background on cache miss', async () => {
+      loadMyBoxes.mockResolvedValue([fakeBox]);
+      const req = { userId };
+      await getBoxCount(req, res);
+      expect(preWarmBoxCache).toHaveBeenCalledWith(userId, [fakeBox]);
     });
   });
 
@@ -113,12 +139,13 @@ describe('myBoxControllers', () => {
   });
 
   describe('addBox', () => {
-    test('adds a new empty box and returns count', async () => {
+    test('adds a new empty box, invalidates count cache, and returns count', async () => {
       loadMyBoxes.mockResolvedValue([fakeBox]);
       saveMyBoxes.mockResolvedValue();
       const req = { userId };
       await addBox(req, res);
       expect(saveMyBoxes).toHaveBeenCalledWith(userId, [fakeBox, {}]);
+      expect(invalidateBoxCountCache).toHaveBeenCalledWith(userId);
       expect(res.status).toHaveBeenCalledWith(200);
       expect(res.json).toHaveBeenCalledWith(expect.objectContaining({ count: 2 }));
     });
@@ -131,13 +158,14 @@ describe('myBoxControllers', () => {
       expect(res.status).toHaveBeenCalledWith(400);
     });
 
-    test('removes box at index, invalidates all cache, and returns count + newActiveIndex', async () => {
+    test('removes box at index, invalidates all caches, and returns count + newActiveIndex', async () => {
       loadMyBoxes.mockResolvedValue([fakeBox, {}]);
       saveMyBoxes.mockResolvedValue();
       const req = { userId, params: { index: '0' } };
       await removeBox(req, res);
       expect(saveMyBoxes).toHaveBeenCalledWith(userId, [{}]);
       expect(invalidateAllBoxCache).toHaveBeenCalledWith(userId);
+      expect(invalidateBoxCountCache).toHaveBeenCalledWith(userId);
       expect(res.status).toHaveBeenCalledWith(200);
       expect(res.json).toHaveBeenCalledWith(expect.objectContaining({ count: 1, newActiveIndex: 0 }));
     });
