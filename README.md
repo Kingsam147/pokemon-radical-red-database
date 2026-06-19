@@ -1,5 +1,7 @@
 # Pokemon Radical Red Database
 
+**Live:** https://pokemon-damage-calculator-gamma.vercel.app
+
 A full-stack Pokemon damage calculator and team builder for the Radical Red ROM hack. Built to fill the gap left by mainline tools that do not account for Radical Red's custom moves, abilities, and stat changes.
 
 Supports both guest sessions (no account required) and Auth0-authenticated accounts for persisting teams and box data across sessions.
