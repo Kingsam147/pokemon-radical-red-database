@@ -8,7 +8,7 @@ Supports both guest sessions (no account required) and Auth0-authenticated accou
 
 ## Features
 
-- **Damage calculator** - computes damage ranges for any move/Pokemon matchup using the Smogon formula engine, adapted for Radical Red's modified stats and move data
+- **Damage calculator** - computes damage ranges for any move/Pokemon matchup using the main Pokemon repo, Smogon formula engine, an already existing and popular tool. Adapted API calls to match the Pokemon objects and layout of the repo, and Radical Red's modified stats and move data
 - **Team builder** - build and save teams of up to 6 Pokemon with full moveset and item selection
 - **Box system** - store Pokemon in persistent boxes, accessible across sessions when signed in
 - **Guest sessions** - anonymous users get a signed cookie session to save progress without creating an account
