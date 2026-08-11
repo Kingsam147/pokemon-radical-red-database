@@ -4,68 +4,6 @@ const redis = require('../infrastructure/redis/redisClient');
 const P2_TEAMS_KEY = 'p2:teams';
 const P2_TEAMS_TTL = 86400; // 24 hours
 
-const loadMyBoxes = async (userId) => {
-    const docs = await db.collection('myBoxes').find({ userId }).toArray();
-    if (!docs.length) return [];
-    return docs.map(({ _id, userId: _uid, ...box }) => box);
-}
-
-const saveMyBoxes = async (userId, newBoxes) => {
-    await db.collection('myBoxes').deleteMany({ userId });
-    if (newBoxes.length > 0) {
-        await db.collection('myBoxes').insertMany(newBoxes.map(box => ({ ...box, userId })));
-    }
-}
-
-const BOX_SCHEMA_VERSION = process.env.BOX_SCHEMA_VERSION || '1';
-const BOX_CACHE_TTL = 600;
-const BOX_COUNT_TTL = 30;
-
-const boxCacheKey = (userId, index) => `box:${userId}:${index}:v${BOX_SCHEMA_VERSION}`;
-const boxCountCacheKey = (userId) => `boxcount:${userId}`;
-
-const loadBox = async (userId, index) => {
-    const key = boxCacheKey(userId, index);
-    const cached = await redis.get(key);
-    if (cached) return cached;
-    const docs = await db.collection('myBoxes').find({ userId }).sort({ _id: 1 }).skip(index).limit(1).toArray();
-    if (!docs.length) return undefined;
-    const { _id, userId: _uid, ...box } = docs[0];
-    await redis.set(key, box, BOX_CACHE_TTL);
-    return box;
-};
-
-const invalidateBoxCache = async (userId, index) => {
-    await redis.del(boxCacheKey(userId, index));
-};
-
-const invalidateAllBoxCache = async (userId) => {
-    await redis.delPattern(`box:${userId}:*`);
-};
-
-const getCachedBoxCount = async (userId) => {
-    const cached = await redis.get(boxCountCacheKey(userId));
-    return cached !== null ? Number(cached) : null;
-};
-
-const setBoxCountCache = async (userId, count) => {
-    await redis.set(boxCountCacheKey(userId), count, BOX_COUNT_TTL);
-};
-
-const invalidateBoxCountCache = async (userId) => {
-    await redis.del(boxCountCacheKey(userId));
-};
-
-const preWarmBoxCache = async (userId, boxes) => {
-    await Promise.all(boxes.map(async (box, index) => {
-        const key = boxCacheKey(userId, index);
-        const cached = await redis.get(key);
-        if (!cached) {
-            await redis.set(key, box, BOX_CACHE_TTL);
-        }
-    }));
-};
-
 const loadTeams = async (player, userId) => {
     if (player === 2) {
         const cached = await redis.get(P2_TEAMS_KEY);
@@ -102,7 +40,5 @@ const findTeam = async (player, teamName, userId) => {
 }
 
 module.exports = {
-    loadMyBoxes, saveMyBoxes, loadBox, invalidateBoxCache, invalidateAllBoxCache,
-    getCachedBoxCount, setBoxCountCache, invalidateBoxCountCache, preWarmBoxCache,
     loadTeams, saveTeams, findTeam
 };
