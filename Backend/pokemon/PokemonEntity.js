@@ -58,7 +58,7 @@ class PokemonEntity {
     const gender = fields.gender;
     const level = fields.level;
     const nature = fields.nature;
-    const item = fields.item === undefined ? '' : fields.item;
+    const item = fields.item === undefined || fields.item === null ? '' : fields.item;
     const abilityId = fields.ability_id;
     const moveIds = fields.move_ids;
     const EVs = fields.EVs;

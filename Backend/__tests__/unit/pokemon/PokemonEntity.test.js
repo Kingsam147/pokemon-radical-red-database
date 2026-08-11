@@ -77,6 +77,11 @@ describe('PokemonEntity construction', () => {
     const entity = PokemonEntity.create({ ...validFields(), item: '' });
     expect(entity.item).toBe('');
   });
+
+  test('normalizes a null item to an empty string', () => {
+    const entity = PokemonEntity.create({ ...validFields(), item: null });
+    expect(entity.item).toBe('');
+  });
 });
 
 describe('PokemonEntity mutation methods', () => {
@@ -152,6 +157,12 @@ describe('PokemonEntity mutation methods', () => {
     expect(entity.item).toBe('Leftovers');
   });
 
+  test('applyPatch normalizes a null item to an empty string instead of throwing', () => {
+    const entity = PokemonEntity.create({ ...validFields(), item: 'Leftovers' });
+    entity.applyPatch({ item: null });
+    expect(entity.item).toBe('');
+  });
+
   test('prepareForSave returns a new incremented-version entity, leaving the original untouched', () => {
     const entity = PokemonEntity.create(validFields());
     const saved = entity.prepareForSave();
@@ -196,6 +207,12 @@ describe('PokemonEntity.fromStoredDoc', () => {
     delete doc.form;
     const entity = PokemonEntity.fromStoredDoc(doc, models, 1, 'user-1');
     expect(entity.form).toBe('Blaziken');
+  });
+
+  test('lean shape with a null item normalizes to an empty string instead of throwing', () => {
+    const doc = { ...validFields(), item: null };
+    const entity = PokemonEntity.fromStoredDoc(doc, models, 1, 'user-1');
+    expect(entity.item).toBe('');
   });
 
   test('normalizes the legacy full-hydrated-blob shape (has ability/moveset)', () => {
