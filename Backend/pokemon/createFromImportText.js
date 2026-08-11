@@ -57,13 +57,29 @@ const GENDERLESS_SPECIES = new Set([
 // PokemonEntity requires nature as a string, so resolve it back to its name
 // the same way PokemonEntity's own legacy-doc resolution does.
 const resolveNatureName = (nature, natures) => {
+  if (!nature) return 'Hardy';
   if (typeof nature === 'string') return nature;
-  if (nature && typeof nature.name === 'string') return nature.name;
+  if (typeof nature.name === 'string') return nature.name;
   const entries = Object.entries(natures);
   const match = entries.find(
     (entry) => entry[1].increase === nature.increase && entry[1].decrease === nature.decrease,
   );
   return match ? match[0] : 'Hardy';
+};
+
+// Domain/parsePokemonText.js assigns `item` as the raw item object from the
+// items model (e.g. { name: 'Life Orb' }) rather than its string key, or the
+// literal string 'None' when no item is recognized. PokemonEntity requires
+// item as a string, so resolve it back to its name the same way
+// PokemonEntity's own legacy-doc resolution (resolveLegacyItemName) does.
+const resolveItemName = (item, items) => {
+  if (!item || item === 'None') return '';
+  if (typeof item === 'string') return item;
+  if (typeof item.name === 'string') return item.name;
+  const serialized = JSON.stringify(item);
+  const entries = Object.entries(items);
+  const match = entries.find((entry) => JSON.stringify(entry[1]) === serialized);
+  return match ? match[0] : '';
 };
 
 const inferGender = (name, parsedGender) => {
@@ -104,7 +120,7 @@ const createFromImportText = (pokemonText, player) => {
     gender: inferGender(parsed.name, parsed.gender),
     level: parsed.level,
     nature: resolveNatureName(parsed.nature, natures),
-    item: parsed.item,
+    item: resolveItemName(parsed.item, items),
     ability_id: finalAbility,
     move_ids: parsed.moves,
     EVs: parsed.EVs,

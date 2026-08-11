@@ -38,6 +38,17 @@ IVs: 30 Atk / 30 SpD
 - Brave Bird
 - Detect`;
 
+const importTextWithItem = `Blaziken @ Wide Lens
+Level: 47
+Jolly Nature
+Ability: Speed Boost
+EVs: 252 Atk / 252 Spe
+IVs: 30 Atk / 30 SpD
+- High Jump Kick
+- Blaze Kick
+- Brave Bird
+- Detect`;
+
 describe('createFromImportText', () => {
   test('parses import text into a validated PokemonEntity', () => {
     const entity = createFromImportText(importText, 1);
@@ -46,6 +57,12 @@ describe('createFromImportText', () => {
     expect(entity.nature).toBe('Jolly');
     expect(entity.ability_id).toBe('Speed Boost');
     expect(entity.move_ids).toEqual(['High Jump Kick', 'Blaze Kick', 'Brave Bird', 'Detect']);
+    expect(entity.item).toBe('');
+  });
+
+  test('resolves a recognized held item to its string name', () => {
+    const entity = createFromImportText(importTextWithItem, 1);
+    expect(entity.item).toBe('Wide Lens');
   });
 
   test('infers gender N for a genderless-listed species with no (M)/(F) in the text', () => {
