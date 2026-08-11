@@ -1,4 +1,4 @@
-const { getModels, avaliableTMS } = require('../../Config/jsonOptions');
+const { getModels, avaliableTMS } = require('../../game-data/loadModels');
 const {
   isEggMoves,
   tutorLevel,

@@ -1,5 +1,6 @@
 const SessionStore = require('../../infrastructure/session/SessionStore');
-const { getModels, findTeam } = require('../../Config/jsonOptions');
+const { getModels } = require('../../game-data/loadModels');
+const { findTeam } = require('../../Config/jsonOptions');
 const PokemonEntity = require('../pokemon/PokemonEntity');
 const HydrationService = require('../../infrastructure/hydration/HydrationService');
 

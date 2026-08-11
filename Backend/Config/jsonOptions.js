@@ -1,21 +1,8 @@
-const fs = require("fs");
-const path = require('path');
-const { fetchModels, db } = require('./mongodbOptions');
+const { db } = require('./mongodbOptions');
 const redis = require('../infrastructure/redis/redisClient');
 
 const P2_TEAMS_KEY = 'p2:teams';
 const P2_TEAMS_TTL = 86400; // 24 hours
-
-let models = {};
-const loadModels = async () => {
-    models = await fetchModels();
-}
-
-const getModels = () => models;
-
-const avaliableTMS = JSON.parse(fs.readFileSync(path.join(__dirname, "..", "Models", "avaliableTutors+TMS", "avaliableTMS.json"), 'utf8'));
-const megaStones = JSON.parse(fs.readFileSync(path.join(__dirname, "..", "Models", 'megaStones.json'), 'utf8'));
-
 
 const loadMyBoxes = async (userId) => {
     const docs = await db.collection('myBoxes').find({ userId }).toArray();
@@ -115,7 +102,6 @@ const findTeam = async (player, teamName, userId) => {
 }
 
 module.exports = {
-    loadModels, getModels, avaliableTMS, megaStones,
     loadMyBoxes, saveMyBoxes, loadBox, invalidateBoxCache, invalidateAllBoxCache,
     getCachedBoxCount, setBoxCountCache, invalidateBoxCountCache, preWarmBoxCache,
     loadTeams, saveTeams, findTeam

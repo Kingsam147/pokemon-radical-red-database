@@ -1,4 +1,4 @@
-const { getModels, avaliableTMS, megaStones } = require('../Config/jsonOptions.js');
+const { getModels, avaliableTMS, megaStones } = require('../game-data/loadModels');
 
 const { isEggMoves, tutorLevel, tutorTable, bannedMoves, leechSeedExceptions, toxicExceptions, bannedAbilities, abilityExceptions } = require('../Config/jsOptions.js');
 const parsePokemonText = require('../Domain/parsePokemonText');

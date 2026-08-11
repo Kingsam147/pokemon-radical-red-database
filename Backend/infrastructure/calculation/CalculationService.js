@@ -1,5 +1,5 @@
 const { calculate: smogonCalculate, Pokemon, Move, Field, Side, Generations } = require('@smogon/calc');
-const { getModels } = require('../../Config/jsonOptions');
+const { getModels } = require('../../game-data/loadModels');
 const { items: smogonItems, abilities: smogonAbilities } = require('../../Config/tsOptions');
 const calcDefenseType = require('../../Domain/typeInteractions');
 

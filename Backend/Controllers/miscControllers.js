@@ -1,4 +1,4 @@
-const { getModels } = require('../Config/jsonOptions.js');
+const { getModels } = require('../game-data/loadModels');
 const {items, natures, movesList,  typeChart, abilities, statuses } = getModels();
 const { finalHP, finalStats } = require('../Domain/statCalculator.js')
 const calcDefenseTypes = require('../Domain/typeInteractions');

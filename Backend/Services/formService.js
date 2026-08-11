@@ -1,4 +1,4 @@
-const { getModels } = require('../Config/jsonOptions'); 
+const { getModels } = require('../game-data/loadModels');
 const { bannedAbilities, abilityExceptions } = require('../Config/jsOptions.js'); 
 const { createPokemon } = require('./pokemonService.js'); 
 

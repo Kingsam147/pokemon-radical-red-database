@@ -66,7 +66,7 @@ const init = mongoose.connect(MONGODB_URI, {
     socketTimeoutMS: 10000,
 })
 .then(async () => {
-    const { loadModels } = require('./Config/jsonOptions');
+    const { loadModels } = require('./game-data/loadModels');
     const HydrationService = require('./infrastructure/hydration/HydrationService');
     const redis = require('./infrastructure/redis/redisClient');
     redis.connect();
