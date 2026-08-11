@@ -66,6 +66,17 @@ describe('PokemonEntity construction', () => {
       'player must be 1 or 2',
     );
   });
+
+  test('rejects non-string item', () => {
+    expect(() => PokemonEntity.create({ ...validFields(), item: 42 })).toThrow(
+      'item must be a string',
+    );
+  });
+
+  test('accepts empty string item as "no item"', () => {
+    const entity = PokemonEntity.create({ ...validFields(), item: '' });
+    expect(entity.item).toBe('');
+  });
 });
 
 describe('PokemonEntity mutation methods', () => {
@@ -94,11 +105,51 @@ describe('PokemonEntity mutation methods', () => {
     ).toThrow('Total EVs (756) cannot exceed 510');
   });
 
+  test('changeItem rejects non-string item', () => {
+    const entity = PokemonEntity.create(validFields());
+    expect(() => entity.changeItem(42)).toThrow('item must be a string');
+    expect(() => entity.changeItem({})).toThrow('item must be a string');
+  });
+
+  test('changeItem accepts a string item, including empty string', () => {
+    const entity = PokemonEntity.create(validFields());
+    entity.changeItem('Leftovers');
+    expect(entity.item).toBe('Leftovers');
+    entity.changeItem('');
+    expect(entity.item).toBe('');
+  });
+
   test('applyPatch only touches whitelisted fields and ignores the rest', () => {
     const entity = PokemonEntity.create(validFields());
     entity.applyPatch({ level: 50, name: 'Torkoal' });
     expect(entity.level).toBe(50);
     expect(entity.name).toBe('Blaziken');
+  });
+
+  test('applyPatch rejects non-object changes', () => {
+    const entity = PokemonEntity.create(validFields());
+    expect(() => entity.applyPatch(null)).toThrow('changes must be an object');
+    expect(() => entity.applyPatch(undefined)).toThrow('changes must be an object');
+  });
+
+  test('applyPatch is atomic: a failing patch leaves all prior state unchanged', () => {
+    const entity = PokemonEntity.create(validFields());
+    expect(() => entity.applyPatch({ move_ids: ['Overheat'], level: 999 })).toThrow(
+      'level must be an integer from 1 to 100',
+    );
+    expect(entity.move_ids).toEqual(['High Jump Kick', 'Blaze Kick', 'Brave Bird', 'Detect']);
+    expect(entity.level).toBe(47);
+    expect(entity.ability_id).toBe('Speed Boost');
+    expect(entity.item).toBe('');
+    expect(entity.nature).toBe('Jolly');
+  });
+
+  test('applyPatch applies all whitelisted fields together on success', () => {
+    const entity = PokemonEntity.create(validFields());
+    entity.applyPatch({ move_ids: ['Overheat'], level: 60, item: 'Leftovers' });
+    expect(entity.move_ids).toEqual(['Overheat']);
+    expect(entity.level).toBe(60);
+    expect(entity.item).toBe('Leftovers');
   });
 
   test('prepareForSave returns a new incremented-version entity, leaving the original untouched', () => {
@@ -138,6 +189,13 @@ describe('PokemonEntity.fromStoredDoc', () => {
     const entity = PokemonEntity.fromStoredDoc(doc, models, 1, 'user-1');
     expect(entity.name).toBe('Blaziken');
     expect(entity.ability_id).toBe('Speed Boost');
+  });
+
+  test('lean shape missing form falls back to name, same as the legacy branch', () => {
+    const doc = { ...validFields() };
+    delete doc.form;
+    const entity = PokemonEntity.fromStoredDoc(doc, models, 1, 'user-1');
+    expect(entity.form).toBe('Blaziken');
   });
 
   test('normalizes the legacy full-hydrated-blob shape (has ability/moveset)', () => {

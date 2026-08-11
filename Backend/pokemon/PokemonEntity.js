@@ -74,6 +74,7 @@ class PokemonEntity {
       throw new Error('level must be an integer from 1 to 100');
     if (!nature || typeof nature !== 'string')
       throw new Error('nature must be a non-empty string name');
+    if (typeof item !== 'string') throw new Error('item must be a string');
     if (!abilityId || typeof abilityId !== 'string')
       throw new Error('ability_id must be a non-empty string');
     if (!Array.isArray(moveIds) || moveIds.length > 4)
@@ -164,7 +165,9 @@ class PokemonEntity {
   }
 
   changeItem(item) {
-    this.#item = item === undefined || item === null ? '' : item;
+    const resolvedItem = item === undefined || item === null ? '' : item;
+    if (typeof resolvedItem !== 'string') throw new Error('item must be a string');
+    this.#item = resolvedItem;
   }
 
   changeNature(nature) {
@@ -191,14 +194,26 @@ class PokemonEntity {
   }
 
   applyPatch(changes) {
-    PATCHABLE_FIELDS.filter((key) => key in changes).forEach((key) => {
-      if (key === 'move_ids') this.changeMoves(changes.move_ids);
-      if (key === 'ability_id') this.changeAbility(changes.ability_id);
-      if (key === 'item') this.changeItem(changes.item);
-      if (key === 'nature') this.changeNature(changes.nature);
-      if (key === 'EVs') this.changeEVs(changes.EVs);
-      if (key === 'IVs') this.changeIVs(changes.IVs);
-      if (key === 'level') this.changeLevel(changes.level);
+    if (!changes || typeof changes !== 'object') throw new Error('changes must be an object');
+
+    const whitelistedKeys = PATCHABLE_FIELDS.filter((key) => key in changes);
+    if (whitelistedKeys.length === 0) return;
+
+    const candidateFields = Object.assign({}, this.toJSON());
+    whitelistedKeys.forEach((key) => {
+      candidateFields[key] = changes[key];
+    });
+
+    const candidate = PokemonEntity.create(candidateFields);
+
+    whitelistedKeys.forEach((key) => {
+      if (key === 'move_ids') this.#moveIds = candidate.move_ids;
+      if (key === 'ability_id') this.#abilityId = candidate.ability_id;
+      if (key === 'item') this.#item = candidate.item;
+      if (key === 'nature') this.#nature = candidate.nature;
+      if (key === 'EVs') this.#EVs = candidate.EVs;
+      if (key === 'IVs') this.#IVs = candidate.IVs;
+      if (key === 'level') this.#level = candidate.level;
     });
   }
 
@@ -236,6 +251,7 @@ class PokemonEntity {
     const isLeanShape = 'ability_id' in doc && 'move_ids' in doc;
     if (isLeanShape) {
       const fields = Object.assign({}, doc);
+      fields.form = doc.form === undefined ? doc.name : doc.form;
       fields.player = doc.player === undefined ? resolvedPlayer : doc.player;
       fields.userId = doc.userId === undefined ? userId : doc.userId;
       return new PokemonEntity(fields);
