@@ -40,6 +40,24 @@ describe('BoxEntity', () => {
     );
   });
 
+  test('addPokemon throws a clear error for null or non-entity values', () => {
+    const box = new BoxEntity();
+    expect(() => box.addPokemon(null)).toThrow('entity must be a PokemonEntity');
+    expect(() => box.addPokemon({ name: 'Ditto' })).toThrow('entity must be a PokemonEntity');
+  });
+
+  test('constructor throws the same duplicate-name error as addPokemon', () => {
+    expect(() => new BoxEntity([makePokemon('Ditto'), makePokemon('Ditto')])).toThrow(
+      'Ditto already exists in this box',
+    );
+  });
+
+  test('constructor error message identifies the offending array index', () => {
+    expect(() => new BoxEntity([makePokemon('Ditto'), null])).toThrow(
+      'pokemonEntities[1] must be a PokemonEntity instance',
+    );
+  });
+
   test('removePokemon deletes and returns the removed entity, or null if absent', () => {
     const box = new BoxEntity();
     const ditto = makePokemon('Ditto');
@@ -58,6 +76,30 @@ describe('BoxEntity', () => {
     expect(() => box.updatePokemon('Mew', makePokemon('Mew'))).toThrow(
       "Mew doesn't exist in this box",
     );
+  });
+
+  test('updatePokemon throws when renaming to a name already used by another entry', () => {
+    const box = new BoxEntity([makePokemon('Ditto'), makePokemon('Mew')]);
+    const renamedToMew = makePokemon('Mew');
+    expect(() => box.updatePokemon('Ditto', renamedToMew)).toThrow(
+      'Mew already exists in this box',
+    );
+    expect(box.getPokemon('Ditto')).not.toBeNull();
+    expect(box.getPokemon('Mew').name).toBe('Mew');
+  });
+
+  test('updatePokemon throws a clear error for null or non-entity values', () => {
+    const box = new BoxEntity();
+    box.addPokemon(makePokemon('Ditto'));
+    expect(() => box.updatePokemon('Ditto', null)).toThrow('entity must be a PokemonEntity');
+    expect(() => box.updatePokemon('Ditto', { name: 'Ditto' })).toThrow(
+      'entity must be a PokemonEntity',
+    );
+  });
+
+  test('updatePokemon reports missing-key error before the instanceof check', () => {
+    const box = new BoxEntity();
+    expect(() => box.updatePokemon('Missing', null)).toThrow("Missing doesn't exist in this box");
   });
 
   test('clear empties the box', () => {

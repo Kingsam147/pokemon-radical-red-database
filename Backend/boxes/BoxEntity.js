@@ -8,10 +8,10 @@ class BoxEntity {
       throw new Error('pokemonEntities must be an array of PokemonEntity instances');
 
     this.#pokemon = new Map();
-    pokemonEntities.forEach((entity) => {
+    pokemonEntities.forEach((entity, index) => {
       if (!(entity instanceof PokemonEntity))
-        throw new Error('pokemonEntities must be an array of PokemonEntity instances');
-      this.#pokemon.set(entity.name, entity);
+        throw new Error(`pokemonEntities[${index}] must be a PokemonEntity instance`);
+      this.addPokemon(entity);
     });
   }
 
@@ -50,12 +50,12 @@ class BoxEntity {
   }
 
   updatePokemon(name, entity) {
-    if (!(entity instanceof PokemonEntity)) throw new Error('entity must be a PokemonEntity');
     if (!this.#pokemon.has(name)) {
       const error = new Error(`${name} doesn't exist in this box`);
       error.code = 'NOT_FOUND';
       throw error;
     }
+    if (!(entity instanceof PokemonEntity)) throw new Error('entity must be a PokemonEntity');
     if (entity.name !== name && this.#pokemon.has(entity.name)) {
       const error = new Error(`${entity.name} already exists in this box`);
       error.code = 'DUPLICATE_POKEMON';
