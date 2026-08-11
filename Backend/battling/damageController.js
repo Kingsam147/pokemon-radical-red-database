@@ -1,4 +1,4 @@
-const CalculationService = require('../infrastructure/calculation/CalculationService');
+const CalculationService = require('./CalculationService');
 
 const calculateDamage = (req, res) => {
   try {

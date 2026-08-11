@@ -1,14 +1,14 @@
-jest.mock('../../infrastructure/calculation/CalculationService', () => ({
+jest.mock('../../../battling/CalculationService', () => ({
   calculate: jest.fn(),
 }));
 
-jest.mock('../../infrastructure/logger/logger', () => ({
+jest.mock('../../../infrastructure/logger/logger', () => ({
   info: jest.fn(), warn: jest.fn(), error: jest.fn(),
   security: jest.fn(), setUser: jest.fn(), clearUser: jest.fn(),
 }));
 
-const CalculationService = require('../../infrastructure/calculation/CalculationService');
-const { calculateDamage } = require('../../Controllers/damageController');
+const CalculationService = require('../../../battling/CalculationService');
+const { calculateDamage } = require('../../../battling/damageController');
 
 const buildRequest = (body = {}) => ({ body });
 const buildResponse = () => {
