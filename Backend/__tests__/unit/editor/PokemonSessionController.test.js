@@ -1,10 +1,10 @@
 jest.mock('../../../editor/SessionService');
 jest.mock('../../../teams/TeamRepository');
-jest.mock('../../../Domain/pokemon/CalculationDomainService');
+jest.mock('../../../legality/validate');
 
 const SessionService = require('../../../editor/SessionService');
 const TeamRepository = require('../../../teams/TeamRepository');
-const { validate } = require('../../../Domain/pokemon/CalculationDomainService');
+const validate = require('../../../legality/validate');
 const { saveDraft } = require('../../../editor/PokemonSessionController');
 
 const mockRes = () => {

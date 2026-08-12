@@ -1,4 +1,4 @@
-const { getModels, avaliableTMS } = require('../../game-data/loadModels');
+const { getModels, avaliableTMS } = require('../game-data/loadModels');
 const {
   isEggMoves,
   tutorLevel,
@@ -8,11 +8,11 @@ const {
   toxicExceptions,
   bannedAbilities,
   abilityExceptions,
-} = require('../../Config/jsOptions');
-const allAvaliableMoves = require('../../Domain/pokemonMovesets');
-const legalMovesFilter = require('../../Domain/legalMoves');
-const legalAbilityFilter = require('../../Domain/legalAbilites');
-const { STAT_KEYS } = require('./PokemonEntity');
+} = require('../Config/jsOptions');
+const allAvaliableMoves = require('./pokemonMovesets');
+const legalMovesFilter = require('./legalMoves');
+const legalAbilityFilter = require('./legalAbilities');
+const { STAT_KEYS } = require('../pokemon/PokemonEntity');
 
 const validate = (entity) => {
   const { species2, natures, items } = getModels();
@@ -63,4 +63,4 @@ const validate = (entity) => {
   return { valid: errors.length === 0, errors };
 };
 
-module.exports = { validate };
+module.exports = validate;

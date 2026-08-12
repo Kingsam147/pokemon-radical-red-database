@@ -9,10 +9,10 @@ const {
   bannedAbilities,
   abilityExceptions,
 } = require('../Config/jsOptions');
-const allAvaliableMoves = require('../Domain/pokemonMovesets');
-const legalMoves = require('../Domain/legalMoves');
-const legalAbility = require('../Domain/legalAbilites');
-const stats = require('../Domain/statCalculator');
+const allAvaliableMoves = require('../legality/pokemonMovesets');
+const legalMoves = require('../legality/legalMoves');
+const legalAbility = require('../legality/legalAbilities');
+const stats = require('../stats/statCalculator');
 
 let movesMap = new Map();
 let abilitiesMap = new Map();

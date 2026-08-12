@@ -1,7 +1,7 @@
 
 
-const moveToFormat = (moveName) => 
-    moveName 
+const moveToFormat = (moveName) =>
+    moveName
         .replaceAll(' ', '')
         .replaceAll('-', '')
         .replaceAll('\'', '')
@@ -47,7 +47,7 @@ const nameToFormat = (pokemonName) => {
         .toUpperCase();
 }
 
-const abilityToFormat = (abilityName) => 
+const abilityToFormat = (abilityName) =>
     abilityName
         .replaceAll(' ', '')
         .replaceAll('-', '')

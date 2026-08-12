@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const { getItems, getNatures, getMoves, getTypes, getAbilities, calcStats, getStatuses, getDefenseTypes, getVersion } = require('../Controllers/miscControllers');
+const { getItems, getNatures, getMoves, getTypes, getAbilities, calcStats, getStatuses, getDefenseTypes, getVersion } = require('../game-data/miscControllers');
 const { calculateDamage } = require('../battling/damageController');
 
 router.route('/items')

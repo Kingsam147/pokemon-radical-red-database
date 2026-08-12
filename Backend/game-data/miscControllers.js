@@ -1,32 +1,32 @@
-const { getModels } = require('../game-data/loadModels');
+const { getModels } = require('./loadModels');
 const {items, natures, movesList,  typeChart, abilities, statuses } = getModels();
-const { finalHP, finalStats } = require('../Domain/statCalculator.js')
-const calcDefenseTypes = require('../Domain/typeInteractions');
+const { finalHP, finalStats } = require('../stats/statCalculator.js');
+const calcDefenseTypes = require('../stats/typeInteractions');
 
 const getItems = (req, res) => res.status(200).json({
-    message: 'successfully retreived the items', 
+    message: 'successfully retreived the items',
     items: items
 });
 
 const getNatures = (req, res) => res.status(200).json({
-    message: "sucessfully retreived the natures", 
+    message: "sucessfully retreived the natures",
     natures: natures
 });
 
 const getMoves = (req, res) => res.status(200).json({
-    message: "Successfully retreived the moves", 
+    message: "Successfully retreived the moves",
     movesData: movesList
 });
 
 const getTypes = (req, res) => {
     res.status(200).json({
-        message: "Sucessfully retreived the types", 
+        message: "Sucessfully retreived the types",
         types: typeChart
     });
 }
 
 const getAbilities = (req, res) => res.status(200).json({
-    message: 'Successfully found the ability list', 
+    message: 'Successfully found the ability list',
     abilitiesData: abilities
 })
 
@@ -48,7 +48,7 @@ const calcStats = (req, res) => {
 const getStatuses = (req, res) => {
 
     return res.status(200).json({
-        message: "Successfully retreived the statuses", 
+        message: "Successfully retreived the statuses",
         statuses: statuses
     });
 }
@@ -61,7 +61,7 @@ const getDefenseTypes = (req, res) => {
         const typeInteractions = calcDefenseTypes(types, typeChart);
 
         return res.status(200).json({
-            message: "Successfully retreived the Type interactions", 
+            message: "Successfully retreived the Type interactions",
             TypeInteractions: typeInteractions
         });
     } catch (err) {

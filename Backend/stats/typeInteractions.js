@@ -1,7 +1,7 @@
 // given the type combination of a pokemon list out what it's immunities, resistances, and weaknesses
 
 
-// return an dictionary in this format 
+// return an dictionary in this format
 /* {
     immunities: []
     resistances: []
@@ -14,24 +14,24 @@ const calcDefenseType = (pokemonTypes, typeChart) => {
 
     let [type1, type2] = pokemonTypes;
 
-    type1 = typeChart[type1]; 
+    type1 = typeChart[type1];
     type2 = typeChart[type2];
 
     const typeDefenses = {
-        "immunities": [], 
+        "immunities": [],
         "doubleResistances": [],
-        "resistances": [], 
+        "resistances": [],
         "normal": [],
         "weaknesses": [],
         "doubleWeaknesses": []
-    };  
+    };
 
     let newChart = { ...type1};
 
     if (type2.name !== "None") {
-        // console.log(type1); 
+        // console.log(type1);
         // console.log(type2);
-        
+
         for (const type of Object.keys(type1)) {
             if (type === "name") continue;
             // console.log(type)
@@ -61,7 +61,7 @@ const calcDefenseType = (pokemonTypes, typeChart) => {
     }
 
     return typeDefenses;
-        
+
 }
 
 module.exports = calcDefenseType;

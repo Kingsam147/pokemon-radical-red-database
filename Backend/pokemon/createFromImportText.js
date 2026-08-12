@@ -1,7 +1,7 @@
 const { getModels, megaStones } = require('../game-data/loadModels');
 const { bannedAbilities, abilityExceptions } = require('../Config/jsOptions.js');
-const getPokemonInfo = require('../Domain/parsePokemonText');
-const legalAbility = require('../Domain/legalAbilites');
+const getPokemonInfo = require('../import/parsePokemonText');
+const legalAbility = require('../legality/legalAbilities');
 const PokemonEntity = require('./PokemonEntity');
 
 // Species with a permanently fixed gender -- copied verbatim from the current
