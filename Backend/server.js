@@ -67,7 +67,7 @@ const init = mongoose.connect(MONGODB_URI, {
 })
 .then(async () => {
     const { loadModels } = require('./game-data/loadModels');
-    const HydrationService = require('./infrastructure/hydration/HydrationService');
+    const HydrationService = require('./pokemon/HydrationService');
     const redis = require('./infrastructure/redis/redisClient');
     redis.connect();
     await loadModels();

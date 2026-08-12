@@ -1,4 +1,4 @@
-const { getModels, avaliableTMS } = require('../../game-data/loadModels');
+const { getModels, avaliableTMS } = require('../game-data/loadModels');
 const {
   isEggMoves,
   tutorLevel,
@@ -8,11 +8,11 @@ const {
   toxicExceptions,
   bannedAbilities,
   abilityExceptions,
-} = require('../../Config/jsOptions');
-const allAvaliableMoves = require('../../Domain/pokemonMovesets');
-const legalMoves = require('../../Domain/legalMoves');
-const legalAbility = require('../../Domain/legalAbilites');
-const stats = require('../../Domain/statCalculator');
+} = require('../Config/jsOptions');
+const allAvaliableMoves = require('../Domain/pokemonMovesets');
+const legalMoves = require('../Domain/legalMoves');
+const legalAbility = require('../Domain/legalAbilites');
+const stats = require('../Domain/statCalculator');
 
 let movesMap = new Map();
 let abilitiesMap = new Map();

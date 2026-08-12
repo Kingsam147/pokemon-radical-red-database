@@ -2,7 +2,7 @@ const SessionStore = require('../../infrastructure/session/SessionStore');
 const { getModels } = require('../../game-data/loadModels');
 const { findTeam } = require('../../Config/jsonOptions');
 const PokemonEntity = require('../pokemon/PokemonEntity');
-const HydrationService = require('../../infrastructure/hydration/HydrationService');
+const HydrationService = require('../../pokemon/HydrationService');
 
 const PATCHABLE_FIELDS = ['move_ids', 'ability_id', 'item', 'nature', 'EVs', 'IVs', 'level'];
 
