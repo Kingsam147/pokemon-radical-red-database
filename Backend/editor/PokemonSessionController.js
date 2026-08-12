@@ -60,6 +60,7 @@ const saveDraft = async (req, res) => {
     if (error.message.includes('No active draft')) return res.status(404).json({ message: error.message });
     if (error.status === 403) return res.status(403).json({ message: error.message });
     if (error.status === 409) return res.status(409).json({ message: error.message });
+    if (error.message.includes('not found')) return res.status(404).json({ message: error.message });
     return res.status(500).json({ message: error.message });
   }
 };
