@@ -100,8 +100,17 @@ const addToBox = async (req, res) => {
         checkMega(pokemonText) ? addMega(pokemonText, 1) : createFromImportText(pokemonText, 1),
       );
 
-    const duplicates = newPokemons.filter((entity) => box.hasPokemon(entity.name));
-    const validPokemon = newPokemons.filter((entity) => !box.hasPokemon(entity.name));
+    const claimedNames = new Set();
+    const duplicates = [];
+    const validPokemon = [];
+    newPokemons.forEach((entity) => {
+      if (box.hasPokemon(entity.name) || claimedNames.has(entity.name)) {
+        duplicates.push(entity);
+      } else {
+        claimedNames.add(entity.name);
+        validPokemon.push(entity);
+      }
+    });
     validPokemon.forEach((entity) => box.addPokemon(entity));
 
     boxes[index] = box;
