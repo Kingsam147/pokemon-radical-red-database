@@ -1,6 +1,6 @@
 const jwtCheck = require('./jwtCheck');
-const logger = require('../logger/logger');
-const { AUTH_EVENTS, SECURITY_EVENTS } = require('../logger/events');
+const logger = require('../infrastructure/logger/logger');
+const { AUTH_EVENTS, SECURITY_EVENTS } = require('../infrastructure/logger/events');
 
 const resolveIdentity = (req, res, next) => {
   const authHeader = req.headers.authorization;

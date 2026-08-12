@@ -1,12 +1,12 @@
 jest.mock('express-oauth2-jwt-bearer', () => ({ auth: jest.fn(() => jest.fn()) }));
-jest.mock('../../infrastructure/auth/jwtCheck');
-jest.mock('../../infrastructure/logger/logger', () => ({
+jest.mock('../../../identity/jwtCheck');
+jest.mock('../../../infrastructure/logger/logger', () => ({
   info: jest.fn(), warn: jest.fn(), error: jest.fn(),
   security: jest.fn(), setUser: jest.fn(), clearUser: jest.fn(),
 }));
 
-const jwtCheck = require('../../infrastructure/auth/jwtCheck');
-const resolveIdentity = require('../../infrastructure/auth/resolveIdentity');
+const jwtCheck = require('../../../identity/jwtCheck');
+const resolveIdentity = require('../../../identity/resolveIdentity');
 
 const buildReq = (overrides = {}) => ({
   headers: {},

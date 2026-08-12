@@ -13,8 +13,8 @@ const app = express();
 const cors = require('cors');
 const cookieParser = require('cookie-parser');
 const mongoose = require("mongoose");
-const jwtCheck = require('./infrastructure/auth/jwtCheck');
-const resolveIdentity = require('./infrastructure/auth/resolveIdentity');
+const jwtCheck = require('./identity/jwtCheck');
+const resolveIdentity = require('./identity/resolveIdentity');
 const { globalLimiter, calcLimiter, guestInitLimiter } = require('./infrastructure/rateLimit/rateLimiter');
 
 const PORT = process.env.PORT || 3500;

@@ -1,6 +1,6 @@
 const { randomUUID } = require('crypto');
-const logger = require('../../infrastructure/logger/logger');
-const { AUTH_EVENTS } = require('../../infrastructure/logger/events');
+const logger = require('../infrastructure/logger/logger');
+const { AUTH_EVENTS } = require('../infrastructure/logger/events');
 
 const COOKIE_MAX_AGE_MS = 365 * 24 * 60 * 60 * 1000;
 

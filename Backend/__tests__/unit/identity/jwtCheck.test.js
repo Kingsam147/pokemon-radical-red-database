@@ -4,13 +4,13 @@ jest.mock('express-oauth2-jwt-bearer', () => {
   return { auth: jest.fn(() => mockMiddleware) };
 });
 
-jest.mock('../../infrastructure/logger/logger', () => ({
+jest.mock('../../../infrastructure/logger/logger', () => ({
   info: jest.fn(), warn: jest.fn(), error: jest.fn(),
   security: jest.fn(), setUser: jest.fn(), clearUser: jest.fn(),
 }));
 
-const logger = require('../../infrastructure/logger/logger');
-const jwtCheck = require('../../infrastructure/auth/jwtCheck');
+const logger = require('../../../infrastructure/logger/logger');
+const jwtCheck = require('../../../identity/jwtCheck');
 
 const buildReq = () => ({ headers: {}, path: '/teams/1', method: 'GET' });
 const buildRes = () => {

@@ -1,6 +1,6 @@
 const { auth } = require('express-oauth2-jwt-bearer');
-const logger = require('../logger/logger');
-const { AUTH_EVENTS } = require('../logger/events');
+const logger = require('../infrastructure/logger/logger');
+const { AUTH_EVENTS } = require('../infrastructure/logger/events');
 
 const rawJwtCheck = auth({
   audience: process.env.AUTH0_AUDIENCE,

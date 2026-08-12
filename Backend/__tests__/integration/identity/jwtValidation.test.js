@@ -10,7 +10,7 @@ const buildTestApp = () => {
   // Minimal route using resolveIdentity (guest path only — no live Auth0 needed)
   let resolveIdentity;
   try {
-    resolveIdentity = require('../../infrastructure/auth/resolveIdentity');
+    resolveIdentity = require('../../../identity/resolveIdentity');
   } catch {
     // If env vars are missing, use a stub that always passes as guest
     resolveIdentity = (req, _res, next) => {
