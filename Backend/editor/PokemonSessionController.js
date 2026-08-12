@@ -1,6 +1,6 @@
-const SessionService = require('../../Domain/session/SessionService');
-const CalculationDomainService = require('../../Domain/pokemon/CalculationDomainService');
-const TeamRepository = require('../../infrastructure/repositories/TeamRepository');
+const SessionService = require('./SessionService');
+const { validate } = require('../Domain/pokemon/CalculationDomainService');
+const TeamRepository = require('../teams/TeamRepository');
 
 const activate = async (req, res) => {
   try {
@@ -47,7 +47,7 @@ const saveDraft = async (req, res) => {
 
     const entity = SessionService.getDraftEntity(userId, sessionId);
 
-    const { valid, errors } = CalculationDomainService.validate(entity);
+    const { valid, errors } = validate(entity);
     if (!valid) {
       return res.status(422).json({ message: 'Validation failed', errors });
     }
