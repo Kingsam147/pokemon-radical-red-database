@@ -129,7 +129,13 @@ const updatePokemon = async (req, res) => {
     const teamName = req.params.teamName;
     const pokemonName = req.params.pokemonName;
     const { pokemonData } = req.body;
-    const team = await TeamRepository.findTeam(player, teamName, userId);
+
+    let team;
+    try {
+      team = await TeamRepository.findTeam(player, teamName, userId);
+    } catch (findTeamError) {
+      return res.status(404).json({ message: findTeamError.message });
+    }
 
     if (Array.isArray(team) || !team.hasPokemon(pokemonName))
       return res.status(404).json({
