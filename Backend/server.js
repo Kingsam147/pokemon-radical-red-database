@@ -75,6 +75,7 @@ const init = mongoose.connect(MONGODB_URI, {
 
     app.use('/misc/damage', calcLimiter);
     app.use('/misc', require('./Routes/miscRoutes'));
+    app.use('/public', require('./Routes/publicRoutes'));
     app.use('/api/guest/init', guestInitLimiter);
     app.use('/api/guest', require('./interfaces/routes/guestRoutes'));
     app.use('/api/auth', jwtCheck, require('./interfaces/routes/authRoutes'));
