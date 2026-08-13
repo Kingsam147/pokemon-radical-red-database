@@ -1,10 +1,11 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useEffect, useRef, useState } from "react"
 import { Pokemon, Teams, Box, TrainerInfo } from "@/lib/utils/types.ts"
 import { addPokemon, fetchBoxCount, loadSingleBox, resolveSingleBox } from "@/lib/api/boxes"
 import { MOVES_OPTIONS, ABILITY_OPTIONS, ITEMS_OPTIONS, NATURE_OPTIONS, TYPE_OPTIONS, STATUS_OPTIONS, MISC_VERSION } from "@/lib/api/misc"
 import { loadMyTeams, loadEnemyTeams, removeTeam, saveFullTeam } from "@/lib/api/teams"
+import { loadEnemyPreview } from "@/lib/api/enemyPreview"
 import { readMiscCache, writeMiscCache } from "@/lib/cache/miscCache"
 import { useAuth0 } from "@auth0/auth0-react"
 import { toast } from "sonner"
@@ -29,6 +30,8 @@ import { useUIState } from "@/lib/hooks/useUIState"
 export default function PokemonBattleSimulator() {
   const { isAuthenticated, isLoading } = useAuth0()
   const [isInitializing, setIsInitializing] = useState(true)
+  const [isP2Loading, setIsP2Loading] = useState(true)
+  const fullPipelineDoneRef = useRef(false)
 
   const options = useBattleOptions()
   const boxManager = useBoxManager({
@@ -137,6 +140,8 @@ export default function PokemonBattleSimulator() {
           slots.forEach((p, i) => { initialBench[i] = p })
           bench.setPlayer2Bench(initialBench)
         }
+        fullPipelineDoneRef.current = true
+        setIsP2Loading(false)
       } catch (err) {
         toast.error(`Failed to load data: ${err}`)
       } finally {
@@ -152,6 +157,26 @@ export default function PokemonBattleSimulator() {
       }
       await loadInitialData()
     }
+
+    // Fast path: the first enemy trainer is pre-hydrated and edge-cached,
+    // so it can render immediately without waiting on guest-init or misc data.
+    loadEnemyPreview()
+      .then((preview) => {
+        if (!preview || fullPipelineDoneRef.current) return
+        teams.setP2Teams((prev) => ({
+          ...prev,
+          [preview.teamName]: preview.team,
+        }))
+        teams.setP2SelectedTeamIndex(preview.teamName)
+        const slots = Object.entries(preview.team)
+          .filter(([k, v]) => k !== "trainerInfo" && v !== null)
+          .map(([_, v]) => v as Pokemon)
+        const initialBench: (Pokemon | null)[] = Array(6).fill(null)
+        slots.forEach((p, i) => { initialBench[i] = p })
+        bench.setPlayer2Bench(initialBench)
+        setIsP2Loading(false)
+      })
+      .catch(() => {}) // fast path is best-effort — the full pipeline below is authoritative
 
     run()
   }, [isLoading, isAuthenticated])
@@ -558,7 +583,7 @@ export default function PokemonBattleSimulator() {
               })}
             </div>
 
-            {isInitializing ? (
+            {isP2Loading ? (
               <TeamBenchSkeleton />
             ) : (
               <TeamBench
