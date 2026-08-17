@@ -9,28 +9,15 @@ const STATUS_MAP = {
   'Badly Poison': 'tox', 'Badly Poisoned': 'tox', Sleep: 'slp', Asleep: 'slp', Fainted: '',
 };
 
-const WEATHER_MAP = {
-  Sun: 'Sun', 'Harsh Sunshine': 'Harsh Sunshine', Rain: 'Rain',
-  'Heavy Rain': 'Heavy Rain', Sand: 'Sand', Snow: 'Snow', 'Strong Winds': 'Strong Winds',
-};
-
-const TERRAIN_MAP = {
-  'Electric Terrain': 'Electric', 'Grassy Terrain': 'Grassy',
-  'Misty Terrain': 'Misty', 'Psychic Terrain': 'Psychic',
-};
-
 // ─── Smogon helpers ───────────────────────────────────────────────────────────
 
-const getPokemonOverrides = (pokemonName, species2) => {
-  const data = species2[pokemonName];
-  if (!data) return {};
-  return {
-    rawStats: {
-      hp: data.baseHP, atk: data.baseAttack, def: data.baseDefense,
-      spa: data.baseSpAttack, spd: data.baseSpDefense, spe: data.baseSpeed,
-    },
-    types: [data.type1, data.type2].filter(t => t && t !== 'None'),
-  };
+const requirePokemonOverrides = (pokemon, label) => {
+  if (!pokemon.rawStats || !pokemon.types) {
+    const error = new Error(`${label}.rawStats and ${label}.types are required`);
+    error.status = 400;
+    throw error;
+  }
+  return { rawStats: pokemon.rawStats, types: [...pokemon.types] };
 };
 
 const sanitizeItem = (itemName) => {
@@ -107,23 +94,29 @@ const applyRadicalRedAbilityFixes = (damageArray, attacker, defender, move, fiel
 
 // ─── Core calculation ─────────────────────────────────────────────────────────
 
+const requireMoveOverrides = (move) => {
+  if (!move.name || !move.type) {
+    const error = new Error('move.name and move.type are required');
+    error.status = 400;
+    throw error;
+  }
+};
+
 const performCalculation = ({ attacker, defender, move, field, abilityToggles = {} }) => {
-  const { species2, movesList: allMoves, typeChart } = getModels();
+  const { typeChart } = getModels();
   const gen = Generations.get(9);
 
-  const attackerOverrides = getPokemonOverrides(attacker.name, species2);
-  let defenderOverrides = getPokemonOverrides(defender.name, species2);
+  const attackerOverrides = requirePokemonOverrides(attacker, 'attacker');
+  let defenderOverrides = requirePokemonOverrides(defender, 'defender');
+  requireMoveOverrides(move);
 
-  if (attacker.ability === 'Bone Zone' && move.name) {
-    const sanitizedMoveName = move.name.toLowerCase().replace(/[^a-z0-9]/g, '');
-    if (allMoves[sanitizedMoveName]?.type === 'Ground') {
-      defenderOverrides = {
-        ...defenderOverrides,
-        types: defenderOverrides.types?.filter(t => t !== 'Flying') ?? defenderOverrides.types,
-      };
-      if (defender.ability === 'Levitate' || defender.ability === 'Earth Eater') defenderOverrides.ability = '';
-      if (defender.item === 'Air Balloon') defenderOverrides.item = '';
-    }
+  if (attacker.ability === 'Bone Zone' && move.type === 'Ground') {
+    defenderOverrides = {
+      ...defenderOverrides,
+      types: defenderOverrides.types?.filter(t => t !== 'Flying') ?? defenderOverrides.types,
+    };
+    if (defender.ability === 'Levitate' || defender.ability === 'Earth Eater') defenderOverrides.ability = '';
+    if (defender.item === 'Air Balloon') defenderOverrides.item = '';
   }
 
   if (attacker.ability === 'Corrosion' && move.type === 'Poison' && defender.types?.includes('Steel')) {
@@ -164,24 +157,16 @@ const performCalculation = ({ attacker, defender, move, field, abilityToggles = 
     ...defenderOverrides,
   });
 
-  const sanitizedMoveName = move.name.toLowerCase().replace(/[^a-z0-9]/g, '');
-  const moveData = allMoves[sanitizedMoveName];
-
-  if (!moveData) {
-    const error = new Error(`Move "${move.name}" not found in database`);
-    error.status = 404;
-    throw error;
-  }
-
   const moveObj = new Move(gen, move.name, {
     isCrit: move.isCrit ?? false,
     isZ: move.isZ ?? false,
-    overrides: moveData,
+    overrides: move,
   });
 
   const fieldData = new Field({
-    weather: WEATHER_MAP[field?.weather] ?? undefined,
-    terrain: TERRAIN_MAP[field?.terrain] ?? undefined,
+    gameType: field?.gameType ?? 'Singles',
+    weather: field?.weather,
+    terrain: field?.terrain,
     isGravity: field?.isGravity ?? false,
     isMagicRoom: field?.isMagicRoom ?? false,
     isWonderRoom: field?.isWonderRoom ?? false,
@@ -245,7 +230,7 @@ const performCalculation = ({ attacker, defender, move, field, abilityToggles = 
       level: defender.level,
       originalCurHP: defender.currentHP,
     },
-    moveData,
+    move,
     field,
     abilityToggles,
     typeChart,

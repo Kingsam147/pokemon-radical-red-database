@@ -1,11 +1,22 @@
 const TeamRepository = require('./TeamRepository');
+const HydrationService = require('../pokemon/HydrationService');
 const logger = require('../infrastructure/logger/logger');
 const { USER_ACTION_EVENTS } = require('../infrastructure/logger/events');
+
+const hydrateTeam = (team) => {
+  if (Array.isArray(team)) return team;
+  const result = {};
+  team.listPokemon().forEach((entity) => {
+    result[entity.name] = HydrationService.hydrate(entity);
+  });
+  if (team.trainerInfo !== undefined) result.trainerInfo = team.trainerInfo;
+  return result;
+};
 
 const hydrateTeamsMap = (teams) => {
   const result = {};
   for (const [name, team] of Object.entries(teams)) {
-    result[name] = Array.isArray(team) ? team : team.toJSON();
+    result[name] = hydrateTeam(team);
   }
   return result;
 };
@@ -25,7 +36,7 @@ const getTeam = async (req, res) => {
     const trainerInfo = team.trainerInfo;
     const pokemonMap = {};
     team.listPokemon().forEach((entity) => {
-      pokemonMap[entity.name] = entity.toJSON();
+      pokemonMap[entity.name] = HydrationService.hydrate(entity);
     });
 
     return res

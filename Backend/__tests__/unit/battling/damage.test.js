@@ -19,9 +19,22 @@ const buildResponse = () => {
 };
 
 const samplePayload = {
-  attacker: { name: 'Charizard', level: 50, ability: 'Blaze', nature: 'Timid', evs: {}, ivs: {}, boosts: {}, status: 'Healthy', gender: 'M', currentHP: 155, maxHP: 155 },
-  defender: { name: 'Blastoise', level: 50, ability: 'Torrent', nature: 'Bold', evs: {}, ivs: {}, boosts: {}, status: 'Healthy', gender: 'M', currentHP: 162, maxHP: 162 },
-  move: { name: 'Flamethrower', isCrit: false, isZ: false },
+  attacker: {
+    name: 'Charizard', level: 50, ability: 'Blaze', nature: 'Timid', evs: {}, ivs: {}, boosts: {},
+    status: 'Healthy', gender: 'M', currentHP: 155, maxHP: 155,
+    rawStats: { hp: 78, atk: 84, def: 78, spa: 109, spd: 85, spe: 100 },
+    types: ['Fire', 'Flying'],
+  },
+  defender: {
+    name: 'Blastoise', level: 50, ability: 'Torrent', nature: 'Bold', evs: {}, ivs: {}, boosts: {},
+    status: 'Healthy', gender: 'M', currentHP: 162, maxHP: 162,
+    rawStats: { hp: 79, atk: 83, def: 100, spa: 85, spd: 105, spe: 78 },
+    types: ['Water'],
+  },
+  move: {
+    name: 'Flamethrower', isCrit: false, isZ: false,
+    basePower: 90, type: 'Fire', category: 'Special', flags: {},
+  },
   field: {},
   abilityToggles: {},
 };

@@ -69,7 +69,7 @@ class PokemonEntity {
 
     if (!name || typeof name !== 'string') throw new Error('name is required');
     if (!form || typeof form !== 'string') throw new Error('form is required');
-    if (!['M', 'F', 'N'].includes(gender)) throw new Error("gender must be 'M', 'F', or 'N'");
+    if (!['M', 'F', 'N', 'Both'].includes(gender)) throw new Error("gender must be 'M', 'F', 'N', or 'Both'");
     if (!Number.isInteger(level) || level < 1 || level > 100)
       throw new Error('level must be an integer from 1 to 100');
     if (!nature || typeof nature !== 'string')

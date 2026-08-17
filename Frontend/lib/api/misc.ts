@@ -106,8 +106,8 @@ export async function fetchCalculateDamage(
         body: JSON.stringify({
           attacker: formatPokemonForAPI(attacker),
           defender: formatPokemonForAPI(defender),
-          move: { 
-            name: move.name,
+          move: {
+            ...move,
             isCrit: move.isCrit ?? false,
             isZ: move.isZ ?? false,
           },

@@ -36,8 +36,13 @@ describe('PokemonEntity construction', () => {
 
   test('rejects invalid gender', () => {
     expect(() => PokemonEntity.create({ ...validFields(), gender: 'X' })).toThrow(
-      "gender must be 'M', 'F', or 'N'",
+      "gender must be 'M', 'F', 'N', or 'Both'",
     );
+  });
+
+  test('accepts Both as a valid gender', () => {
+    const entity = PokemonEntity.create({ ...validFields(), gender: 'Both' });
+    expect(entity.gender).toBe('Both');
   });
 
   test('rejects level out of range', () => {

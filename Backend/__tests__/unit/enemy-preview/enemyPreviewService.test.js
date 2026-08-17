@@ -8,75 +8,25 @@ jest.mock('../../../teams/TeamRepository', () => ({
   loadAllTeams: jest.fn(),
 }));
 
-jest.mock('../../../game-data/loadModels', () => ({
-  getModels: jest.fn(),
-}));
-
 const redis = require('../../../infrastructure/redis/redisClient');
 const TeamRepository = require('../../../teams/TeamRepository');
-const { getModels } = require('../../../game-data/loadModels');
 const {
   getHydratedEnemyPreview,
   invalidateEnemyPreview,
   ENEMY_PREVIEW_KEY,
 } = require('../../../enemy-preview/enemyPreviewService');
 
-const models = {
-  abilities: {
-    intimidate: {
-      name: 'Intimidate',
-      description: 'Lowers foe Atk',
-      toggle: false,
-    },
-  },
-  items: { leftovers: { name: 'Leftovers' } },
-  natures: { adamant: { name: 'Adamant', increase: 'Atk', decrease: 'SpA' } },
-  movesList: {
-    tackle: { name: 'Tackle', type: 'Normal', category: 'Physical' },
-  },
-  typeChart: { normal: { name: 'Normal' } },
-};
-
-const rawTeam = {
-  trainerInfo: { format: 'Singles' },
-  1: {
-    name: 'Snorlax',
-    ID: '143',
-    item: 'leftovers',
-    ability: 'intimidate',
-    abilities: ['intimidate'],
-    nature: 'adamant',
-    type1: 'normal',
-    type2: 'normal',
-    moveset: ['tackle'],
-    allMoves: ['tackle'],
-    form: null,
-    forms: {
-      Snorlax: {
-        formName: 'Snorlax',
-        ID: 143,
-        baseStats: {},
-        finalStats: {},
-        ability: 'intimidate',
-        abilities: ['intimidate'],
-        allMoves: ['tackle'],
-        type1: 'normal',
-        type2: 'normal',
-      },
-    },
-    statBoosts: null,
-  },
-};
-
-// TeamRepository.loadAllTeams resolves TeamEntity instances (or raw arrays
-// per Assumption #3), never plain dicts — buildEnemyPreview only ever calls
-// .toJSON() on the resolved value, so a minimal duck-typed stub is sufficient.
+// buildEnemyPreview no longer hydrates whatever team is first in the enemy
+// collection — it always serves a hand-hardcoded, fully-resolved Bulbasaur
+// (see the HARDCODED_BULBASAUR comment in enemyPreviewService.js). Only the
+// teamName label is still derived live from TeamRepository, so the trainer
+// name shown alongside the preview stays accurate even though the Pokemon
+// itself is static scaffolding.
 const asStoredTeam = (rawDoc) => ({ toJSON: () => rawDoc });
 
 describe('enemyPreviewService', () => {
   beforeEach(() => {
     jest.clearAllMocks();
-    getModels.mockReturnValue(models);
   });
 
   test('returns null when there are no enemy teams', async () => {
@@ -97,61 +47,52 @@ describe('enemyPreviewService', () => {
     expect(TeamRepository.loadAllTeams).toHaveBeenCalledWith(2, null);
   });
 
-  test('hydrates every string reference into the full resolved object', async () => {
+  test('serves the hardcoded, fully-resolved Bulbasaur regardless of the actual first team contents', async () => {
     redis.get.mockResolvedValue(null);
     TeamRepository.loadAllTeams.mockResolvedValue({
-      'Gym Leader Brock': asStoredTeam(rawTeam),
+      'Gym Leader Brock': asStoredTeam({ Onix: { name: 'Onix' } }),
     });
 
     const result = await getHydratedEnemyPreview();
 
     expect(result.teamName).toBe('Gym Leader Brock');
-    expect(result.team[1].item).toEqual(models.items.leftovers);
-    expect(result.team[1].ability).toEqual(models.abilities.intimidate);
-    expect(result.team[1].abilities).toEqual([models.abilities.intimidate]);
-    expect(result.team[1].nature).toEqual(models.natures.adamant);
-    expect(result.team[1].type1).toEqual(models.typeChart.normal);
-    expect(result.team[1].type2).toEqual(models.typeChart.normal);
-    expect(result.team[1].moveset).toEqual([models.movesList.tackle]);
-    expect(result.team[1].allMoves).toEqual([models.movesList.tackle]);
-    expect(result.team[1].forms.Snorlax.ability).toEqual(
-      models.abilities.intimidate,
-    );
-    expect(result.team.trainerInfo).toEqual({ format: 'Singles' });
+    expect(result.team.Bulbasaur.name).toBe('Bulbasaur');
+    expect(result.team.Bulbasaur.ID).toBe(1);
+    expect(result.team.Bulbasaur.ability).toEqual({
+      name: 'Overgrow',
+      description: '',
+      toggle: false,
+    });
+    expect(result.team.Bulbasaur.type1).toMatchObject({ name: 'Grass' });
+    expect(result.team.Bulbasaur.type2).toMatchObject({ name: 'Poison' });
+    expect(result.team.Bulbasaur.finalStats).toEqual({
+      HP: 21,
+      Atk: 11,
+      Def: 11,
+      SpA: 13,
+      SpD: 13,
+      Spe: 11,
+    });
+    expect(result.team.Bulbasaur.moveset.map((m) => m.name)).toEqual([
+      'Tackle',
+      'Growl',
+    ]);
+    expect(result.team.Bulbasaur.forms.Bulbasaur.formName).toBe('Bulbasaur');
   });
 
-  test('falls back to a name-only move object when a move is missing from the database', async () => {
+  test('labels the preview with the live first enemy trainer name', async () => {
     redis.get.mockResolvedValue(null);
     TeamRepository.loadAllTeams.mockResolvedValue({
-      Team1: asStoredTeam({
-        1: {
-          ...rawTeam[1],
-          moveset: ['nonexistentmove'],
-          allMoves: ['nonexistentmove'],
-        },
+      'Rival Gary - Pallet Town (Bulbasaur)': asStoredTeam({
+        Bulbasaur: { name: 'Bulbasaur' },
       }),
     });
 
     const result = await getHydratedEnemyPreview();
 
-    expect(result.team[1].moveset).toEqual([{ name: 'nonexistentmove' }]);
-  });
-
-  test('defaults missing statBoosts to zero for every stat', async () => {
-    redis.get.mockResolvedValue(null);
-    TeamRepository.loadAllTeams.mockResolvedValue({
-      Team1: asStoredTeam(rawTeam),
-    });
-
-    const result = await getHydratedEnemyPreview();
-
-    expect(result.team[1].statBoosts).toEqual({
-      Atk: 0,
-      Def: 0,
-      SpA: 0,
-      SpD: 0,
-      Spe: 0,
-    });
+    expect(result.team.trainerInfo.name).toBe(
+      'Rival Gary - Pallet Town (Bulbasaur)',
+    );
   });
 
   test('resolves a raw array team (per Assumption #3) without throwing', async () => {
@@ -162,12 +103,8 @@ describe('enemyPreviewService', () => {
 
     const result = await getHydratedEnemyPreview();
 
-    // The outer team is a plain array (not a TeamEntity), so buildEnemyPreview
-    // skips .toJSON() and passes it straight to resolveTeamSlots — which still
-    // walks and resolves each slot's Pokemon fields, same as for a dict-shaped
-    // team. Object.entries() on an array yields index-keyed entries.
     expect(result.teamName).toBe('LegacyTeam');
-    expect(result.team['0'].name).toBe('Ditto');
+    expect(result.team.Bulbasaur.name).toBe('Bulbasaur');
   });
 
   test('serves from Redis cache without touching TeamRepository when a cached value exists', async () => {
@@ -180,10 +117,10 @@ describe('enemyPreviewService', () => {
     expect(TeamRepository.loadAllTeams).not.toHaveBeenCalled();
   });
 
-  test('writes the hydrated result to Redis under the expected key on a cache miss', async () => {
+  test('writes the preview to Redis under the expected key on a cache miss', async () => {
     redis.get.mockResolvedValue(null);
     TeamRepository.loadAllTeams.mockResolvedValue({
-      Team1: asStoredTeam(rawTeam),
+      Team1: asStoredTeam({ Bulbasaur: { name: 'Bulbasaur' } }),
     });
 
     await getHydratedEnemyPreview();

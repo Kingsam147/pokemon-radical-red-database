@@ -136,9 +136,15 @@ if (require.main === module) {
     const logger = require('./infrastructure/logger/logger');
     const { SYSTEM_EVENTS } = require('./infrastructure/logger/events');
     init.then(() => {
-        logger.info(SYSTEM_EVENTS.DB_CONNECTED, { db: MONGODB_DB });
+        if (initFailed) {
+            console.error('[SERVER_DEGRADED] Initialisation failed — only /health will respond until restarted with valid database credentials.');
+        } else {
+            logger.info(SYSTEM_EVENTS.DB_CONNECTED, { db: MONGODB_DB });
+            console.log(`[DB_CONNECTED] db=${MONGODB_DB}`);
+        }
         app.listen(PORT, () => {
             logger.info(SYSTEM_EVENTS.SERVER_STARTED, { port: PORT, env: process.env.NODE_ENV });
+            console.log(`[SERVER_STARTED] port=${PORT} env=${process.env.NODE_ENV}`);
         });
     });
 }

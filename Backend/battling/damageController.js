@@ -9,6 +9,7 @@ const calculateDamage = (req, res) => {
       calculation: result,
     });
   } catch (error) {
+    if (error.status === 400) return res.status(400).json({ message: error.message });
     if (error.status === 404) return res.status(404).json({ message: error.message });
     return res.status(500).json({ message: 'Failed to calculate damage', error: error.message });
   }

@@ -140,7 +140,7 @@ const hydrate = (entity) => {
     gender,
     level,
     nature: natureName,
-    item,
+    item: item === '' ? 'None' : item,
     ability: activeAbility,
     abilities: [...new Set(possibleAbilities)],
     baseStats,
