@@ -183,7 +183,7 @@ export default function PokemonEditor({
 
     useEffect(() => {
         if (!pokemon) return;
-        runAllCalcs(player1Bench, player2Bench, p1Hazards, p2Hazards, activeEffects, abilityToggles, moveCrits, moveZPowered, setDamageResults, setCalcLoadingKeys)
+        runAllCalcs(player1Bench, player2Bench, p1Hazards, p2Hazards, activeEffects, battleMode as "singles" | "doubles", abilityToggles, moveCrits, moveZPowered, setDamageResults, setCalcLoadingKeys)
     }, [
         player1Bench[0]?.name, player2Bench[0]?.name,
         player1Bench[0]?.level, player2Bench[0]?.level,
@@ -197,9 +197,57 @@ export default function PokemonEditor({
         JSON.stringify(player1Bench[0]?.EVs), JSON.stringify(player2Bench[0]?.EVs),
         JSON.stringify(player1Bench[0]?.IVs), JSON.stringify(player2Bench[0]?.IVs),
         JSON.stringify(player1Bench[0]?.statBoosts), JSON.stringify(player2Bench[0]?.statBoosts),
-        JSON.stringify(player1Bench[0]?.moveset), JSON.stringify(player2Bench[0]?.moveset),
-        JSON.stringify({ moveCrits, moveZPowered, abilityToggles }),
+        JSON.stringify(abilityToggles),
         JSON.stringify(activeEffects), JSON.stringify(p1Hazards), JSON.stringify(p2Hazards),
+        battleMode,
+    ]);
+
+    const prevMoveStateRef = useRef<Record<"p1" | "p2", {
+        name?: string;
+        moveset?: PokemonMove[];
+        crits?: boolean[];
+        zPowered?: boolean[];
+    }>>({ p1: {}, p2: {} });
+
+    useEffect(() => {
+        if (!pokemon) return;
+
+        const recalcChangedMoves = (side: 1 | 2, current: Pokemon | null) => {
+            if (!current) return;
+            const sideKey = side === 1 ? "p1" : "p2";
+            const prev = prevMoveStateRef.current[sideKey];
+            const currentCrits = moveCrits[`p${side}-0`] ?? [];
+            const currentZPowered = moveZPowered[`p${side}-0`] ?? [];
+
+            if (prev.name === current.name && prev.moveset) {
+                current.moveset.forEach((move, idx) => {
+                    const movesetChanged = JSON.stringify(move) !== JSON.stringify(prev.moveset?.[idx]);
+                    const critChanged = (prev.crits?.[idx] ?? false) !== (currentCrits[idx] ?? false);
+                    const zChanged = (prev.zPowered?.[idx] ?? false) !== (currentZPowered[idx] ?? false);
+                    if (movesetChanged || critChanged || zChanged) {
+                        runCalc(
+                            side, 0, idx, current, player1Bench, player2Bench,
+                            p1Hazards, p2Hazards, activeEffects, battleMode as "singles" | "doubles",
+                            abilityToggles, moveCrits, moveZPowered, setDamageResults, setCalcLoadingKeys
+                        );
+                    }
+                });
+            }
+
+            prevMoveStateRef.current[sideKey] = {
+                name: current.name,
+                moveset: current.moveset,
+                crits: currentCrits,
+                zPowered: currentZPowered,
+            };
+        };
+
+        recalcChangedMoves(1, player1Bench[0]);
+        recalcChangedMoves(2, player2Bench[0]);
+    }, [
+        JSON.stringify(player1Bench[0]?.moveset), JSON.stringify(player2Bench[0]?.moveset),
+        JSON.stringify(moveCrits["p1-0"]), JSON.stringify(moveCrits["p2-0"]),
+        JSON.stringify(moveZPowered["p1-0"]), JSON.stringify(moveZPowered["p2-0"]),
     ]);
 
     if (!pokemon) return null;
@@ -347,8 +395,8 @@ export default function PokemonEditor({
                             <div className="pokemon-editor-pills-column">
                                 <span className="pokemon-editor-nature-pill">{pokemon.nature.name}</span>
                                 <span className="pokemon-editor-item-pill">
-                                    {pokemon.item.name}
-                                    <img className="pokemon-editor-item-pill-sprite" src={ITEM_SPRITE(pokemon.item.name)} alt={`${pokemon.item.name} icon`} />
+                                    {pokemon.item?.name ?? "None"}
+                                    <img className="pokemon-editor-item-pill-sprite" src={ITEM_SPRITE(pokemon.item?.name ?? "")} alt={`${pokemon.item?.name ?? "no item"} icon`} />
                                 </span>
                                 <span className="pokemon-editor-ability-pill">{pokemon.ability.name}</span>
                                 {player === 1 && isAuthenticated && teamName && sessionId && (
@@ -524,7 +572,7 @@ export default function PokemonEditor({
                                                 onClick={async () => {
                                                     const isSame = isSelected;
                                                     setSelectedMove(isSame ? null : { player, slot: slotIndex, moveIdx });
-                                                    await runCalc(player, slotIndex, moveIdx, pokemon, player1Bench, player2Bench, p1Hazards, p2Hazards, activeEffects, abilityToggles, moveCrits, moveZPowered, setDamageResults, setCalcLoadingKeys);
+                                                    await runCalc(player, slotIndex, moveIdx, pokemon, player1Bench, player2Bench, p1Hazards, p2Hazards, activeEffects, battleMode as "singles" | "doubles", abilityToggles, moveCrits, moveZPowered, setDamageResults, setCalcLoadingKeys);
                                                 }}
                                                 className={`pokemon-editor-move-button ${isSelected ? "pokemon-editor-move-button-selected" : `pokemon-editor-move-button-unselected ${accuracyClass}`}`}
                                             >
@@ -560,7 +608,7 @@ export default function PokemonEditor({
                                     </div>
                                     <div className="pokemon-editor-dropdown-grid">
                                         <Label className="pokemon-editor-item-label">Item:</Label>
-                                        <Select value={pokemon.item.name} onValueChange={(val) => { updatePokemonItem(player, slotIndex, val); immediatePatch({ item: val }); }}>
+                                        <Select value={pokemon.item?.name ?? "None"} onValueChange={(val) => { updatePokemonItem(player, slotIndex, val); immediatePatch({ item: val }); }}>
                                             <SelectTrigger className="pokemon-editor-item-trigger" title="Select Held Item">
                                                 <SelectValue placeholder="Select Item" />
                                             </SelectTrigger>
