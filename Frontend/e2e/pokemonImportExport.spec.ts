@@ -49,38 +49,3 @@ test.describe('Pokemon import via modal', () => {
     await expect(page.getByTestId('import-modal-textarea')).not.toBeVisible();
   });
 });
-
-test.describe('Pokemon export via Tools sidebar', () => {
-  test('Generate Export button is visible in Tools sidebar', async ({ page }) => {
-    await page.goto('/');
-    await page.waitForLoadState('networkidle');
-
-    const toolsButton = page.getByRole('button', { name: /tools/i });
-    await toolsButton.click();
-
-    await expect(page.getByTestId('export-button')).toBeVisible();
-  });
-
-  test('clicking Generate Export populates the export output area', async ({ page }) => {
-    await page.goto('/');
-    await page.waitForLoadState('networkidle');
-
-    const toolsButton = page.getByRole('button', { name: /tools/i });
-    await toolsButton.click();
-
-    await page.getByTestId('export-button').click();
-    const exportOutput = page.getByTestId('export-output');
-    await expect(exportOutput).toBeVisible();
-  });
-
-  test('export output textarea is readonly', async ({ page }) => {
-    await page.goto('/');
-    await page.waitForLoadState('networkidle');
-
-    const toolsButton = page.getByRole('button', { name: /tools/i });
-    await toolsButton.click();
-
-    const exportOutput = page.getByTestId('export-output');
-    await expect(exportOutput).toHaveAttribute('readonly', '');
-  });
-});

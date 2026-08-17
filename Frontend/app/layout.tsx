@@ -45,7 +45,7 @@ export default function RootLayout({
         </Auth0ProviderWrapper>
         <Toaster richColors position="top-right" />
         <Analytics />
-        {process.env.NEXT_PUBLIC_CF_ANALYTICS_TOKEN && (
+        {process.env.NODE_ENV === 'production' && process.env.NEXT_PUBLIC_CF_ANALYTICS_TOKEN && (
           <Script
             defer
             src="https://static.cloudflareinsights.com/beacon.min.js"

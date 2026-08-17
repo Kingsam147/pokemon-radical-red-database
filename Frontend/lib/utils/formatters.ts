@@ -32,8 +32,17 @@ export const formatPokemonForAPI = (pokemon: Pokemon) => ({
   abilityOn: pokemon.ability.toggle,
   status: pokemon.status,
   currentHP: pokemon.currentHp,
-  maxHP: pokemon.maxHp, 
-  gender: pokemon.gender
+  maxHP: pokemon.maxHp,
+  gender: pokemon.gender,
+  rawStats: {
+    hp: pokemon.baseStats.HP,
+    atk: pokemon.baseStats.Atk,
+    def: pokemon.baseStats.Def,
+    spa: pokemon.baseStats.SpA,
+    spd: pokemon.baseStats.SpD,
+    spe: pokemon.baseStats.Spe
+  },
+  types: pokemon.types.map(t => t.name)
 });
 
 export const getTypeColor = (type: PokemonType): string => {

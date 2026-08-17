@@ -455,18 +455,10 @@ export default function PokemonBattleSimulator() {
     }
   }
 
-  const handleExport = () => {
-    ui.setExportText(JSON.stringify({
-      player1Bench: bench.player1Bench,
-      player2Bench: bench.player2Bench,
-      notes: ui.notes,
-    }, null, 2))
-  }
-
-  const handleImportModal = async () => {
-    if (!ui.importModalText.trim()) return
+  const handleImportModal = async (text: string) => {
+    if (!text.trim()) return
     try {
-      const result = await addPokemon(String(boxManager.activeBoxIndex), ui.importModalText)
+      const result = await addPokemon(String(boxManager.activeBoxIndex), text)
       if (result.updatedBox) {
         const resolved = resolveSingleBox(
           result.updatedBox,
@@ -479,7 +471,6 @@ export default function PokemonBattleSimulator() {
           return updated
         })
       }
-      ui.setImportModalText("")
       ui.setImportModalOpen(false)
     } catch (err) {
       toast.error(`Import failed: ${err}`)
@@ -499,14 +490,6 @@ export default function PokemonBattleSimulator() {
       <ToolSidebar
         sidebarOpen={ui.sidebarOpen}
         setSidebarOpen={ui.setSidebarOpen}
-        sidebarView={ui.sidebarView}
-        setSidebarView={ui.setSidebarView}
-        activeBoxIndex={boxManager.activeBoxIndex}
-        updateActiveBox={boxManager.updateActiveBox}
-        importText={ui.importText}
-        setImportText={ui.setImportText}
-        exportText={ui.exportText}
-        handleExport={handleExport}
         notes={ui.notes}
         setNotes={ui.setNotes}
       />

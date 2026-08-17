@@ -24,44 +24,12 @@
   @apply text-xl font-bold;
 }
 
-.tool-sidebar-view-toggle {
-  @apply flex gap-2 mb-4;
-}
-
-.tool-sidebar-view-button {
-  @apply flex-1;
-}
-
 .tool-sidebar-content {
   @apply flex-1 overflow-auto;
 }
 
-.tool-sidebar-section {
-  @apply space-y-4;
-}
-
-.tool-sidebar-field {
-  @apply space-y-2;
-}
-
 .tool-sidebar-label {
   @apply text-sm font-semibold;
-}
-
-.tool-sidebar-clear-button {
-  @apply w-full;
-}
-
-.tool-sidebar-import-textarea {
-  @apply min-h-[150px];
-}
-
-.tool-sidebar-export-button {
-  @apply w-full mb-2;
-}
-
-.tool-sidebar-export-textarea {
-  @apply min-h-[150px];
 }
 
 .tool-sidebar-notes-field {

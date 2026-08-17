@@ -232,7 +232,7 @@ export default function TeamBench({
                 onDrop={() => onDropOnBench(player, index)}
                 className={getBenchSlotClass(index)}
               >
-                {pokemon && IS_MEGA_ITEM(pokemon.item.name) && (
+                {pokemon && IS_MEGA_ITEM(pokemon.item?.name ?? "") && (
                   <img
                     src={MEGA_SYMBOL}
                     alt="Mega Capable"
@@ -278,8 +278,8 @@ export default function TeamBench({
                       )}
                       <span className="team-bench-item-wrapper">
                         <Badge variant="outline" className="team-bench-item-badge">
-                          <img className="team-bench-item-sprite" src={ITEM_SPRITE(pokemon.item.name)} alt={`${pokemon.item.name} icon`} />
-                          {pokemon.item.name}
+                          <img className="team-bench-item-sprite" src={ITEM_SPRITE(pokemon.item?.name ?? "")} alt={`${pokemon.item?.name ?? "no item"} icon`} />
+                          {pokemon.item?.name ?? "None"}
                         </Badge>
                       </span>
                       {pokemon.status.name !== "Healthy" && (
