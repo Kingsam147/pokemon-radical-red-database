@@ -1,11 +1,22 @@
-import { pokemonPayload, Pokemon, PokemonStats, PokemonMove } from "@/lib/utils/types.ts";
+import { Pokemon, PokemonStats, PokemonMove, Nature } from "@/lib/utils/types.ts";
 import { formatPokemonForAPI } from "@/lib/utils/formatters.ts";
 
-// fetches from backend 
+// fetches from backend
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? '';
 
-async function fetchCalcStats(payload: pokemonPayload) {
+interface CalcStatsPayload {
+  pokemonData: {
+    baseStats: PokemonStats
+    EVs: PokemonStats
+    IVs: PokemonStats
+    nature: Nature
+    level: number
+    statBoosts?: Partial<PokemonStats>
+  }
+}
+
+async function fetchCalcStats(payload: CalcStatsPayload) {
   const res = await fetch(`${API_BASE}/misc/stats`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -136,7 +147,7 @@ export async function calcStats(pokemon: Pokemon): Promise<PokemonStats> {
     nature: pokemon.nature,
     level: pokemon.level,
     statBoosts: pokemon.statBoosts,
-  } as any });
+  } });
   return json.stats;
 }
 

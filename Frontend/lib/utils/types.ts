@@ -198,7 +198,18 @@ export interface Abilities {
 
 export interface PokemonMove {
   name: string,
-  [key: string]: any
+  basePower?: number,
+  type?: string,
+  category?: string,
+  accuracy?: number | null,
+  secondary?: unknown,
+  [key: string]: unknown
+}
+
+export interface DamageResult {
+  range: [string, string]
+  damage: number[]
+  description: string
 }
 
 export interface PokemonMoves {
@@ -265,6 +276,10 @@ export interface RawPokemon {
 
 export interface RawTeam {
   [key: string]: RawPokemon | TrainerInfo | null
+}
+
+export interface RawBox {
+  [key: string]: RawPokemon | null
 }
 
 export interface PokemonStatus {

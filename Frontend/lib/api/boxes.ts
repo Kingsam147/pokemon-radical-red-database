@@ -1,24 +1,16 @@
 import { pokemonPayload,
-  teamPayload,
-  PokemonType, 
   PokemonTypes,
-  Nature, 
-  Natures, 
-  Item, 
-  Items, 
-  Ability, 
+  Natures,
+  Items,
   Abilities,
-  PokemonStats, 
-  PokemonMove, 
+  PokemonStats,
+  PokemonMove,
   PokemonMoves,
-  PokemonForm, 
-  PokemonForms, 
-  Gender, 
-  PokemonStatus,
-  Pokemon, 
-  Teams, 
-  Box, 
-  TurnData, createPokemon} from "@/lib/utils/types.ts";
+  PokemonForm,
+  PokemonForms,
+  Box,
+  RawBox,
+  createPokemon} from "@/lib/utils/types.ts";
 
   import {POKEMON_SPRITES} from "@/lib/utils/sprites.ts";
 import apiClient from "@/lib/infrastructure/apiClient";
@@ -33,7 +25,7 @@ export async function fetchBoxCount(): Promise<number> {
   return res.data.count;
 }
 
-export async function fetchSingleBox(index: number): Promise<any> {
+export async function fetchSingleBox(index: number): Promise<RawBox> {
   const res = await apiClient.get(`/myBoxes/${index}`);
   return res.data.box;
 }
@@ -59,7 +51,7 @@ async function fetchAddToBox(boxIndex: string, payload: pokemonPayload) {
 }
 
 export function resolveSingleBox(
-  rawBox: any,
+  rawBox: RawBox,
   abilityList: Abilities,
   itemsList: Items,
   naturesList: Natures,
@@ -67,35 +59,36 @@ export function resolveSingleBox(
   typeList: PokemonTypes,
 ): Box {
   const newBox: Box = {};
-  for (const [key, pokemon] of Object.entries(rawBox) as [string, any][]) {
+  for (const [key, pokemon] of Object.entries(rawBox)) {
     if (!pokemon) continue;
     const resolvedItem = typeof pokemon.item === 'string' ? itemsList[pokemon.item] : pokemon.item;
     const resolvedAbility = typeof pokemon.ability === 'string' ? abilityList[pokemon.ability] : pokemon.ability;
-    const resolvedAbilities = pokemon.abilities.map((a: any) => typeof a === 'string' ? abilityList[a] : a);
-    const resolvedMoves = (pokemon.moveset as (string | PokemonMove)[]).map(m => typeof m === 'string' ? movesList[m.toLowerCase().replaceAll(/[^a-z0-9]/g, "")] : m);
-    const resolvedAllMoves = (pokemon.allMoves as (string | PokemonMove)[]).map(m => typeof m === 'string' ? movesList[m.toLowerCase().replaceAll(/[^a-z0-9]/g, "")] : m);
+    const resolvedAbilities = pokemon.abilities.map(a => typeof a === 'string' ? abilityList[a] : a);
+    const resolvedMoves = pokemon.moveset.map(m => typeof m === 'string' ? movesList[m.toLowerCase().replaceAll(/[^a-z0-9]/g, "")] : m);
+    const resolvedAllMoves = pokemon.allMoves.map(m => typeof m === 'string' ? movesList[m.toLowerCase().replaceAll(/[^a-z0-9]/g, "")] : m);
     const resolvedNature = typeof pokemon.nature === 'string' ? naturesList[pokemon.nature] : pokemon.nature;
     const resolvedType1 = typeof pokemon.type1 === 'string' ? typeList[pokemon.type1] : pokemon.type1;
     const resolvedType2 = typeof pokemon.type2 === 'string' ? typeList[pokemon.type2] : pokemon.type2;
-    const resolvedForm = typeof pokemon.form === 'string' ? pokemon.forms[pokemon.form] : pokemon.form;
+    const resolvedForm = (typeof pokemon.form === 'string' ? pokemon.forms[pokemon.form] : pokemon.form) as unknown as PokemonForm;
     const resolvedStatBoosts: Partial<PokemonStats> = pokemon.statBoosts || { Atk: 0, Def: 0, SpA: 0, SpD: 0, Spe: 0 };
 
-    for (const form of Object.values(pokemon.forms) as any[]) {
-      form.ability = typeof form.ability === 'string' ? abilityList[form.ability] : form.ability;
-      form.abilities = form.abilities.map((a: any) => typeof a === 'string' ? abilityList[a] : a);
-      form.allMoves = (form.allMoves as (string | PokemonMove)[]).map(m => typeof m === 'string' ? movesList[m.toLowerCase().replaceAll(/[^a-z0-9]/g, "")] : m);
-      form.type1 = typeof form.type1 === 'string' ? typeList[form.type1] : form.type1;
-      form.type2 = typeof form.type2 === 'string' ? typeList[form.type2] : form.type2;
+    for (const rawForm of Object.values(pokemon.forms)) {
+      const form = rawForm as unknown as PokemonForm;
+      form.ability = typeof rawForm.ability === 'string' ? abilityList[rawForm.ability] : rawForm.ability;
+      form.abilities = rawForm.abilities.map(a => typeof a === 'string' ? abilityList[a] : a);
+      form.allMoves = rawForm.allMoves.map(m => typeof m === 'string' ? movesList[m.toLowerCase().replaceAll(/[^a-z0-9]/g, "")] : m);
+      form.type1 = typeof rawForm.type1 === 'string' ? typeList[rawForm.type1] : rawForm.type1;
+      form.type2 = typeof rawForm.type2 === 'string' ? typeList[rawForm.type2] : rawForm.type2;
       form.types = form.type2 && form.type2.name !== "None" ? [form.type1, form.type2] : [form.type1];
       form.sprite = POKEMON_SPRITES(String(form.ID));
     }
 
     newBox[key] = createPokemon(
-      pokemon.name, String(pokemon.ID), POKEMON_SPRITES(pokemon.ID),
+      pokemon.name, String(pokemon.ID), POKEMON_SPRITES(String(pokemon.ID)),
       resolvedType1, resolvedType2, pokemon.level, resolvedNature, resolvedItem,
       resolvedAbility, resolvedAbilities, pokemon.baseStats, pokemon.EVs, pokemon.IVs,
       pokemon.finalStats.HP, pokemon.finalStats, resolvedMoves, resolvedAllMoves,
-      resolvedForm, pokemon.forms, pokemon.gender, pokemon.femaleSprite, resolvedStatBoosts
+      resolvedForm, pokemon.forms as unknown as PokemonForms, pokemon.gender, pokemon.femaleSprite, resolvedStatBoosts
     );
   }
   return newBox;
@@ -133,7 +126,6 @@ export async function loadMyBoxes(abilityList: Abilities, itemsList: Items, natu
       if (!pokemon) continue;
       const resolvedItem = typeof pokemon.item === 'string' ? itemsList[pokemon.item] : pokemon.item;
       const resolvedAbility = typeof pokemon.ability === 'string' ? abilityList[pokemon.ability] : pokemon.ability;
-      resolvedAbility
       const resolvedAbilities = pokemon.abilities.map(ability => typeof ability === 'string' ? abilityList[ability] : ability);
       const resolvedMoves = (pokemon.moveset as (string | PokemonMove)[]).map(move => typeof move === 'string' ? movesList[move.toLowerCase().replaceAll(/[^a-z0-9]/g, "")] : move)
       const resolvedAllMoves = (pokemon.allMoves as (string | PokemonMove)[]).map(move => typeof move === 'string' ? movesList[move.toLowerCase().replaceAll(/[^a-z0-9]/g, "")] : move)
@@ -187,7 +179,7 @@ export async function loadMyBoxes(abilityList: Abilities, itemsList: Items, natu
 }
 
 export function resolveBoxes(
-    rawBoxes: any[],
+    rawBoxes: RawBox[],
     abilityList: Abilities,
     itemsList: Items,
     naturesList: Natures,

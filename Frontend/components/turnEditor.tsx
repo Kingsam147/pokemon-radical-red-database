@@ -1,15 +1,20 @@
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { TurnData } from "@/lib/utils/types.ts"
+import { TurnData, Pokemon } from "@/lib/utils/types.ts"
 import TurnViewComponent from "@/components/turnView"
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs"
 import { useState } from "react"
 import "./turnEditor.css"
 
+type ActivePokemon = Pokemon | (Pokemon | null)[] | null
+
+const getCurrentHp = (active: ActivePokemon): number | undefined =>
+    Array.isArray(active) ? undefined : active?.currentHp
+
 type Props = {
     healTeam: () => void
-    player1Active: any
-    player2Active: any
+    player1Active: ActivePokemon
+    player2Active: ActivePokemon
 }
 
 export default function TurnEditor({ healTeam, player1Active, player2Active }: Props) {
@@ -27,8 +32,8 @@ export default function TurnEditor({ healTeam, player1Active, player2Active }: P
         const newTurnNumber = turns.length + 1
         const newTurn: TurnData = {
             turnNumber: newTurnNumber,
-            player1Hp: player1Active?.currentHp || 150,
-            player2Hp: player2Active?.currentHp || 150,
+            player1Hp: getCurrentHp(player1Active) || 150,
+            player2Hp: getCurrentHp(player2Active) || 150,
             action: "Turn added",
         }
         setTurns([...turns, newTurn])
@@ -36,9 +41,6 @@ export default function TurnEditor({ healTeam, player1Active, player2Active }: P
     }
 
     const TurnView = ({ turn }: { turn: TurnData }) => {
-        const p1Pokemon = { ...player1Active!, currentHp: turn.player1Hp }
-        const p2Pokemon = { ...player2Active!, currentHp: turn.player2Hp }
-
         return <TurnViewComponent turn={turn} />
     }
 

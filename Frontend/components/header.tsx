@@ -6,9 +6,9 @@ import { useAuth0 } from "@auth0/auth0-react"
 import "./header.css"
 
 type Props = {
-    battleMode: any
-    setBattleMode: (mode: any) => void
-    setSidebarOpen: (sidebar: any) => void
+    battleMode: "singles" | "doubles"
+    setBattleMode: (mode: "singles" | "doubles") => void
+    setSidebarOpen: (sidebar: boolean) => void
 }
 
 export default function Header({ battleMode, setBattleMode, setSidebarOpen }: Props) {

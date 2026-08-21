@@ -10,32 +10,18 @@ import { Button } from "@/components/ui/button"
 import { runCalc, runAllCalcs } from "@/lib/api/runCalcs"
 import EffectivenessTooltip from "@/components/PokemonEditor/typePopup";
 import {
-    pokemonPayload,
-    teamPayload,
-    PokemonType,
-    PokemonTypes,
-    Nature,
-    Natures,
-    Item,
-    Items,
-    Ability,
-    Abilities,
     PokemonStats,
     PokemonMove,
-    PokemonMoves,
-    PokemonForm,
-    PokemonForms,
+    Natures,
+    Items,
+    PokemonStatuses,
     Gender,
-    PokemonStatus,
     Pokemon,
-    Team,
-    Teams,
-    Box,
-    TurnData,
-    createPokemon,
-    TrainerInfo
+    Ability,
+    DamageResult,
 } from "@/lib/utils/types";
-import { ITEM_SPRITE, TYPE_SPRITES, POKEMON_SPRITES, FEMALE_POKEMON_SPRITES, IS_MEGA_ITEM, TYPE_ICONS, MEGA_SYMBOL } from "@/lib/utils/sprites";
+import { Hazards } from "@/lib/hooks/useBattleField";
+import { ITEM_SPRITE, TYPE_SPRITES, FEMALE_POKEMON_SPRITES, TYPE_ICONS } from "@/lib/utils/sprites";
 import { fetchTypeInteractions } from "@/lib/api/misc"
 import { useAuth0 } from "@auth0/auth0-react";
 import { activateSession, patchSession, saveSession } from "@/lib/api/session";
@@ -48,16 +34,16 @@ type Props = {
     battleMode: string
     doublesType: string
     teamName?: string
-    toggleHazard: any
-    p1Hazards: any
-    p2Hazards: any
+    toggleHazard: (player: 1 | 2, key: string) => void
+    p1Hazards: Hazards
+    p2Hazards: Hazards
     activeEffects: string[]
-    natureOptions: any
-    itemOptions: any
-    statusOptions: any
+    natureOptions: Natures
+    itemOptions: Items
+    statusOptions: PokemonStatuses
     player1Bench: (Pokemon | null)[]
     player2Bench: (Pokemon | null)[]
-    faintPokemon: any
+    faintPokemon: (player: 1 | 2, slotIndex: number) => void
 
     updatePokemonForm: (player: 1 | 2, slotIndex: number, newFormName: string) => void
     updatePokemonHp: (player: 1 | 2, slotIndex: number, hp: number) => void
@@ -87,14 +73,13 @@ export default function PokemonEditor({
     const { isAuthenticated } = useAuth0();
 
     const isDoubles = battleMode === "doubles"
-    const isTrueDoubles = doublesType === "True"
     const hazards = player === 1 ? p1Hazards : p2Hazards;
 
     const [moveCrits, setMoveCrits] = useState<Record<string, boolean[]>>({});
     const [moveZPowered, setMoveZPowered] = useState<Record<string, boolean[]>>({});
-    const [abilityToggles, setAbilityToggles] = useState<Record<string, boolean>>({});
-    const [selectedMove, setSelectedMove] = useState<{ player: Number, slot: Number, moveIdx: number } | null>(null)
-    const [damageResults, setDamageResults] = useState<Record<string, { range: [string, string], damage: number[], description: string } | null>>({});
+    const [abilityToggles] = useState<Record<string, boolean>>({});
+    const [selectedMove, setSelectedMove] = useState<{ player: number, slot: number, moveIdx: number } | null>(null)
+    const [damageResults, setDamageResults] = useState<Record<string, DamageResult | null>>({});
     const [calcLoadingKeys, setCalcLoadingKeys] = useState<Set<string>>(new Set());
 
     const [sessionId, setSessionId] = useState<string | null>(null);
@@ -136,6 +121,9 @@ export default function PokemonEditor({
         if (!isAuthenticated || !teamName || !pokemon || player !== 1) return;
 
         const newSessionId = crypto.randomUUID();
+        // newSessionId is a fresh random UUID generated for the session-activation call below,
+        // not a value derivable during render; it must be produced and stored here.
+        // eslint-disable-next-line react-hooks/set-state-in-effect
         setSessionId(newSessionId);
         setSaveStatus('idle');
 
@@ -553,9 +541,9 @@ export default function PokemonEditor({
                                         const isCalcLoading = calcLoadingKeys.has(resultKey);
                                         const isSelected = selectedMove?.player === player && selectedMove?.slot === slotIndex && selectedMove?.moveIdx === moveIdx;
 
-                                        const accuracyClass = isStatus ? "" : accuracy !== null && accuracy < 90
+                                        const accuracyClass = isStatus ? "" : accuracy != null && accuracy < 90
                                             ? "pokemon-editor-move-button-low-accuracy"
-                                            : accuracy !== null && accuracy < 100
+                                            : accuracy != null && accuracy < 100
                                                 ? "pokemon-editor-move-button-mid-accuracy"
                                                 : "";
                                         const moveNameClass = isStatus

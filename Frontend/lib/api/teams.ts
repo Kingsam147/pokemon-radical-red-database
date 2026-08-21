@@ -1,27 +1,23 @@
-import { pokemonPayload,
-  teamPayload,
+import { teamPayload,
   PokemonType,
   PokemonTypes,
-  Nature, 
-  Natures, 
-  Item, 
-  Items, 
-  Ability, 
+  Nature,
+  Natures,
+  Item,
+  Items,
+  Ability,
   Abilities,
-  PokemonStats, 
-  PokemonMove, 
+  PokemonStats,
+  PokemonMove,
   PokemonMoves,
-  PokemonForm, 
-  PokemonForms, 
-  Gender, 
-  PokemonStatus,
+  PokemonForm,
+  PokemonForms,
   Pokemon,
   Team,
   Teams,
   RawTeam,
-  TrainerInfo,
-  Box,
-  TurnData, createPokemon} from "@/lib/utils/types.ts";
+  RawPokemon,
+  TrainerInfo, createPokemon} from "@/lib/utils/types.ts";
 
 import { POKEMON_SPRITES } from "@/lib/utils/sprites.ts";
 import apiClient from "@/lib/infrastructure/apiClient";
@@ -78,35 +74,36 @@ export function resolveEnemyTeam(
       resolvedTeam[slotKey] = entry as TrainerInfo | null;
       continue;
     }
-    const p = entry as any;
+    const p = entry as RawPokemon;
 
     const resolvedItem: Item = typeof p.item === 'string' ? itemsList[p.item] : p.item;
     const resolvedAbility: Ability = typeof p.ability === 'string' ? abilityList[p.ability] : p.ability;
-    const resolvedAbilities: Ability[] = (p.abilities as any[]).map(a => typeof a === 'string' ? abilityList[a] : a);
+    const resolvedAbilities: Ability[] = p.abilities.map(a => typeof a === 'string' ? abilityList[a] : a);
     const resolvedNature: Nature = typeof p.nature === 'string' ? naturesList[p.nature] : p.nature;
-    const resolvedType1: PokemonType = typeof p.type1 === 'string' ? (typeList[p.type1] ?? typeList[p.type1]) : p.type1;
-    const resolvedType2: PokemonType = typeof p.type2 === 'string' ? (typeList[p.type2] ?? typeList[p.type2]) : p.type2;
-    const resolvedForm: PokemonForm = typeof p.form === 'string' ? p.forms[p.form] : p.form;
+    const resolvedType1: PokemonType = typeof p.type1 === 'string' ? typeList[p.type1] : p.type1;
+    const resolvedType2: PokemonType = typeof p.type2 === 'string' ? typeList[p.type2] : p.type2;
+    const resolvedForm = (typeof p.form === 'string' ? p.forms[p.form] : p.form) as unknown as PokemonForm;
     const resolvedStatBoosts: Partial<PokemonStats> = p.statBoosts || { Atk: 0, Def: 0, SpA: 0, SpD: 0, Spe: 0 };
-    const resolvedMoves: PokemonMove[] = (p.moveset as any[]).map(m => typeof m === 'string' ? (movesList[m.toLowerCase().replaceAll(/[^a-z0-9]/g, "")] ?? { name: m }) : m);
-    const resolvedAllMoves: PokemonMove[] = (p.allMoves as any[]).map(m => typeof m === 'string' ? (movesList[m.toLowerCase().replaceAll(/[^a-z0-9]/g, "")] ?? { name: m }) : m);
+    const resolvedMoves: PokemonMove[] = p.moveset.map(m => typeof m === 'string' ? (movesList[m.toLowerCase().replaceAll(/[^a-z0-9]/g, "")] ?? { name: m }) : m);
+    const resolvedAllMoves: PokemonMove[] = p.allMoves.map(m => typeof m === 'string' ? (movesList[m.toLowerCase().replaceAll(/[^a-z0-9]/g, "")] ?? { name: m }) : m);
 
     // Resolve each form
-    for (const form of Object.values(p.forms) as any[]) {
-      form.ability = typeof form.ability === 'string' ? abilityList[form.ability] : form.ability;
-      form.abilities = (form.abilities as any[]).map(a =>
+    for (const rawForm of Object.values(p.forms)) {
+      const form = rawForm as unknown as PokemonForm;
+      form.ability = typeof rawForm.ability === 'string' ? abilityList[rawForm.ability] : rawForm.ability;
+      form.abilities = rawForm.abilities.map(a =>
         typeof a === 'string' ? abilityList[a] : a
       );
 
-      form.allMoves = (form.allMoves as any[]).map(m => typeof m === 'string' ? (movesList[m.toLowerCase().replaceAll(/[^a-z0-9]/g, "")] ?? { name: m }) : m);
-      form.type1 = typeof form.type1 === 'string' ? (typeList[form.type1] ?? typeList[p.type1]) : form.type1;
-      form.type2 = typeof form.type2 === 'string' ? (typeList[form.type2] ?? typeList[p.type2]) : form.type2;
+      form.allMoves = rawForm.allMoves.map(m => typeof m === 'string' ? (movesList[m.toLowerCase().replaceAll(/[^a-z0-9]/g, "")] ?? { name: m }) : m);
+      form.type1 = typeof rawForm.type1 === 'string' ? typeList[rawForm.type1] : rawForm.type1;
+      form.type2 = typeof rawForm.type2 === 'string' ? typeList[rawForm.type2] : rawForm.type2;
     }
 
     resolvedTeam[slotKey] = createPokemon(
       p.name,
       String(p.ID),
-      POKEMON_SPRITES(p.ID), // already a full URL in the JSON
+      POKEMON_SPRITES(String(p.ID)), // already a full URL in the JSON
       resolvedType1,
       resolvedType2,
       p.level,
@@ -122,7 +119,7 @@ export function resolveEnemyTeam(
       resolvedMoves,
       resolvedAllMoves,
       resolvedForm,
-      p.forms,
+      p.forms as unknown as PokemonForms,
       p.gender,
       p.femaleSprite,
       resolvedStatBoosts
@@ -160,37 +157,38 @@ export async function loadMyTeams(
   const myTeamsJSON = await fetchAllTeams('1');
   const resolved: Record<string, (Pokemon | null)[]> = {};
 
-  for (const [teamName, bench] of Object.entries(myTeamsJSON.allTeams as Record<string, any[]>)) {
-    resolved[teamName] = bench.map((p: any) => {
+  for (const [teamName, bench] of Object.entries(myTeamsJSON.allTeams as Record<string, (RawPokemon | null)[]>)) {
+    resolved[teamName] = bench.map((p) => {
       if (!p) return null;
 
       const resolvedItem: Item = typeof p.item === 'string' ? itemsList[p.item] : p.item;
       const resolvedAbility: Ability = typeof p.ability === 'string' ? abilityList[p.ability] : p.ability;
-      const resolvedAbilities: Ability[] = (p.abilities as any[]).map(a => typeof a === 'string' ? abilityList[a] : a);
+      const resolvedAbilities: Ability[] = p.abilities.map(a => typeof a === 'string' ? abilityList[a] : a);
       const resolvedNature: Nature = typeof p.nature === 'string' ? naturesList[p.nature] : p.nature;
       const resolvedType1: PokemonType = typeof p.type1 === 'string' ? typeList[p.type1] : p.type1;
       const resolvedType2: PokemonType = typeof p.type2 === 'string' ? typeList[p.type2] : p.type2;
-      const resolvedForm: PokemonForm = typeof p.form === 'string' ? p.forms[p.form] : p.form;
+      const resolvedForm = (typeof p.form === 'string' ? p.forms[p.form] : p.form) as unknown as PokemonForm;
       const resolvedStatBoosts: Partial<PokemonStats> = p.statBoosts || { Atk: 0, Def: 0, SpA: 0, SpD: 0, Spe: 0 };
-      const resolvedMoves: PokemonMove[] = (p.moveset as any[]).map(m => typeof m === 'string' ? (movesList[m.toLowerCase().replaceAll(/[^a-z0-9]/g, '')] ?? { name: m }) : m);
-      const resolvedAllMoves: PokemonMove[] = (p.allMoves as any[]).map(m => typeof m === 'string' ? (movesList[m.toLowerCase().replaceAll(/[^a-z0-9]/g, '')] ?? { name: m }) : m);
+      const resolvedMoves: PokemonMove[] = p.moveset.map(m => typeof m === 'string' ? (movesList[m.toLowerCase().replaceAll(/[^a-z0-9]/g, '')] ?? { name: m }) : m);
+      const resolvedAllMoves: PokemonMove[] = p.allMoves.map(m => typeof m === 'string' ? (movesList[m.toLowerCase().replaceAll(/[^a-z0-9]/g, '')] ?? { name: m }) : m);
 
-      for (const form of Object.values(p.forms) as any[]) {
-        form.ability = typeof form.ability === 'string' ? abilityList[form.ability] : form.ability;
-        form.abilities = (form.abilities as any[]).map(a => typeof a === 'string' ? abilityList[a] : a);
-        form.allMoves = (form.allMoves as any[]).map(m => typeof m === 'string' ? (movesList[m.toLowerCase().replaceAll(/[^a-z0-9]/g, '')] ?? { name: m }) : m);
-        form.type1 = typeof form.type1 === 'string' ? typeList[form.type1] : form.type1;
-        form.type2 = typeof form.type2 === 'string' ? typeList[form.type2] : form.type2;
+      for (const rawForm of Object.values(p.forms)) {
+        const form = rawForm as unknown as PokemonForm;
+        form.ability = typeof rawForm.ability === 'string' ? abilityList[rawForm.ability] : rawForm.ability;
+        form.abilities = rawForm.abilities.map(a => typeof a === 'string' ? abilityList[a] : a);
+        form.allMoves = rawForm.allMoves.map(m => typeof m === 'string' ? (movesList[m.toLowerCase().replaceAll(/[^a-z0-9]/g, '')] ?? { name: m }) : m);
+        form.type1 = typeof rawForm.type1 === 'string' ? typeList[rawForm.type1] : rawForm.type1;
+        form.type2 = typeof rawForm.type2 === 'string' ? typeList[rawForm.type2] : rawForm.type2;
         form.types = form.type2 && form.type2.name !== 'None' ? [form.type1, form.type2] : [form.type1];
         form.sprite = POKEMON_SPRITES(String(form.ID));
       }
 
       return createPokemon(
-        p.name, String(p.ID), POKEMON_SPRITES(p.ID),
+        p.name, String(p.ID), POKEMON_SPRITES(String(p.ID)),
         resolvedType1, resolvedType2, p.level, resolvedNature, resolvedItem,
         resolvedAbility, resolvedAbilities, p.baseStats, p.EVs, p.IVs,
         p.finalStats.HP, p.finalStats, resolvedMoves, resolvedAllMoves,
-        resolvedForm, p.forms, p.gender, p.femaleSprite, resolvedStatBoosts
+        resolvedForm, p.forms as unknown as PokemonForms, p.gender, p.femaleSprite, resolvedStatBoosts
       );
     });
   }

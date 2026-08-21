@@ -1,6 +1,6 @@
 import { describe, test, expect } from "vitest"
 import { resolveSingleBox } from "@/lib/api/boxes"
-import type { Abilities, Items, Natures, PokemonMove, PokemonMoves, PokemonTypes, PokemonType } from "@/lib/utils/types"
+import type { Abilities, Items, Natures, PokemonMove, PokemonMoves, PokemonTypes, PokemonType, RawBox } from "@/lib/utils/types"
 
 // This raw shape mirrors exactly what the Backend actually sends: HydrationService.hydrate()
 // (Backend/pokemon/HydrationService.js) already resolves ability_id -> ability (a string) and
@@ -39,9 +39,9 @@ const typeList: PokemonTypes = {
   Fighting: buildType("Fighting"),
 }
 
-const rawBox = {
+const rawBox: RawBox = {
   Blaziken: {
-    name: "Blaziken", form: "Blaziken", ID: 257, sprite: "sprite-url", femaleSprite: "sprite-url",
+    name: "Blaziken", form: "Blaziken", ID: 257, sprite: "sprite-url", femaleSprite: false,
     type1: "Fire", type2: "Fighting", gender: "N", level: 50, nature: "Jolly", item: "Wide Lens",
     ability: "Speed Boost", abilities: ["Blaze", "Speed Boost"],
     baseStats: { HP: 80, Atk: 120, Def: 70, SpA: 110, SpD: 70, Spe: 80 },
@@ -60,7 +60,6 @@ const rawBox = {
         allMoves: ["Blaze Kick", "Detect"],
       },
     },
-    version: 0,
   },
 }
 

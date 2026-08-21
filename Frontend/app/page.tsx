@@ -1,7 +1,7 @@
 "use client"
 
 import { useEffect, useRef, useState } from "react"
-import { Pokemon, Teams, Box, TrainerInfo } from "@/lib/utils/types.ts"
+import { Pokemon, Teams, Box, TrainerInfo, Abilities, Items, Natures, PokemonMoves, PokemonTypes, PokemonStatuses } from "@/lib/utils/types.ts"
 import { addPokemon, fetchBoxCount, loadSingleBox, resolveSingleBox } from "@/lib/api/boxes"
 import { MOVES_OPTIONS, ABILITY_OPTIONS, ITEMS_OPTIONS, NATURE_OPTIONS, TYPE_OPTIONS, STATUS_OPTIONS, MISC_VERSION } from "@/lib/api/misc"
 import { loadMyTeams, loadEnemyTeams, removeTeam, saveFullTeam } from "@/lib/api/teams"
@@ -56,12 +56,12 @@ export default function PokemonBattleSimulator() {
 
     async function loadInitialData() {
       try {
-        let abilityList: any
-        let itemsList: any
-        let naturesList: any
-        let movesList: any
-        let typesList: any
-        let statusList: any
+        let abilityList: Abilities
+        let itemsList: Items
+        let naturesList: Natures
+        let movesList: PokemonMoves
+        let typesList: PokemonTypes
+        let statusList: PokemonStatuses
 
         const version = await MISC_VERSION().catch(() => null)
         const cached = version ? readMiscCache(version) : null
@@ -203,7 +203,11 @@ export default function PokemonBattleSimulator() {
       const trainerInfo = teams.p2OriginalTeams[teamName].trainerInfo as TrainerInfo
       if (trainerInfo && trainerInfo.format === "Doubles") {
         field.setBattleMode("doubles")
-        trainerInfo.partner !== "True" ? field.setDoublesType("Partner") : field.setDoublesType("True")
+        if (trainerInfo.partner !== "True") {
+          field.setDoublesType("Partner")
+        } else {
+          field.setDoublesType("True")
+        }
       } else {
         field.setBattleMode("singles")
         field.setDoublesType("None")
@@ -272,7 +276,11 @@ export default function PokemonBattleSimulator() {
     const trainerInfo = originalTeam.trainerInfo as TrainerInfo
     if (trainerInfo && trainerInfo.format === "Doubles") {
       field.setBattleMode("doubles")
-      trainerInfo.partner !== "True" ? field.setDoublesType("Partner") : field.setDoublesType("True")
+      if (trainerInfo.partner !== "True") {
+        field.setDoublesType("Partner")
+      } else {
+        field.setDoublesType("True")
+      }
     } else {
       field.setBattleMode("singles")
       field.setDoublesType("None")
@@ -423,7 +431,7 @@ export default function PokemonBattleSimulator() {
         const existingBox = updated[boxIdx]
         if (!existingBox) return prev
         const newBox = { ...existingBox };
-        (newBox as any)[boxKey] = null
+        newBox[boxKey] = null
         updated[boxIdx] = newBox
         return updated
       })

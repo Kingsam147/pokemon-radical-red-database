@@ -1,3 +1,4 @@
+import axios from "axios"
 import { Team, RawTeam } from "@/lib/utils/types.ts"
 import { resolveEnemyTeam } from "@/lib/api/teams"
 import apiClient from "@/lib/infrastructure/apiClient"
@@ -9,8 +10,8 @@ async function fetchEnemyPreview(): Promise<{
   try {
     const res = await apiClient.get("/public/enemy-preview")
     return res.data
-  } catch (err: any) {
-    if (err?.response?.status === 404) return null
+  } catch (err) {
+    if (axios.isAxiosError(err) && err.response?.status === 404) return null
     throw err
   }
 }
