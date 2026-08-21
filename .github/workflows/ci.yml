@@ -148,7 +148,7 @@ jobs:
 
       - name: Install Playwright browsers
         working-directory: Frontend
-        run: npx playwright install --with-deps chromium
+        run: pnpm exec playwright install --with-deps chromium
 
       - name: Build Frontend
         working-directory: Frontend
@@ -183,7 +183,7 @@ jobs:
 
       - name: Run E2E tests
         working-directory: Frontend
-        run: npx playwright test
+        run: pnpm exec playwright test
         env:
           PLAYWRIGHT_BASE_URL: http://localhost:3000
           AUTH0_TEST_USERNAME: ${{ secrets.AUTH0_TEST_USERNAME }}
