@@ -222,25 +222,3 @@ jobs:
           tags: |
             ghcr.io/${{ github.repository }}:latest
             ghcr.io/${{ github.repository }}:${{ github.sha }}
-
-  claude-review:
-    runs-on: ubuntu-latest
-    continue-on-error: true
-    if: |
-      (github.event_name == 'issue_comment' && contains(github.event.comment.body, '@claude')) ||
-      (github.event_name == 'pull_request_review_comment' && contains(github.event.comment.body, '@claude')) ||
-      github.event_name == 'pull_request'
-    steps:
-      - uses: actions/checkout@v4
-
-      - uses: anthropics/claude-code-action@v1
-        with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          prompt: |
-            Review this PR against the project CLAUDE.md standards. Check for:
-            - Bugs and logic errors
-            - Security vulnerabilities
-            - Redis cache usage correctness
-            - Docker configuration issues
-            - Naming conventions and code style violations
-          claude_args: '--max-turns 5'
