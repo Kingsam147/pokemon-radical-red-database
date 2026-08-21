@@ -16,10 +16,13 @@ const mongoose = require("mongoose");
 const jwtCheck = require('./identity/jwtCheck');
 const resolveIdentity = require('./identity/resolveIdentity');
 const redis = require('./infrastructure/redis/redisClient');
+const rateLimiter = require('./infrastructure/rateLimit/rateLimiter');
 
-// Fire the Redis connection attempt immediately, independent of Mongo, so the
-// rate limiter (required below once this settles) never races an unconnected client.
-const redisReady = redis.connect();
+// Fire the Redis connection attempt immediately, independent of Mongo, so rate
+// limiting is enforced as soon as possible. redisClient.sendCommand checks the
+// connection state lazily per-request, so registering the limiter below doesn't
+// need to wait on this settling.
+redis.connect();
 
 const PORT = process.env.PORT || 3500;
 const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/pokemonDB';
@@ -40,59 +43,45 @@ app.use(cors({
 app.use(cookieParser(process.env.GUEST_COOKIE_SECRET));
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
+app.use(rateLimiter.globalLimiter);
 
 let ready = false;
 let initFailed = false;
 const pendingReqs = [];
-let calcLimiter, guestInitLimiter;
 
-// globalLimiter, the /health route, and the init-gate must register in this
-// relative order (limiter before gate) so queued pre-ready requests still pass
-// through rate limiting once drained — so they wait on the same Redis settle.
-const rateLimitersReady = redisReady.then(() => {
-    const rateLimiter = require('./infrastructure/rateLimit/rateLimiter');
-    calcLimiter = rateLimiter.calcLimiter;
-    guestInitLimiter = rateLimiter.guestInitLimiter;
+app.get('/health', (_req, res) => res.json({ ok: true, ready }));
 
-    app.use(rateLimiter.globalLimiter);
-
-    app.get('/health', (_req, res) => res.json({ ok: true, ready }));
-
-    app.use((_req, _res, next) => {
-        if (ready) return next();
-        if (initFailed) return next(Object.assign(new Error('Service unavailable — initialisation failed'), { status: 503 }));
-        pendingReqs.push(next);
-    });
-
-    return setTimeout(() => {
-        if (!ready && pendingReqs.length > 0) {
-            initFailed = true;
-            const timeoutError = Object.assign(new Error('Service unavailable — initialisation timed out'), { status: 503 });
-            pendingReqs.splice(0).forEach(next => next(timeoutError));
-            console.error('[DB_INIT_TIMEOUT] Drained pending requests after 15s');
-        }
-    }, 15000);
+app.use((_req, _res, next) => {
+    if (ready) return next();
+    if (initFailed) return next(Object.assign(new Error('Service unavailable — initialisation failed'), { status: 503 }));
+    pendingReqs.push(next);
 });
 
-const init = Promise.all([
-    mongoose.connect(MONGODB_URI, {
-        dbName: MONGODB_DB,
-        serverSelectionTimeoutMS: 10000,
-        connectTimeoutMS: 10000,
-        socketTimeoutMS: 10000,
-    }),
-    rateLimitersReady,
-])
-.then(async ([, initTimeoutId]) => {
+const initTimeoutId = setTimeout(() => {
+    if (!ready && pendingReqs.length > 0) {
+        initFailed = true;
+        const timeoutError = Object.assign(new Error('Service unavailable — initialisation timed out'), { status: 503 });
+        pendingReqs.splice(0).forEach(next => next(timeoutError));
+        console.error('[DB_INIT_TIMEOUT] Drained pending requests after 15s');
+    }
+}, 15000);
+
+const init = mongoose.connect(MONGODB_URI, {
+    dbName: MONGODB_DB,
+    serverSelectionTimeoutMS: 10000,
+    connectTimeoutMS: 10000,
+    socketTimeoutMS: 10000,
+})
+.then(async () => {
     const { loadModels } = require('./game-data/loadModels');
     const HydrationService = require('./pokemon/HydrationService');
     await loadModels();
     HydrationService.load();
 
-    app.use('/misc/damage', calcLimiter);
+    app.use('/misc/damage', rateLimiter.calcLimiter);
     app.use('/misc', require('./Routes/miscRoutes'));
     app.use('/public', require('./Routes/publicRoutes'));
-    app.use('/api/guest/init', guestInitLimiter);
+    app.use('/api/guest/init', rateLimiter.guestInitLimiter);
     app.use('/api/guest', require('./interfaces/routes/guestRoutes'));
     app.use('/api/auth', jwtCheck, require('./interfaces/routes/authRoutes'));
     app.use('/api/pokemon', jwtCheck, require('./interfaces/routes/pokemonSessionRoutes'));
