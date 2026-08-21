@@ -142,6 +142,13 @@ jobs:
         working-directory: Backend
         run: npm ci
 
+      - name: Seed reference data
+        working-directory: Backend
+        run: node game-data/seed/seedTestData.js
+        env:
+          MONGODB_URI: mongodb://localhost:27017/pokemon_test
+          MONGODB_DB: Radical-Red-Database
+
       - name: Install Frontend dependencies
         working-directory: Frontend
         run: pnpm install --frozen-lockfile
