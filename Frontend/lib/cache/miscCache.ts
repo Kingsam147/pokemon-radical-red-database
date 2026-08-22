@@ -1,13 +1,15 @@
+import { Abilities, Items, Natures, PokemonMoves, PokemonTypes, PokemonStatuses } from "@/lib/utils/types.ts";
+
 const VERSION_KEY = 'misc-version';
 const DATA_KEY = 'misc-data';
 
 type MiscData = {
-  abilities: any;
-  items: any;
-  natures: any;
-  moves: any;
-  types: any;
-  statuses: any;
+  abilities: Abilities;
+  items: Items;
+  natures: Natures;
+  moves: PokemonMoves;
+  types: PokemonTypes;
+  statuses: PokemonStatuses;
 };
 
 export const readMiscCache = (version: string): MiscData | null => {

@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const { initGuest } = require('../controllers/GuestController');
+const { initGuest } = require('../../identity/GuestController');
 
 router.get('/init', initGuest);
 

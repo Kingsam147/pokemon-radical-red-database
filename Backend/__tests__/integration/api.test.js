@@ -5,33 +5,15 @@ const cookieParser = require('cookie-parser');
 const request = require('supertest');
 const cookieSignature = require('cookie-signature');
 
-// mockDb is accessible inside the jest.mock factory (name starts with mock — Jest allows it)
-const mockDb = { ref: null };
-
-jest.mock('../../Config/mongodbOptions', () => ({
-  get db() { return mockDb.ref; },
-  fetchModels: jest.fn(),
+jest.mock('../../infrastructure/logger/logger', () => ({
+  info: jest.fn(), warn: jest.fn(), error: jest.fn(),
+  security: jest.fn(), setUser: jest.fn(), clearUser: jest.fn(),
 }));
 
-jest.mock('@sentry/node', () => ({
-  init: jest.fn(),
-  setupExpressErrorHandler: jest.fn(),
-  addBreadcrumb: jest.fn(),
-  captureEvent: jest.fn(),
-  captureException: jest.fn(),
-  setUser: jest.fn(),
-  withScope: jest.fn(),
-}));
-
-jest.mock('../../Services/pokemonService', () => ({
-  createPokemon: jest.fn((text) => ({ name: text.split('\n')[0].trim().split('@')[0].trim() })),
-  hasDuplicate: jest.fn(() => false),
-}));
-
-jest.mock('../../Services/formService', () => ({
-  checkMega: jest.fn(() => false),
-  addMega: jest.fn((text) => ({ name: text.split('\n')[0].trim().split('@')[0].trim() })),
-}));
+// Never exercised (no test sends an Authorization: Bearer header), but resolveIdentity
+// requires it at module load — mocked so requiring it doesn't reach the real Auth0 SDK
+// setup, which needs AUTH0_AUDIENCE / AUTH0_ISSUER_BASE_URL to be configured.
+jest.mock('../../identity/jwtCheck', () => jest.fn());
 
 const signGuestCookie = (guestId) => {
   const signed = 's:' + cookieSignature.sign(guestId, 'test-secret');
@@ -42,58 +24,19 @@ let mongoServer;
 let mongoClient;
 let app;
 
-// Simple in-process stores so tests don't rely on the real jsonOptions DB calls
-const boxStore = {};
-const teamStore = {};
-
+// Routers pull in boxControllers/teamControllers, which pull in BoxRepository/TeamRepository,
+// which destructure `db` from Config/mongodbOptions at require time — so these must be
+// required only after jest.doMock('../../Config/mongodbOptions', ...) below has taken effect.
 const buildApp = () => {
-  const jsonOptions = require('../../Config/jsonOptions');
-
-  jsonOptions.loadMyBoxes = async (userId) => boxStore[userId] ?? [];
-  jsonOptions.saveMyBoxes = async (userId, boxes) => { boxStore[userId] = boxes; };
-  jsonOptions.getCachedBoxCount = async () => null;
-  jsonOptions.setBoxCountCache = async () => {};
-  jsonOptions.invalidateBoxCountCache = async () => {};
-  jsonOptions.preWarmBoxCache = async () => {};
-  jsonOptions.loadTeams = async (player, userId) => teamStore[`${player}:${userId}`] ?? {};
-  jsonOptions.saveTeams = async (player, userId, teams) => { teamStore[`${player}:${userId}`] = teams; };
-  jsonOptions.findTeam = async (player, teamName, userId) => {
-    const teams = teamStore[`${player}:${userId}`] ?? {};
-    if (!(teamName in teams)) throw new Error(`can't find ${teamName}`);
-    return teams[teamName];
-  };
-
-  const myBoxControllers = require('../../Controllers/myBoxControllers');
-  const teamControllers = require('../../Controllers/teamControllers');
+  const resolveIdentity = require('../../identity/resolveIdentity');
+  const myBoxRoutes = require('../../Routes/myBoxRoutes');
+  const teamRoutes = require('../../Routes/teamRoutes');
 
   const application = express();
   application.use(express.json());
   application.use(cookieParser('test-secret'));
-
-  application.use((req, _res, next) => {
-    const guestId = req.signedCookies?.guest_id;
-    if (guestId) {
-      req.userId = guestId;
-      req.isGuest = true;
-    }
-    next();
-  });
-
-  const authMiddleware = (req, res, next) => {
-    if (!req.userId) return res.status(401).json({ message: 'Authentication required' });
-    next();
-  };
-
-  application.get('/myBoxes', authMiddleware, myBoxControllers.getAllMyBoxes);
-  application.get('/myBoxes/count', authMiddleware, myBoxControllers.getBoxCount);
-  application.post('/myBoxes', authMiddleware, myBoxControllers.addBox);
-  application.post('/myBoxes/:index', authMiddleware, myBoxControllers.addToBox);
-  application.delete('/myBoxes/:index/:pokemonName', authMiddleware, myBoxControllers.deleteInBox);
-
-  application.get('/teams/:player', authMiddleware, teamControllers.getAllTeams);
-  application.post('/teams/:player', authMiddleware, teamControllers.addTeam);
-  application.delete('/teams/:player/:teamName', authMiddleware, teamControllers.removeTeam);
-  application.put('/teams/:player/:teamName', authMiddleware, teamControllers.saveFullTeam);
+  application.use('/myBoxes', resolveIdentity, myBoxRoutes);
+  application.use('/teams', resolveIdentity, teamRoutes);
 
   application.use((err, _req, res, _next) => {
     res.status(err.status || 500).json({ message: err.message });
@@ -106,7 +49,10 @@ beforeAll(async () => {
   mongoServer = await MongoMemoryServer.create();
   mongoClient = new MongoClient(mongoServer.getUri());
   await mongoClient.connect();
-  mockDb.ref = mongoClient.db('test');
+  jest.doMock('../../Config/mongodbOptions', () => ({
+    db: mongoClient.db('test'),
+    fetchModels: jest.fn(),
+  }));
   app = buildApp();
 });
 

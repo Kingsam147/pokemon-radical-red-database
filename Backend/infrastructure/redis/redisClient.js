@@ -5,7 +5,8 @@ let available = false;
 
 const connect = () => {
   const url = process.env.REDIS_URL;
-  if (!url) return;
+  if (!url) return Promise.resolve();
+  if (client) return Promise.resolve();
 
   client = new Redis(url, {
     lazyConnect: true,
@@ -19,7 +20,7 @@ const connect = () => {
     available = false;
   });
 
-  client.connect()
+  return client.connect()
     .then(() => { available = true; })
     .catch(() => { available = false; });
 };

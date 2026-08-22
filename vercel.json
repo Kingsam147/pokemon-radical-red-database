@@ -13,6 +13,7 @@
     { "src": "/activePokemon(.*)", "dest": "Backend/server.js" },
     { "src": "/myBoxes(.*)", "dest": "Backend/server.js" },
     { "src": "/teams(.*)", "dest": "Backend/server.js" },
+    { "src": "/public(.*)", "dest": "Backend/server.js" },
     { "src": "/misc(.*)", "dest": "Backend/server.js" },
     { "src": "/health", "dest": "Backend/server.js" },
     { "src": "/(.*)", "dest": "Frontend/$1" }

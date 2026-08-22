@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const { migrate } = require('../controllers/AuthController');
+const { migrate } = require('../../identity/AuthController');
 
 router.post('/migrate', migrate);
 

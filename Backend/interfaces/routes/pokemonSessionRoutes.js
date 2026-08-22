@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const { activate, patchDraft, saveDraft } = require('../controllers/PokemonSessionController');
+const { activate, patchDraft, saveDraft } = require('../../editor/PokemonSessionController');
 
 router.post('/activate', activate);
 router.patch('/draft/:sessionId', patchDraft);

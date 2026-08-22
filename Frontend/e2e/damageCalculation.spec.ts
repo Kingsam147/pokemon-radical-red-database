@@ -2,21 +2,32 @@ import { test, expect } from '@playwright/test';
 
 test.describe('Damage calculation accuracy', () => {
   test('damage calculator page loads without errors', async ({ page }) => {
-    const errors: string[] = [];
+    const errors: { text: string; url: string }[] = [];
     page.on('console', (msg) => {
-      if (msg.type() === 'error') errors.push(msg.text());
+      if (msg.type() === 'error') errors.push({ text: msg.text(), url: msg.location().url });
     });
 
     await page.goto('/');
     await page.waitForLoadState('networkidle');
 
-    // Filter out known non-critical errors (e.g. auth redirects, missing assets)
+    // Filter out known non-critical errors (e.g. auth redirects, missing assets).
+    // "Failed to load resource" console messages don't include the failing URL in
+    // their text — it's only available via msg.location().url — so both need
+    // checking to catch the Vercel/Cloudflare analytics scripts that only work on
+    // a real deployed domain, not localhost/CI.
+    // /public/enemy-preview 404s when no enemy teams are seeded yet — a valid,
+    // expected state (see enemy-preview-fast-path.spec.ts and
+    // enemyPreviewService.test.js), not a page error.
     const criticalErrors = errors.filter(e =>
-      !e.includes('401') &&
-      !e.includes('favicon') &&
-      !e.includes('ERR_ABORTED')
+      !e.text.includes('401') &&
+      !e.text.includes('favicon') &&
+      !e.text.includes('ERR_ABORTED') &&
+      !e.text.includes('cloudflareinsights.com') &&
+      !e.url.includes('cloudflareinsights.com') &&
+      !e.url.includes('_vercel/insights') &&
+      !e.url.includes('/public/enemy-preview')
     );
-    expect(criticalErrors).toHaveLength(0);
+    expect(criticalErrors.map(e => e.text)).toHaveLength(0);
   });
 
   test('turn editor section is present on page', async ({ page }) => {
@@ -34,7 +45,7 @@ test.describe('Damage calculation accuracy', () => {
 
     // Weather/terrain controls should be present somewhere in the page
     const pageContent = await page.content();
-    expect(pageContent).toContain('weather');
+    expect(pageContent).toContain('Sun');
   });
 
   test('POST /misc/damage endpoint is reachable from client', async ({ page }) => {

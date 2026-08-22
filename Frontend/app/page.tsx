@@ -1,10 +1,11 @@
 "use client"
 
-import { useEffect, useState } from "react"
-import { Pokemon, Teams, Box, TrainerInfo } from "@/lib/utils/types.ts"
+import { useEffect, useRef, useState } from "react"
+import { Pokemon, Teams, Box, TrainerInfo, Abilities, Items, Natures, PokemonMoves, PokemonTypes, PokemonStatuses } from "@/lib/utils/types.ts"
 import { addPokemon, fetchBoxCount, loadSingleBox, resolveSingleBox } from "@/lib/api/boxes"
 import { MOVES_OPTIONS, ABILITY_OPTIONS, ITEMS_OPTIONS, NATURE_OPTIONS, TYPE_OPTIONS, STATUS_OPTIONS, MISC_VERSION } from "@/lib/api/misc"
 import { loadMyTeams, loadEnemyTeams, removeTeam, saveFullTeam } from "@/lib/api/teams"
+import { loadEnemyPreview } from "@/lib/api/enemyPreview"
 import { readMiscCache, writeMiscCache } from "@/lib/cache/miscCache"
 import { useAuth0 } from "@auth0/auth0-react"
 import { toast } from "sonner"
@@ -29,6 +30,8 @@ import { useUIState } from "@/lib/hooks/useUIState"
 export default function PokemonBattleSimulator() {
   const { isAuthenticated, isLoading } = useAuth0()
   const [isInitializing, setIsInitializing] = useState(true)
+  const [isP2Loading, setIsP2Loading] = useState(true)
+  const fullPipelineDoneRef = useRef(false)
 
   const options = useBattleOptions()
   const boxManager = useBoxManager({
@@ -53,12 +56,12 @@ export default function PokemonBattleSimulator() {
 
     async function loadInitialData() {
       try {
-        let abilityList: any
-        let itemsList: any
-        let naturesList: any
-        let movesList: any
-        let typesList: any
-        let statusList: any
+        let abilityList: Abilities
+        let itemsList: Items
+        let naturesList: Natures
+        let movesList: PokemonMoves
+        let typesList: PokemonTypes
+        let statusList: PokemonStatuses
 
         const version = await MISC_VERSION().catch(() => null)
         const cached = version ? readMiscCache(version) : null
@@ -137,6 +140,8 @@ export default function PokemonBattleSimulator() {
           slots.forEach((p, i) => { initialBench[i] = p })
           bench.setPlayer2Bench(initialBench)
         }
+        fullPipelineDoneRef.current = true
+        setIsP2Loading(false)
       } catch (err) {
         toast.error(`Failed to load data: ${err}`)
       } finally {
@@ -152,6 +157,26 @@ export default function PokemonBattleSimulator() {
       }
       await loadInitialData()
     }
+
+    // Fast path: the first enemy trainer is pre-hydrated and edge-cached,
+    // so it can render immediately without waiting on guest-init or misc data.
+    loadEnemyPreview()
+      .then((preview) => {
+        if (!preview || fullPipelineDoneRef.current) return
+        teams.setP2Teams((prev) => ({
+          ...prev,
+          [preview.teamName]: preview.team,
+        }))
+        teams.setP2SelectedTeamIndex(preview.teamName)
+        const slots = Object.entries(preview.team)
+          .filter(([k, v]) => k !== "trainerInfo" && v !== null)
+          .map(([_, v]) => v as Pokemon)
+        const initialBench: (Pokemon | null)[] = Array(6).fill(null)
+        slots.forEach((p, i) => { initialBench[i] = p })
+        bench.setPlayer2Bench(initialBench)
+        setIsP2Loading(false)
+      })
+      .catch(() => {}) // fast path is best-effort — the full pipeline below is authoritative
 
     run()
   }, [isLoading, isAuthenticated])
@@ -178,7 +203,11 @@ export default function PokemonBattleSimulator() {
       const trainerInfo = teams.p2OriginalTeams[teamName].trainerInfo as TrainerInfo
       if (trainerInfo && trainerInfo.format === "Doubles") {
         field.setBattleMode("doubles")
-        trainerInfo.partner !== "True" ? field.setDoublesType("Partner") : field.setDoublesType("True")
+        if (trainerInfo.partner !== "True") {
+          field.setDoublesType("Partner")
+        } else {
+          field.setDoublesType("True")
+        }
       } else {
         field.setBattleMode("singles")
         field.setDoublesType("None")
@@ -247,7 +276,11 @@ export default function PokemonBattleSimulator() {
     const trainerInfo = originalTeam.trainerInfo as TrainerInfo
     if (trainerInfo && trainerInfo.format === "Doubles") {
       field.setBattleMode("doubles")
-      trainerInfo.partner !== "True" ? field.setDoublesType("Partner") : field.setDoublesType("True")
+      if (trainerInfo.partner !== "True") {
+        field.setDoublesType("Partner")
+      } else {
+        field.setDoublesType("True")
+      }
     } else {
       field.setBattleMode("singles")
       field.setDoublesType("None")
@@ -398,7 +431,7 @@ export default function PokemonBattleSimulator() {
         const existingBox = updated[boxIdx]
         if (!existingBox) return prev
         const newBox = { ...existingBox };
-        (newBox as any)[boxKey] = null
+        newBox[boxKey] = null
         updated[boxIdx] = newBox
         return updated
       })
@@ -430,18 +463,10 @@ export default function PokemonBattleSimulator() {
     }
   }
 
-  const handleExport = () => {
-    ui.setExportText(JSON.stringify({
-      player1Bench: bench.player1Bench,
-      player2Bench: bench.player2Bench,
-      notes: ui.notes,
-    }, null, 2))
-  }
-
-  const handleImportModal = async () => {
-    if (!ui.importModalText.trim()) return
+  const handleImportModal = async (text: string) => {
+    if (!text.trim()) return
     try {
-      const result = await addPokemon(String(boxManager.activeBoxIndex), ui.importModalText)
+      const result = await addPokemon(String(boxManager.activeBoxIndex), text)
       if (result.updatedBox) {
         const resolved = resolveSingleBox(
           result.updatedBox,
@@ -454,7 +479,6 @@ export default function PokemonBattleSimulator() {
           return updated
         })
       }
-      ui.setImportModalText("")
       ui.setImportModalOpen(false)
     } catch (err) {
       toast.error(`Import failed: ${err}`)
@@ -474,14 +498,6 @@ export default function PokemonBattleSimulator() {
       <ToolSidebar
         sidebarOpen={ui.sidebarOpen}
         setSidebarOpen={ui.setSidebarOpen}
-        sidebarView={ui.sidebarView}
-        setSidebarView={ui.setSidebarView}
-        activeBoxIndex={boxManager.activeBoxIndex}
-        updateActiveBox={boxManager.updateActiveBox}
-        importText={ui.importText}
-        setImportText={ui.setImportText}
-        exportText={ui.exportText}
-        handleExport={handleExport}
         notes={ui.notes}
         setNotes={ui.setNotes}
       />
@@ -558,7 +574,7 @@ export default function PokemonBattleSimulator() {
               })}
             </div>
 
-            {isInitializing ? (
+            {isP2Loading ? (
               <TeamBenchSkeleton />
             ) : (
               <TeamBench

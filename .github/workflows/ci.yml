@@ -38,7 +38,7 @@ jobs:
 
       - name: TypeScript check (Frontend)
         working-directory: Frontend
-        run: npx tsc --noEmit
+        run: pnpm exec tsc --noEmit
 
   security-scan:
     runs-on: ubuntu-latest
@@ -79,6 +79,7 @@ jobs:
         run: npm test
         env:
           NODE_ENV: test
+          MONGODB_URI: mongodb://localhost:27017/unit_test_placeholder
 
   integration-tests:
     runs-on: ubuntu-latest
@@ -112,7 +113,7 @@ jobs:
           NODE_ENV: test
           MONGODB_URI: mongodb://localhost:27017/pokemon_test
           REDIS_URL: redis://localhost:6379
-          AUTH0_DOMAIN: ${{ secrets.AUTH0_DOMAIN }}
+          AUTH0_ISSUER_BASE_URL: https://${{ secrets.AUTH0_DOMAIN }}
           AUTH0_AUDIENCE: ${{ secrets.AUTH0_AUDIENCE }}
 
   e2e-tests:
@@ -141,13 +142,20 @@ jobs:
         working-directory: Backend
         run: npm ci
 
+      - name: Seed reference data
+        working-directory: Backend
+        run: node game-data/seed/seedTestData.js
+        env:
+          MONGODB_URI: mongodb://localhost:27017/pokemon_test
+          MONGODB_DB: Radical-Red-Database
+
       - name: Install Frontend dependencies
         working-directory: Frontend
         run: pnpm install --frozen-lockfile
 
       - name: Install Playwright browsers
         working-directory: Frontend
-        run: npx playwright install --with-deps chromium
+        run: pnpm exec playwright install --with-deps chromium
 
       - name: Build Frontend
         working-directory: Frontend
@@ -167,7 +175,7 @@ jobs:
           PORT: 3500
           MONGODB_URI: mongodb://localhost:27017/pokemon_test
           REDIS_URL: redis://localhost:6379
-          AUTH0_DOMAIN: ${{ secrets.AUTH0_DOMAIN }}
+          AUTH0_ISSUER_BASE_URL: https://${{ secrets.AUTH0_DOMAIN }}
           AUTH0_AUDIENCE: ${{ secrets.AUTH0_AUDIENCE }}
           GUEST_COOKIE_SECRET: test-secret
 
@@ -182,7 +190,7 @@ jobs:
 
       - name: Run E2E tests
         working-directory: Frontend
-        run: npx playwright test
+        run: pnpm exec playwright test
         env:
           PLAYWRIGHT_BASE_URL: http://localhost:3000
           AUTH0_TEST_USERNAME: ${{ secrets.AUTH0_TEST_USERNAME }}
@@ -221,24 +229,3 @@ jobs:
           tags: |
             ghcr.io/${{ github.repository }}:latest
             ghcr.io/${{ github.repository }}:${{ github.sha }}
-
-  claude-review:
-    runs-on: ubuntu-latest
-    if: |
-      (github.event_name == 'issue_comment' && contains(github.event.comment.body, '@claude')) ||
-      (github.event_name == 'pull_request_review_comment' && contains(github.event.comment.body, '@claude')) ||
-      github.event_name == 'pull_request'
-    steps:
-      - uses: actions/checkout@v4
-
-      - uses: anthropics/claude-code-action@v1
-        with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          prompt: |
-            Review this PR against the project CLAUDE.md standards. Check for:
-            - Bugs and logic errors
-            - Security vulnerabilities
-            - Redis cache usage correctness
-            - Docker configuration issues
-            - Naming conventions and code style violations
-          claude_args: '--max-turns 5'

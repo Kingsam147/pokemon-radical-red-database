@@ -198,7 +198,18 @@ export interface Abilities {
 
 export interface PokemonMove {
   name: string,
-  [key: string]: any
+  basePower?: number,
+  type?: string,
+  category?: string,
+  accuracy?: number | null,
+  secondary?: unknown,
+  [key: string]: unknown
+}
+
+export interface DamageResult {
+  range: [string, string]
+  damage: number[]
+  description: string
 }
 
 export interface PokemonMoves {
@@ -221,6 +232,54 @@ export interface PokemonForm {
 
 export interface PokemonForms {
   [key: string]: PokemonForm
+}
+
+// Shape of a Pokemon entry as it arrives from the backend, before misc
+// reference data (abilities/items/natures/types/moves) has been resolved —
+// fields may still be raw string keys or already-resolved objects.
+export interface RawPokemonForm {
+  formName: string
+  ID: number
+  baseStats: PokemonStats
+  finalStats: PokemonStats
+  ability: string | Ability
+  abilities: (string | Ability)[]
+  allMoves: (string | PokemonMove)[]
+  type1: string | PokemonType
+  type2: string | PokemonType
+  sprite?: string
+}
+
+export interface RawPokemon {
+  name: string
+  ID: string | number
+  sprite?: string
+  type1: string | PokemonType
+  type2: string | PokemonType
+  level: number
+  nature: string | Nature
+  item: string | Item
+  ability: string | Ability
+  abilities: (string | Ability)[]
+  baseStats: PokemonStats
+  EVs: PokemonStats
+  IVs: PokemonStats
+  finalStats: PokemonStats
+  moveset: (string | PokemonMove)[]
+  allMoves: (string | PokemonMove)[]
+  form: string | PokemonForm
+  forms: Record<string, RawPokemonForm>
+  gender: Gender
+  femaleSprite: boolean
+  statBoosts?: Partial<PokemonStats> | null
+}
+
+export interface RawTeam {
+  [key: string]: RawPokemon | TrainerInfo | null
+}
+
+export interface RawBox {
+  [key: string]: RawPokemon | null
 }
 
 export interface PokemonStatus {

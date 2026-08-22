@@ -1,4 +1,4 @@
-import { useState } from "react"
+import { useEffect, useRef, useState } from "react"
 import { Abilities, Items, Natures, PokemonMoves, PokemonTypes, Box } from "@/lib/utils/types.ts"
 import { fetchAddBox, fetchRemoveBox, fetchClearBox, fetchSingleBox, resolveSingleBox } from "@/lib/api/boxes"
 import { toast } from "sonner"
@@ -18,6 +18,14 @@ export function useBoxManager({ abilityOptions, itemOptions, natureOptions, move
   const [activeBoxIndex, setActiveBoxIndex] = useState(0)
   const [originalPokemon, setOriginalPokemon] = useState<Box>({})
   const [isBoxLoading, setIsBoxLoading] = useState(false)
+
+  // prefetchRemainingBoxes runs from a callback captured once at mount, so it
+  // would otherwise always see the initial (stale) p1Boxes closure. Read
+  // through a ref that tracks the latest value instead.
+  const p1BoxesRef = useRef(p1Boxes)
+  useEffect(() => {
+    p1BoxesRef.current = p1Boxes
+  }, [p1Boxes])
 
   const updateActiveBox = (newPokemonBox: Box) => {
     setP1Boxes((prev) => {
@@ -103,7 +111,7 @@ export function useBoxManager({ abilityOptions, itemOptions, natureOptions, move
 
   const prefetchRemainingBoxes = async (totalCount: number) => {
     for (let i = 1; i < totalCount; i++) {
-      if (p1Boxes[i] !== null) continue;
+      if (p1BoxesRef.current[i] !== null) continue;
       try {
         const rawBox = await fetchSingleBox(i);
         const resolved = resolveSingleBox(rawBox, abilityOptions, itemOptions, natureOptions, movesOptions, typesOptions);

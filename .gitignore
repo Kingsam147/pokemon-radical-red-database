@@ -37,6 +37,8 @@ coverage/
 .nyc_output/
 *.lcov
 report.[0-9]*
+test-results/
+playwright-report/
 
 # IDE & System Caches
 .vscode/*

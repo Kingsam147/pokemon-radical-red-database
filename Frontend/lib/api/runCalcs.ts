@@ -1,13 +1,16 @@
 import React from "react";
-import { Pokemon } from "@/lib/utils/types";
+import { Pokemon, DamageResult } from "@/lib/utils/types";
+import { Hazards } from "@/lib/hooks/useBattleField";
 import { fetchCalculateDamage } from "@/lib/api/misc"
 
-const buildField = (player: number, p1Hazards: any, p2Hazards: any, activeEffects: string[]) => {
+const buildField = (player: number, p1Hazards: Hazards, p2Hazards: Hazards, activeEffects: string[], battleMode: "singles" | "doubles") => {
     const weather = activeEffects.find(e => ["Sun", "Rain", "Sand", "Snow", "Harsh Sunshine", "Heavy Rain", "Strong Winds"].includes(e));
-    const terrain = activeEffects.find(e => ["Electric Terrain", "Grassy Terrain", "Misty Terrain", "Psychic Terrain"].includes(e));
+    const terrainEffect = activeEffects.find(e => ["Electric Terrain", "Grassy Terrain", "Misty Terrain", "Psychic Terrain"].includes(e));
+    const terrain = terrainEffect?.replace(" Terrain", "");
     const attackerHazards = player === 1 ? p1Hazards : p2Hazards;
     const defenderHazards = player === 1 ? p2Hazards : p1Hazards;
     return {
+        gameType: battleMode === "doubles" ? "Doubles" : "Singles",
         weather,
         terrain,
         isMagicRoom: activeEffects.includes("Magic Room"),
@@ -41,13 +44,14 @@ export const runCalc = async (
   pokemon: Pokemon,
   player1Bench: (Pokemon | null)[],
   player2Bench: (Pokemon | null)[],
-  p1Hazards: any,
-  p2Hazards: any,
+  p1Hazards: Hazards,
+  p2Hazards: Hazards,
   activeEffects: string[],
+  battleMode: "singles" | "doubles",
   abilityToggles: Record<string, boolean>,
   moveCrits: Record<string, boolean[]>,
   moveZPowered: Record<string, boolean[]>,
-  setDamageResults: React.Dispatch<React.SetStateAction<Record<string, any>>>,
+  setDamageResults: React.Dispatch<React.SetStateAction<Record<string, DamageResult | null>>>,
   setCalcLoadingKeys?: React.Dispatch<React.SetStateAction<Set<string>>>
 ) => {
   const defenderBench = player === 1 ? player2Bench : player1Bench;
@@ -67,7 +71,7 @@ export const runCalc = async (
       pokemon, player, slotIndex,
       defender, player === 1 ? 2 : 1, defenderIdx,
       { ...pokemon.moveset[idx], isCrit, isZ },
-      buildField(player, p1Hazards, p2Hazards, activeEffects),
+      buildField(player, p1Hazards, p2Hazards, activeEffects, battleMode),
       abilityToggles
     );
     setDamageResults(prev => ({ ...prev, [key]: res.calculation }));
@@ -85,20 +89,21 @@ export const runCalc = async (
 export const runAllCalcs = async (
   player1Bench: (Pokemon | null)[],
   player2Bench: (Pokemon | null)[],
-  p1Hazards: any,
-  p2Hazards: any,
+  p1Hazards: Hazards,
+  p2Hazards: Hazards,
   activeEffects: string[],
+  battleMode: "singles" | "doubles",
   abilityToggles: Record<string, boolean>,
   moveCrits: Record<string, boolean[]>,
   moveZPowered: Record<string, boolean[]>,
-  setDamageResults: React.Dispatch<React.SetStateAction<Record<string, any>>>,
+  setDamageResults: React.Dispatch<React.SetStateAction<Record<string, DamageResult | null>>>,
   setCalcLoadingKeys?: React.Dispatch<React.SetStateAction<Set<string>>>
 ) => {
   const p1 = player1Bench[0];
   const p2 = player2Bench[0];
   if (!p1 || !p2) return;
 
-  const args = [player1Bench, player2Bench, p1Hazards, p2Hazards, activeEffects, abilityToggles, moveCrits, moveZPowered, setDamageResults, setCalcLoadingKeys] as const;
+  const args = [player1Bench, player2Bench, p1Hazards, p2Hazards, activeEffects, battleMode, abilityToggles, moveCrits, moveZPowered, setDamageResults, setCalcLoadingKeys] as const;
 
   for (let idx = 0; idx < p1.moveset.length; idx++) {
     await runCalc(1, 0, idx, p1, ...args);

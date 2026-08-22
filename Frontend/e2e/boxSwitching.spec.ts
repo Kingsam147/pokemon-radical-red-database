@@ -31,13 +31,28 @@ async function stubBaseRoutes(page: Page, boxCount = 3) {
     route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({}) })
   );
 
-  for (const endpoint of ['abilities', 'items', 'natures', 'moves', 'types', 'statuses']) {
+  // Wrapper keys must match what lib/api/misc.ts unwraps from each response
+  // (e.g. NATURE_OPTIONS() reads natureListJSON.natures) — a bare `{}` here
+  // resolves every option list to `undefined` instead of an empty object.
+  const MISC_RESPONSE_KEYS: Record<string, string> = {
+    abilities: 'abilitiesData',
+    items: 'items',
+    natures: 'natures',
+    moves: 'movesData',
+    types: 'types',
+    statuses: 'statuses',
+  };
+  for (const endpoint of Object.keys(MISC_RESPONSE_KEYS)) {
     await page.route(`**/misc/${endpoint}`, route =>
-      route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({}) })
+      route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({ [MISC_RESPONSE_KEYS[endpoint]]: {} }),
+      })
     );
   }
   await page.route('**/misc/version', route =>
-    route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify('v-test') })
+    route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ version: 'v-test' }) })
   );
 
   await page.route('**/teams/1', route =>
@@ -113,11 +128,12 @@ test.describe('Box switching — lazy load and prefetch', () => {
     await page.goto('/');
     await expect(page.getByRole('tab', { name: 'Box 1' })).toBeVisible({ timeout: 15000 });
 
-    // Allow prefetch loop to complete (sequential fetches, so wait a moment)
-    await page.waitForTimeout(3000);
-
-    expect(fetchedIndices.has(1)).toBe(true);
-    expect(fetchedIndices.has(2)).toBe(true);
+    // Poll for the prefetch loop to complete instead of a fixed wait — real
+    // backend latency (unmocked requests elsewhere on the page) can push the
+    // sequential fetches past any fixed timeout.
+    await expect.poll(() => fetchedIndices.has(1) && fetchedIndices.has(2), {
+      timeout: 10000,
+    }).toBe(true);
   });
 
   test('switching to a prefetched box shows content immediately without skeleton', async ({ page }) => {

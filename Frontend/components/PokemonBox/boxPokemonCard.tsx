@@ -53,7 +53,7 @@ export default function BoxPokemonCard({
           <p className="box-pokemon-tooltip-name">{pokemon.name}</p>
           <p>Lv.{pokemon.level}</p>
           <p>{pokemon.nature.name}</p>
-          <p>{pokemon.item.name}</p>
+          <p>{pokemon.item?.name ?? "None"}</p>
         </div>
       </div>
 
