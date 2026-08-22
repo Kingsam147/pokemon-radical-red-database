@@ -30,7 +30,12 @@ const seedTestData = async () => {
 
     for (const name of PLACEHOLDER_COLLECTIONS) {
         await db.collection(name).deleteMany({});
-        await db.collection(name).insertOne({ seedPlaceholder: true });
+        // Deliberately no fields beyond _id: TeamRepository.loadAllTeams treats
+        // every top-level key of an enemyTeamSets document as a team name, so a
+        // placeholder field here (e.g. `seedPlaceholder: true`) leaks into the
+        // UI as a literal selectable "team." An empty document still satisfies
+        // fetchModels()'s findOne({}) !== null liveness check.
+        await db.collection(name).insertOne({});
         console.log(`[SEED] ${name} seeded (placeholder)`);
     }
 

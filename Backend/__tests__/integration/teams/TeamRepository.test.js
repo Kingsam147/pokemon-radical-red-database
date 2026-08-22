@@ -128,6 +128,19 @@ describe('TeamRepository.savePokemon', () => {
   });
 });
 
+describe('TeamRepository placeholder seed data', () => {
+  test('loadAllTeams(2, ...) yields no teams when enemyTeamSets holds only the seed placeholder', async () => {
+    // Mirrors Backend/game-data/seed/seedTestData.js's placeholder doc for
+    // enemyTeamSets — an empty document, not { seedPlaceholder: true }.
+    // Object.entries() over that doc's remaining keys must yield zero "teams";
+    // a non-empty placeholder previously leaked its own key as a literal team
+    // name into the Player 2 Team dropdown.
+    await client.db('test').collection('enemyTeamSets').insertOne({});
+    const teams = await TeamRepository.loadAllTeams(2, null);
+    expect(teams).toEqual({});
+  });
+});
+
 describe('TeamRepository.reassignOwner', () => {
   test('moves all myTeamSets documents from one userId to another', async () => {
     await TeamRepository.addTeam(1, 'guest-1', 'Main');

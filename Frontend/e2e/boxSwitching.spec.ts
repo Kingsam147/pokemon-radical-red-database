@@ -31,13 +31,28 @@ async function stubBaseRoutes(page: Page, boxCount = 3) {
     route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({}) })
   );
 
-  for (const endpoint of ['abilities', 'items', 'natures', 'moves', 'types', 'statuses']) {
+  // Wrapper keys must match what lib/api/misc.ts unwraps from each response
+  // (e.g. NATURE_OPTIONS() reads natureListJSON.natures) — a bare `{}` here
+  // resolves every option list to `undefined` instead of an empty object.
+  const MISC_RESPONSE_KEYS: Record<string, string> = {
+    abilities: 'abilitiesData',
+    items: 'items',
+    natures: 'natures',
+    moves: 'movesData',
+    types: 'types',
+    statuses: 'statuses',
+  };
+  for (const endpoint of Object.keys(MISC_RESPONSE_KEYS)) {
     await page.route(`**/misc/${endpoint}`, route =>
-      route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({}) })
+      route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({ [MISC_RESPONSE_KEYS[endpoint]]: {} }),
+      })
     );
   }
   await page.route('**/misc/version', route =>
-    route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify('v-test') })
+    route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ version: 'v-test' }) })
   );
 
   await page.route('**/teams/1', route =>

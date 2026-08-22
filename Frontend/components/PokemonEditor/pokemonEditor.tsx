@@ -588,7 +588,7 @@ export default function PokemonEditor({
                                                 <SelectValue placeholder="Select Nature" />
                                             </SelectTrigger>
                                             <SelectContent position="popper" side="bottom">
-                                                {Object.keys(natureOptions).map((nature) => (
+                                                {Object.keys(natureOptions ?? {}).map((nature) => (
                                                     <SelectItem key={nature} value={nature} className="pokemon-editor-nature-option">{nature}</SelectItem>
                                                 ))}
                                             </SelectContent>
@@ -601,7 +601,7 @@ export default function PokemonEditor({
                                                 <SelectValue placeholder="Select Item" />
                                             </SelectTrigger>
                                             <SelectContent position="popper" side="bottom">
-                                                {Object.keys(itemOptions).map((item) => (
+                                                {Object.keys(itemOptions ?? {}).map((item) => (
                                                     <SelectItem key={item} value={item} className="pokemon-editor-item-option">{item}</SelectItem>
                                                 ))}
                                             </SelectContent>
@@ -641,7 +641,7 @@ export default function PokemonEditor({
                                                 <SelectValue placeholder="Select Status" />
                                             </SelectTrigger>
                                             <SelectContent position="popper" side="bottom">
-                                                {Object.keys(statusOptions).map((status) => (
+                                                {Object.keys(statusOptions ?? {}).map((status) => (
                                                     <SelectItem key={status} value={status}>{status}</SelectItem>
                                                 ))}
                                             </SelectContent>

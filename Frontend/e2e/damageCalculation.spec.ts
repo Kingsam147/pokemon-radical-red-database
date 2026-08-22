@@ -15,13 +15,17 @@ test.describe('Damage calculation accuracy', () => {
     // their text — it's only available via msg.location().url — so both need
     // checking to catch the Vercel/Cloudflare analytics scripts that only work on
     // a real deployed domain, not localhost/CI.
+    // /public/enemy-preview 404s when no enemy teams are seeded yet — a valid,
+    // expected state (see enemy-preview-fast-path.spec.ts and
+    // enemyPreviewService.test.js), not a page error.
     const criticalErrors = errors.filter(e =>
       !e.text.includes('401') &&
       !e.text.includes('favicon') &&
       !e.text.includes('ERR_ABORTED') &&
       !e.text.includes('cloudflareinsights.com') &&
       !e.url.includes('cloudflareinsights.com') &&
-      !e.url.includes('_vercel/insights')
+      !e.url.includes('_vercel/insights') &&
+      !e.url.includes('/public/enemy-preview')
     );
     expect(criticalErrors.map(e => e.text)).toHaveLength(0);
   });
