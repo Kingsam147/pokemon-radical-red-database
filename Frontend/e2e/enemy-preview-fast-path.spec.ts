@@ -67,7 +67,12 @@ test.describe("Enemy trainer fast-path preview", () => {
 
     // Once the page has settled, both sides should have resolved out of their
     // skeleton state — this guards against the preview permanently stalling.
-    const skeletonCount = await page.locator(".animate-pulse").count()
-    expect(skeletonCount).toBe(0)
+    // Auto-retrying assertion instead of a one-shot count: `networkidle` is a
+    // network-level signal and doesn't guarantee the subsequent React render
+    // (e.g. setIsInitializing(false)) has already flushed.
+    // 20s, not the file's usual 15s: this waits on the full unmocked initial
+    // pipeline (misc data, box, teams, enemy teams — several sequential real
+    // backend round-trips), not just a UI reaction to an already-loaded page.
+    await expect(page.locator(".animate-pulse")).toHaveCount(0, { timeout: 20000 })
   })
 })

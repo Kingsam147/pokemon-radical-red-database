@@ -113,11 +113,12 @@ test.describe('Box switching — lazy load and prefetch', () => {
     await page.goto('/');
     await expect(page.getByRole('tab', { name: 'Box 1' })).toBeVisible({ timeout: 15000 });
 
-    // Allow prefetch loop to complete (sequential fetches, so wait a moment)
-    await page.waitForTimeout(3000);
-
-    expect(fetchedIndices.has(1)).toBe(true);
-    expect(fetchedIndices.has(2)).toBe(true);
+    // Poll for the prefetch loop to complete instead of a fixed wait — real
+    // backend latency (unmocked requests elsewhere on the page) can push the
+    // sequential fetches past any fixed timeout.
+    await expect.poll(() => fetchedIndices.has(1) && fetchedIndices.has(2), {
+      timeout: 10000,
+    }).toBe(true);
   });
 
   test('switching to a prefetched box shows content immediately without skeleton', async ({ page }) => {
