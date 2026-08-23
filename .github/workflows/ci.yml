@@ -212,6 +212,10 @@ jobs:
       - name: Build Docker image
         run: docker build -t pokemon-radical-red:${{ github.sha }} .
 
+      - name: Compute lowercase image repository
+        id: image
+        run: echo "repository=${GITHUB_REPOSITORY,,}" >> "$GITHUB_OUTPUT"
+
       - name: Log in to GitHub Container Registry
         if: github.ref == 'refs/heads/main' && github.event_name == 'push'
         uses: docker/login-action@v3
@@ -227,5 +231,5 @@ jobs:
           context: .
           push: true
           tags: |
-            ghcr.io/${{ github.repository }}:latest
-            ghcr.io/${{ github.repository }}:${{ github.sha }}
+            ghcr.io/${{ steps.image.outputs.repository }}:latest
+            ghcr.io/${{ steps.image.outputs.repository }}:${{ github.sha }}
