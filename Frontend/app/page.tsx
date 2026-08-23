@@ -6,6 +6,8 @@ import { addPokemon, fetchBoxCount, loadSingleBox, resolveSingleBox } from "@/li
 import { MOVES_OPTIONS, ABILITY_OPTIONS, ITEMS_OPTIONS, NATURE_OPTIONS, TYPE_OPTIONS, STATUS_OPTIONS, MISC_VERSION } from "@/lib/api/misc"
 import { loadMyTeams, loadEnemyTeams, removeTeam, saveFullTeam } from "@/lib/api/teams"
 import { loadEnemyPreview } from "@/lib/api/enemyPreview"
+import { loadGuestStarterPikachu } from "@/lib/api/guestStarterPikachu"
+import { shouldSeedGuestStarterPikachu, isUnsavedP1Selection } from "@/lib/utils/guestStarterPikachuGuards"
 import { readMiscCache, writeMiscCache } from "@/lib/cache/miscCache"
 import { useAuth0 } from "@auth0/auth0-react"
 import { toast } from "sonner"
@@ -32,6 +34,7 @@ export default function PokemonBattleSimulator() {
   const [isInitializing, setIsInitializing] = useState(true)
   const [isP2Loading, setIsP2Loading] = useState(true)
   const fullPipelineDoneRef = useRef(false)
+  const player1TeamLockedRef = useRef(false)
 
   const options = useBattleOptions()
   const boxManager = useBoxManager({
@@ -50,9 +53,21 @@ export default function PokemonBattleSimulator() {
   })
   const ui = useUIState()
 
+  // Mirrors bench.player1Bench on every render so the guest-starter fast path
+  // below can read the latest value from inside an async callback without
+  // capturing a stale closure from whichever render scheduled the fetch.
+  // Synced in an effect (rather than assigned during render) so it doesn't
+  // trip the react-hooks/refs rule — the effect still commits before any
+  // callback scheduled from this render could resolve.
+  const player1BenchRef = useRef(bench.player1Bench)
+  useEffect(() => {
+    player1BenchRef.current = bench.player1Bench
+  })
+
   // on initial load
   useEffect(() => {
     if (isLoading) return
+    let cancelled = false
 
     async function loadInitialData() {
       try {
@@ -178,13 +193,44 @@ export default function PokemonBattleSimulator() {
       })
       .catch(() => {}) // fast path is best-effort — the full pipeline below is authoritative
 
+    // Guest-only starter Pikachu: fills P1's active slot (bench[0]) on first
+    // load so a guest with no team yet has something to inspect immediately.
+    // Never runs for authenticated users. Dropped if the user already picked
+    // or cleared a P1 team before this resolves (player1TeamLockedRef), if
+    // this effect instance was superseded by a re-run — e.g. the guest logged
+    // in while this fetch was still in flight (cancelled), or if some other
+    // path already populated bench[0] by the time it resolves.
+    if (!isAuthenticated) {
+      loadGuestStarterPikachu()
+        .then((pikachu) => {
+          const shouldSeed = shouldSeedGuestStarterPikachu({
+            pikachu,
+            cancelled,
+            teamLocked: player1TeamLockedRef.current,
+            bench: player1BenchRef.current,
+          })
+          if (!shouldSeed) return
+          bench.setPlayer1Bench([pikachu!, null, null, null, null, null])
+          // Display-only label for the P1 team selector — intentionally NOT
+          // added to teams.p1Teams, since that dict backs real saved/deletable
+          // teams. deleteP1Team (Step 5 below) is updated to treat any
+          // selected index with no matching teams.p1Teams entry as "nothing
+          // real is selected," so "Clear Team" never calls the backend DELETE
+          // endpoint for this synthetic label.
+          teams.setP1SelectedTeamIndex("Default Pikachu Box")
+        })
+        .catch(() => {}) // best-effort onboarding convenience — never blocks the real pipeline
+    }
+
     run()
+    return () => { cancelled = true }
   }, [isLoading, isAuthenticated])
 
   // --- cross-cutting handlers ---
 
   const handleTeamChange = (player: 1 | 2, teamName: string) => {
     if (player === 1) {
+      player1TeamLockedRef.current = true
       teams.setP1SelectedTeamIndex(teamName)
       const team = teams.p1Teams[teamName]
       if (team) {
@@ -236,7 +282,14 @@ export default function PokemonBattleSimulator() {
   }
 
   const deleteP1Team = async () => {
-    if (!teams.p1SelectedTeamIndex) {
+    player1TeamLockedRef.current = true
+    // A selected index with no matching teams.p1Teams entry isn't a real
+    // saved team — this is the case for the guest starter Pikachu's
+    // "Default Pikachu Box" label. Treat it the same as nothing selected:
+    // just clear the bench locally, don't call the backend DELETE endpoint
+    // for a team that was never saved.
+    if (isUnsavedP1Selection(teams.p1SelectedTeamIndex, teams.p1Teams)) {
+      teams.setP1SelectedTeamIndex("")
       bench.setPlayer1Bench(Array(6).fill(null))
       return
     }
