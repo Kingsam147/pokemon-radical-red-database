@@ -505,6 +505,13 @@ Replace with:
           if (!pikachu || player1TeamLockedRef.current) return
           if (!bench.player1Bench.every((p) => p === null)) return
           bench.setPlayer1Bench([pikachu, null, null, null, null, null])
+          // Display-only label for the P1 team selector — intentionally NOT
+          // added to teams.p1Teams, since that dict backs real saved/deletable
+          // teams. deleteP1Team (Step 5 below) is updated to treat any
+          // selected index with no matching teams.p1Teams entry as "nothing
+          // real is selected," so "Clear Team" never calls the backend DELETE
+          // endpoint for this synthetic label.
+          teams.setP1SelectedTeamIndex("Default Pikachu Box")
         })
         .catch(() => {}) // best-effort onboarding convenience — never blocks the real pipeline
     }
@@ -540,7 +547,7 @@ Replace with:
     } else {
 ```
 
-- [ ] **Step 5: Lock the ref when a P1 team is cleared/deleted**
+- [ ] **Step 5: Lock the ref when a P1 team is cleared/deleted, and treat an unsaved selected label (e.g. the guest starter's "Default Pikachu Box") as nothing being selected**
 
 Find:
 ```typescript
@@ -554,7 +561,13 @@ Replace with:
 ```typescript
   const deleteP1Team = async () => {
     player1TeamLockedRef.current = true
-    if (!teams.p1SelectedTeamIndex) {
+    // A selected index with no matching teams.p1Teams entry isn't a real
+    // saved team — this is the case for the guest starter Pikachu's
+    // "Default Pikachu Box" label. Treat it the same as nothing selected:
+    // just clear the bench locally, don't call the backend DELETE endpoint
+    // for a team that was never saved.
+    if (!teams.p1SelectedTeamIndex || !teams.p1Teams[teams.p1SelectedTeamIndex]) {
+      teams.setP1SelectedTeamIndex("")
       bench.setPlayer1Bench(Array(6).fill(null))
       return
     }
@@ -568,11 +581,13 @@ Expected: zero errors, all existing tests still pass.
 - [ ] **Step 7: Manual verification in the browser**
 
 Run: `cd Frontend && npm run dev`, then open the app in a fresh/incognito browser window (no existing session).
-Expected: Player 1's active slot shows a Level 8 Pikachu (Naughty nature, Lightning Rod, Light Ball, moves Volt Tackle/Thunderbolt/Iron Tail/Quick Attack) without picking any team.
+Expected: Player 1's active slot shows a Level 8 Pikachu (Naughty nature, Lightning Rod, Light Ball, moves Volt Tackle/Thunderbolt/Iron Tail/Quick Attack) without picking any team, and the P1 team dropdown displays "Default Pikachu Box" as a label (it does not appear as a persisted, re-selectable option in the dropdown's option list, since it was never saved).
 Then: log in (or open the app in a window with an existing authenticated session).
 Expected: Player 1's slot starts empty — no Pikachu appears for an authenticated user.
 Then, as a guest: pick a real P1 team from the team dropdown.
 Expected: the real team replaces the Pikachu, and reloading with that team still selected does not bring the Pikachu back.
+Then, as a guest with the starter Pikachu still showing under the "Default Pikachu Box" label: click "Clear Team" (the trash icon).
+Expected: the bench clears immediately with no confirmation dialog and no error toast (this exercises the deleteP1Team early-return guard, confirming it never attempts a backend DELETE for the unsaved label).
 
 - [ ] **Step 8: Commit**
 
@@ -665,3 +680,4 @@ git commit -m "test: add e2e coverage for the guest starter Pikachu fast path"
 - Spec coverage: species/stats/moves/nature/item/ability (spec table) → Task 1; public+edge-cached endpoint → Tasks 2–3; guest-only detection reusing `!isAuthenticated` → Task 5 Step 3; race guard → Task 5 Steps 2, 4, 5; caching plan (edge-only, no Redis, no localStorage) → Tasks 2–3 (headers) with no Redis/localStorage code introduced anywhere; e2e parity with enemy-preview → Task 6.
 - No placeholders: every step has complete, runnable code.
 - Type consistency: `loadGuestStarterPikachu` (Task 4) is the exact name used in the Task 5 import and call site.
+- "Default Pikachu Box" label (added after initial approval, per follow-up user request): set on `teams.p1SelectedTeamIndex` only, never added to `teams.p1Teams` — Task 5 Step 3. `deleteP1Team`'s guard (Step 5) was generalized from `!teams.p1SelectedTeamIndex` to `!teams.p1SelectedTeamIndex || !teams.p1Teams[teams.p1SelectedTeamIndex]` specifically so "Clear Team" can't attempt a backend DELETE for this unsaved label. This was a genuine bug risk caught before implementation (see chat: user was asked to choose between three placements and picked the display-only label to avoid exactly this).
