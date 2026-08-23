@@ -8,7 +8,7 @@ jest.mock('../../../infrastructure/logger/logger', () => ({
 }));
 
 const CalculationService = require('../../../battling/CalculationService');
-const { calculateDamage } = require('../../../battling/damageController');
+const { calculateDamage, calculateDamageBatch } = require('../../../battling/damageController');
 
 const buildRequest = (body = {}) => ({ body });
 const buildResponse = () => {
@@ -102,5 +102,89 @@ describe('calculateDamage controller', () => {
       field: samplePayload.field,
       abilityToggles: samplePayload.abilityToggles,
     });
+  });
+});
+
+describe('calculateDamageBatch controller', () => {
+  let res;
+
+  beforeEach(() => {
+    res = buildResponse();
+    jest.clearAllMocks();
+  });
+
+  test('returns 200 with a keyed result for every calculation on success', () => {
+    const fakeResult = {
+      damage: Array(16).fill(80),
+      range: ['49%', '57%'],
+      description: 'Charizard Flamethrower vs Blastoise',
+      rrModifiersApplied: true,
+    };
+    CalculationService.calculate.mockReturnValue(fakeResult);
+
+    const req = buildRequest({
+      calculations: [
+        { key: 'p1-0-move0', ...samplePayload },
+        { key: 'p1-0-move1', ...samplePayload },
+      ],
+    });
+
+    calculateDamageBatch(req, res);
+
+    expect(res.status).toHaveBeenCalledWith(200);
+    expect(res.json).toHaveBeenCalledWith({
+      message: 'Successfully calculated damage batch with Radical Red mechanics',
+      results: [
+        { key: 'p1-0-move0', calculation: fakeResult },
+        { key: 'p1-0-move1', calculation: fakeResult },
+      ],
+    });
+  });
+
+  test('returns partial success when one calculation fails and others succeed', () => {
+    const fakeResult = { damage: [1], range: ['1%', '1%'], description: '', rrModifiersApplied: true };
+    CalculationService.calculate
+      .mockImplementationOnce(() => fakeResult)
+      .mockImplementationOnce(() => { throw new Error('Move "Fake Move" not found in database'); })
+      .mockImplementationOnce(() => fakeResult);
+
+    const req = buildRequest({
+      calculations: [
+        { key: 'p1-0-move0', ...samplePayload },
+        { key: 'p1-0-move1', ...samplePayload },
+        { key: 'p1-0-move2', ...samplePayload },
+      ],
+    });
+
+    calculateDamageBatch(req, res);
+
+    expect(res.status).toHaveBeenCalledWith(200);
+    expect(res.json).toHaveBeenCalledWith({
+      message: 'Successfully calculated damage batch with Radical Red mechanics',
+      results: [
+        { key: 'p1-0-move0', calculation: fakeResult },
+        { key: 'p1-0-move1', error: 'Move "Fake Move" not found in database' },
+        { key: 'p1-0-move2', calculation: fakeResult },
+      ],
+    });
+  });
+
+  test('returns 200 with an empty results array for an empty batch', () => {
+    const req = buildRequest({ calculations: [] });
+
+    calculateDamageBatch(req, res);
+
+    expect(res.status).toHaveBeenCalledWith(200);
+    expect(res.json).toHaveBeenCalledWith(expect.objectContaining({ results: [] }));
+    expect(CalculationService.calculate).not.toHaveBeenCalled();
+  });
+
+  test('returns 400 when calculations is not an array', () => {
+    const req = buildRequest({ calculations: 'not-an-array' });
+
+    calculateDamageBatch(req, res);
+
+    expect(res.status).toHaveBeenCalledWith(400);
+    expect(res.json).toHaveBeenCalledWith({ message: 'calculations must be an array' });
   });
 });

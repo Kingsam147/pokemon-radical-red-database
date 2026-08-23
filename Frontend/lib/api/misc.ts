@@ -1,4 +1,4 @@
-import { Pokemon, PokemonStats, PokemonMove, Nature } from "@/lib/utils/types.ts";
+import { Pokemon, PokemonStats, PokemonMove, Nature, DamageResult } from "@/lib/utils/types.ts";
 import { formatPokemonForAPI } from "@/lib/utils/formatters.ts";
 
 // fetches from backend
@@ -90,6 +90,63 @@ export async function fetchTypeInteractions(type1: string, type2: string) {
     return res.json();
 }
 
+export interface DamageCalcPayload {
+  attacker: ReturnType<typeof formatPokemonForAPI>;
+  defender: ReturnType<typeof formatPokemonForAPI>;
+  move: PokemonMove;
+  field: { weather?: string, terrain?: string };
+  abilityToggles: Record<string, boolean>;
+}
+
+export function buildDamageCalcPayload(
+  attacker: Pokemon,
+  attackerPlayer: number,
+  attackerSlot: number,
+  defender: Pokemon,
+  defenderPlayer: number,
+  defenderSlot: number,
+  move: PokemonMove,
+  field: { weather?: string, terrain?: string },
+  abilityToggles: Record<string, boolean>
+): DamageCalcPayload {
+    const attackerKey = `p${attackerPlayer}-${attackerSlot}`;
+    const defenderKey = `p${defenderPlayer}-${defenderSlot}`;
+
+    // Merge attacker and defender toggles
+    const mergedToggles = {
+      [attackerKey]: attackerKey in abilityToggles ? abilityToggles[attackerKey] : (attacker.ability?.toggledOn ?? false),
+      [defenderKey]: defenderKey in abilityToggles ? abilityToggles[defenderKey] : (defender.ability?.toggledOn ?? false),
+    };
+
+    return {
+      attacker: formatPokemonForAPI(attacker),
+      defender: formatPokemonForAPI(defender),
+      move: {
+        ...move,
+        isCrit: move.isCrit ?? false,
+        isZ: move.isZ ?? false,
+      },
+      field: field,
+      abilityToggles: mergedToggles
+    };
+}
+
+export async function postDamageCalc(payload: DamageCalcPayload) {
+    try {
+      const res = await fetch(`${API_BASE}/misc/damage`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload)
+      });
+
+      if (!res.ok) throw new Error(`Request failed: ${res.status}`);
+      return res.json();
+    } catch (err) {
+      console.error("Failed to calculate damage:", err);
+      throw err;
+    }
+}
+
 export async function fetchCalculateDamage(
   attacker: Pokemon,
   attackerPlayer: number,
@@ -98,39 +155,43 @@ export async function fetchCalculateDamage(
   defenderPlayer: number,
   defenderSlot: number,
   move: PokemonMove,
-  field: { weather?: string, terrain?: string }, 
+  field: { weather?: string, terrain?: string },
   abilityToggles: Record<string, boolean>
 ) {
-    const attackerKey = `p${attackerPlayer}-${attackerSlot}`;
-    const defenderKey = `p${defenderPlayer}-${defenderSlot}`;
-    
-    // Merge attacker and defender toggles
-    const mergedToggles = {
-      [attackerKey]: attackerKey in abilityToggles ? abilityToggles[attackerKey] : (attacker.ability?.toggledOn ?? false),
-      [defenderKey]: defenderKey in abilityToggles ? abilityToggles[defenderKey] : (defender.ability?.toggledOn ?? false),
-    };
+    const payload = buildDamageCalcPayload(
+      attacker, attackerPlayer, attackerSlot,
+      defender, defenderPlayer, defenderSlot,
+      move, field, abilityToggles
+    );
+    return postDamageCalc(payload);
+}
 
+export interface DamageCalcBatchItem {
+  key: string;
+  payload: DamageCalcPayload;
+}
+
+export interface DamageCalcBatchResult {
+  key: string;
+  calculation?: DamageResult;
+  error?: string;
+}
+
+export async function fetchCalculateDamageBatch(items: DamageCalcBatchItem[]): Promise<DamageCalcBatchResult[]> {
     try {
-      const res = await fetch(`${API_BASE}/misc/damage`, {
+      const res = await fetch(`${API_BASE}/misc/damage/batch`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          attacker: formatPokemonForAPI(attacker),
-          defender: formatPokemonForAPI(defender),
-          move: {
-            ...move,
-            isCrit: move.isCrit ?? false,
-            isZ: move.isZ ?? false,
-          },
-          field: field,
-          abilityToggles: mergedToggles
+          calculations: items.map(item => ({ key: item.key, ...item.payload }))
         })
       });
 
       if (!res.ok) throw new Error(`Request failed: ${res.status}`);
-      return res.json();
+      const json = await res.json();
+      return json.results;
     } catch (err) {
-      console.error("Failed to calculate damage:", err);
+      console.error("Failed to calculate damage batch:", err);
       throw err;
     }
 }

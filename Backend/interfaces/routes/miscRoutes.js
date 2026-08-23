@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const { getItems, getNatures, getMoves, getTypes, getAbilities, calcStats, getStatuses, getDefenseTypes, getVersion } = require('../../game-data/miscControllers');
-const { calculateDamage } = require('../../battling/damageController');
+const { calculateDamage, calculateDamageBatch } = require('../../battling/damageController');
 
 router.route('/items')
     .get(getItems)
@@ -26,6 +26,9 @@ router.route('/stats')
 
 router.route('/damage')
     .post(calculateDamage)
+
+router.route('/damage/batch')
+    .post(calculateDamageBatch)
 
 router.route('/calcTypes/:type1/:type2')
     .get(getDefenseTypes)

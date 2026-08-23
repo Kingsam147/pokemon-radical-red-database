@@ -15,4 +15,25 @@ const calculateDamage = (req, res) => {
   }
 };
 
-module.exports = { calculateDamage };
+const calculateDamageBatch = (req, res) => {
+  const { calculations } = req.body;
+  if (!Array.isArray(calculations)) {
+    return res.status(400).json({ message: 'calculations must be an array' });
+  }
+
+  const results = calculations.map(({ key, attacker, defender, move, field, abilityToggles }) => {
+    try {
+      const calculation = CalculationService.calculate({ attacker, defender, move, field, abilityToggles });
+      return { key, calculation };
+    } catch (error) {
+      return { key, error: error.message };
+    }
+  });
+
+  return res.status(200).json({
+    message: 'Successfully calculated damage batch with Radical Red mechanics',
+    results,
+  });
+};
+
+module.exports = { calculateDamage, calculateDamageBatch };
