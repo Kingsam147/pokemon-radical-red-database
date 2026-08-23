@@ -7,6 +7,7 @@ import { MOVES_OPTIONS, ABILITY_OPTIONS, ITEMS_OPTIONS, NATURE_OPTIONS, TYPE_OPT
 import { loadMyTeams, loadEnemyTeams, removeTeam, saveFullTeam } from "@/lib/api/teams"
 import { loadEnemyPreview } from "@/lib/api/enemyPreview"
 import { loadGuestStarterPikachu } from "@/lib/api/guestStarterPikachu"
+import { shouldSeedGuestStarterPikachu, isUnsavedP1Selection } from "@/lib/utils/guestStarterPikachuGuards"
 import { readMiscCache, writeMiscCache } from "@/lib/cache/miscCache"
 import { useAuth0 } from "@auth0/auth0-react"
 import { toast } from "sonner"
@@ -202,9 +203,14 @@ export default function PokemonBattleSimulator() {
     if (!isAuthenticated) {
       loadGuestStarterPikachu()
         .then((pikachu) => {
-          if (cancelled || !pikachu || player1TeamLockedRef.current) return
-          if (!player1BenchRef.current.every((p) => p === null)) return
-          bench.setPlayer1Bench([pikachu, null, null, null, null, null])
+          const shouldSeed = shouldSeedGuestStarterPikachu({
+            pikachu,
+            cancelled,
+            teamLocked: player1TeamLockedRef.current,
+            bench: player1BenchRef.current,
+          })
+          if (!shouldSeed) return
+          bench.setPlayer1Bench([pikachu!, null, null, null, null, null])
           // Display-only label for the P1 team selector — intentionally NOT
           // added to teams.p1Teams, since that dict backs real saved/deletable
           // teams. deleteP1Team (Step 5 below) is updated to treat any
@@ -282,7 +288,7 @@ export default function PokemonBattleSimulator() {
     // "Default Pikachu Box" label. Treat it the same as nothing selected:
     // just clear the bench locally, don't call the backend DELETE endpoint
     // for a team that was never saved.
-    if (!teams.p1SelectedTeamIndex || !teams.p1Teams[teams.p1SelectedTeamIndex]) {
+    if (isUnsavedP1Selection(teams.p1SelectedTeamIndex, teams.p1Teams)) {
       teams.setP1SelectedTeamIndex("")
       bench.setPlayer1Bench(Array(6).fill(null))
       return

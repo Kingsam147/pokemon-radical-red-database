@@ -152,6 +152,9 @@ export default function TeamBench({
               aria-label={isP1 ? "Select Team 1" : "Select Team 2"}
             >
               {isP1 && <option value="">Select a Team</option>}
+              {isP1 && selectedTeamIndex && !teamNames.includes(selectedTeamIndex) && (
+                <option value={selectedTeamIndex}>{selectedTeamIndex}</option>
+              )}
               {teamNames.map((teamName) => (
                 <option key={teamName} value={teamName}>{teamName}</option>
               ))}
