@@ -52,9 +52,21 @@ export default function PokemonBattleSimulator() {
   })
   const ui = useUIState()
 
+  // Mirrors bench.player1Bench on every render so the guest-starter fast path
+  // below can read the latest value from inside an async callback without
+  // capturing a stale closure from whichever render scheduled the fetch.
+  // Synced in an effect (rather than assigned during render) so it doesn't
+  // trip the react-hooks/refs rule — the effect still commits before any
+  // callback scheduled from this render could resolve.
+  const player1BenchRef = useRef(bench.player1Bench)
+  useEffect(() => {
+    player1BenchRef.current = bench.player1Bench
+  })
+
   // on initial load
   useEffect(() => {
     if (isLoading) return
+    let cancelled = false
 
     async function loadInitialData() {
       try {
@@ -183,13 +195,15 @@ export default function PokemonBattleSimulator() {
     // Guest-only starter Pikachu: fills P1's active slot (bench[0]) on first
     // load so a guest with no team yet has something to inspect immediately.
     // Never runs for authenticated users. Dropped if the user already picked
-    // or cleared a P1 team before this resolves (player1TeamLockedRef), or if
-    // some other path already populated bench[0] by the time it resolves.
+    // or cleared a P1 team before this resolves (player1TeamLockedRef), if
+    // this effect instance was superseded by a re-run — e.g. the guest logged
+    // in while this fetch was still in flight (cancelled), or if some other
+    // path already populated bench[0] by the time it resolves.
     if (!isAuthenticated) {
       loadGuestStarterPikachu()
         .then((pikachu) => {
-          if (!pikachu || player1TeamLockedRef.current) return
-          if (!bench.player1Bench.every((p) => p === null)) return
+          if (cancelled || !pikachu || player1TeamLockedRef.current) return
+          if (!player1BenchRef.current.every((p) => p === null)) return
           bench.setPlayer1Bench([pikachu, null, null, null, null, null])
           // Display-only label for the P1 team selector — intentionally NOT
           // added to teams.p1Teams, since that dict backs real saved/deletable
@@ -203,6 +217,7 @@ export default function PokemonBattleSimulator() {
     }
 
     run()
+    return () => { cancelled = true }
   }, [isLoading, isAuthenticated])
 
   // --- cross-cutting handlers ---
