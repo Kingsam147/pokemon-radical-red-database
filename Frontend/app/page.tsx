@@ -6,6 +6,7 @@ import { addPokemon, fetchBoxCount, loadSingleBox, resolveSingleBox } from "@/li
 import { MOVES_OPTIONS, ABILITY_OPTIONS, ITEMS_OPTIONS, NATURE_OPTIONS, TYPE_OPTIONS, STATUS_OPTIONS, MISC_VERSION } from "@/lib/api/misc"
 import { loadMyTeams, loadEnemyTeams, removeTeam, saveFullTeam } from "@/lib/api/teams"
 import { loadEnemyPreview } from "@/lib/api/enemyPreview"
+import { loadGuestStarterPikachu } from "@/lib/api/guestStarterPikachu"
 import { readMiscCache, writeMiscCache } from "@/lib/cache/miscCache"
 import { useAuth0 } from "@auth0/auth0-react"
 import { toast } from "sonner"
@@ -32,6 +33,7 @@ export default function PokemonBattleSimulator() {
   const [isInitializing, setIsInitializing] = useState(true)
   const [isP2Loading, setIsP2Loading] = useState(true)
   const fullPipelineDoneRef = useRef(false)
+  const player1TeamLockedRef = useRef(false)
 
   const options = useBattleOptions()
   const boxManager = useBoxManager({
@@ -178,6 +180,28 @@ export default function PokemonBattleSimulator() {
       })
       .catch(() => {}) // fast path is best-effort — the full pipeline below is authoritative
 
+    // Guest-only starter Pikachu: fills P1's active slot (bench[0]) on first
+    // load so a guest with no team yet has something to inspect immediately.
+    // Never runs for authenticated users. Dropped if the user already picked
+    // or cleared a P1 team before this resolves (player1TeamLockedRef), or if
+    // some other path already populated bench[0] by the time it resolves.
+    if (!isAuthenticated) {
+      loadGuestStarterPikachu()
+        .then((pikachu) => {
+          if (!pikachu || player1TeamLockedRef.current) return
+          if (!bench.player1Bench.every((p) => p === null)) return
+          bench.setPlayer1Bench([pikachu, null, null, null, null, null])
+          // Display-only label for the P1 team selector — intentionally NOT
+          // added to teams.p1Teams, since that dict backs real saved/deletable
+          // teams. deleteP1Team (Step 5 below) is updated to treat any
+          // selected index with no matching teams.p1Teams entry as "nothing
+          // real is selected," so "Clear Team" never calls the backend DELETE
+          // endpoint for this synthetic label.
+          teams.setP1SelectedTeamIndex("Default Pikachu Box")
+        })
+        .catch(() => {}) // best-effort onboarding convenience — never blocks the real pipeline
+    }
+
     run()
   }, [isLoading, isAuthenticated])
 
@@ -185,6 +209,7 @@ export default function PokemonBattleSimulator() {
 
   const handleTeamChange = (player: 1 | 2, teamName: string) => {
     if (player === 1) {
+      player1TeamLockedRef.current = true
       teams.setP1SelectedTeamIndex(teamName)
       const team = teams.p1Teams[teamName]
       if (team) {
@@ -236,7 +261,14 @@ export default function PokemonBattleSimulator() {
   }
 
   const deleteP1Team = async () => {
-    if (!teams.p1SelectedTeamIndex) {
+    player1TeamLockedRef.current = true
+    // A selected index with no matching teams.p1Teams entry isn't a real
+    // saved team — this is the case for the guest starter Pikachu's
+    // "Default Pikachu Box" label. Treat it the same as nothing selected:
+    // just clear the bench locally, don't call the backend DELETE endpoint
+    // for a team that was never saved.
+    if (!teams.p1SelectedTeamIndex || !teams.p1Teams[teams.p1SelectedTeamIndex]) {
+      teams.setP1SelectedTeamIndex("")
       bench.setPlayer1Bench(Array(6).fill(null))
       return
     }
