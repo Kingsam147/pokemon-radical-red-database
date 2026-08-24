@@ -80,6 +80,18 @@ describe('enemyPreviewService', () => {
     expect(result.team.Bulbasaur.forms.Bulbasaur.formName).toBe('Bulbasaur');
   });
 
+  test('Bulbasaur sprite is the S3 pokemon/{ID}.png convention, not a third-party URL', async () => {
+    redis.get.mockResolvedValue(null);
+    TeamRepository.loadAllTeams.mockResolvedValue({
+      Team1: asStoredTeam({ Bulbasaur: { name: 'Bulbasaur' } }),
+    });
+
+    const result = await getHydratedEnemyPreview();
+
+    expect(result.team.Bulbasaur.sprite).toBe('https://pokemon-radical-red.s3.us-east-2.amazonaws.com/pokemon/1.png');
+    expect(result.team.Bulbasaur.forms.Bulbasaur.sprite).toBe(result.team.Bulbasaur.sprite);
+  });
+
   test('labels the preview with the live first enemy trainer name', async () => {
     redis.get.mockResolvedValue(null);
     TeamRepository.loadAllTeams.mockResolvedValue({

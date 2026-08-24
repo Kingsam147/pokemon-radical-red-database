@@ -1,10 +1,10 @@
 const { GUEST_STARTER_PIKACHU } = require('../../../guest-starter/guestStarterService');
 
 describe('guestStarterService', () => {
-  test('exports a fully-resolved Level 8 Pikachu with the expected build', () => {
+  test('exports a fully-resolved Level 5 Pikachu with the expected build', () => {
     expect(GUEST_STARTER_PIKACHU.name).toBe('Pikachu');
     expect(GUEST_STARTER_PIKACHU.ID).toBe(25);
-    expect(GUEST_STARTER_PIKACHU.level).toBe(8);
+    expect(GUEST_STARTER_PIKACHU.level).toBe(5);
     expect(GUEST_STARTER_PIKACHU.gender).toBe('M');
     expect(GUEST_STARTER_PIKACHU.nature).toEqual({ name: 'Naughty', increase: 'Atk', decrease: 'SpD' });
     expect(GUEST_STARTER_PIKACHU.ability).toEqual({ name: 'Lightning Rod', description: '', toggle: false });
@@ -19,5 +19,20 @@ describe('guestStarterService', () => {
     ]);
     expect(GUEST_STARTER_PIKACHU.moveset[0]).toMatchObject({ basePower: 120, category: 'Physical', type: 'Electric' });
     expect(GUEST_STARTER_PIKACHU.forms.Pikachu.formName).toBe('Pikachu');
+  });
+
+  test('sprite is the S3 pokemon/{ID}.png convention, not a third-party URL', () => {
+    expect(GUEST_STARTER_PIKACHU.sprite).toBe('https://pokemon-radical-red.s3.us-east-2.amazonaws.com/pokemon/25.png');
+    expect(GUEST_STARTER_PIKACHU.forms.Pikachu.sprite).toBe(GUEST_STARTER_PIKACHU.sprite);
+  });
+
+  test('allMoves is the real level-5 legal movepool, computed the same way HydrationService does', () => {
+    expect(GUEST_STARTER_PIKACHU.allMoves).toEqual([
+      'Baby-Doll Eyes', 'Brick Break', 'Dig', 'Electroweb', 'Facade', 'Fake Out',
+      'Flash', 'Growl', 'Iron Tail', 'Light Screen', 'Play Rough', 'Reflect',
+      'Rest', 'Return', 'Sleep Talk', 'Tail Whip', 'Thief', 'Thunder Punch',
+      'Thunder Shock', 'Thunderbolt', 'Volt Switch',
+    ]);
+    expect(GUEST_STARTER_PIKACHU.forms.Pikachu.allMoves).toEqual(GUEST_STARTER_PIKACHU.allMoves);
   });
 });

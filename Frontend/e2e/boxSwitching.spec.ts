@@ -175,3 +175,15 @@ test.describe('Box switching — lazy load and prefetch', () => {
     await expect(deleteButton).toBeEnabled({ timeout: 5000 });
   });
 });
+
+test.describe('Guest starter Pikachu — box and team placement', () => {
+  test('guest Pikachu appears both in the active team selector and inside Starter Pikachu Box', async ({ page }) => {
+    await stubBaseRoutes(page, 1);
+
+    await page.goto('/');
+
+    await expect(page.getByRole('tab', { name: 'Starter Pikachu Box' })).toBeVisible({ timeout: 15000 });
+    await expect(page.getByLabel('Select Team 1')).toHaveValue('Example Pikachu Team');
+    await expect(page.getByTestId('pokemon-card-Pikachu')).toBeVisible();
+  });
+});
