@@ -6,7 +6,7 @@ import { addPokemon, fetchBoxCount, loadSingleBox, resolveSingleBox } from "@/li
 import { MOVES_OPTIONS, ABILITY_OPTIONS, ITEMS_OPTIONS, NATURE_OPTIONS, TYPE_OPTIONS, STATUS_OPTIONS, MISC_VERSION } from "@/lib/api/misc"
 import { loadMyTeams, loadEnemyTeams, removeTeam, saveFullTeam } from "@/lib/api/teams"
 import { isUnsavedP1Selection } from "@/lib/utils/guestStarterPikachuGuards"
-import { GUEST_STARTER_PIKACHU_FIXTURE } from "@/lib/data/guestStarterPikachuFixture"
+import { GUEST_STARTER_PIKACHU_FIXTURE, hydrateAllMoves } from "@/lib/data/guestStarterPikachuFixture"
 import { ENEMY_PREVIEW_FIXTURE } from "@/lib/data/enemyPreviewFixture"
 import { readMiscCache, writeMiscCache } from "@/lib/cache/miscCache"
 import { useAuth0 } from "@auth0/auth0-react"
@@ -171,6 +171,31 @@ export default function PokemonBattleSimulator() {
           if (boxCount > 1) {
             boxManager.prefetchRemainingBoxes(boxCount)
           }
+        }
+
+        // The guest Pikachu was seeded with unhydrated {name}-only allMoves
+        // stubs (no network call needed to show it). Now that movesOptions
+        // has loaded — a fetch the app needs regardless of this Pokemon, not
+        // one made on its behalf — upgrade allMoves to fully-resolved move
+        // objects in place. Reads the latest state via functional updaters
+        // and no-ops if the guest already removed/replaced it.
+        if (!isAuthenticated) {
+          bench.setPlayer1Bench((prev) => prev.map((p) =>
+            p?.boxKey === GUEST_PIKACHU_BOX_KEY ? hydrateAllMoves(p, movesList) : p
+          ))
+          boxManager.setP1Boxes((prev) => {
+            const box0 = prev[0]
+            const current = box0?.[GUEST_PIKACHU_BOX_KEY]
+            if (!current) return prev
+            const updated = [...prev]
+            updated[0] = { ...box0, [GUEST_PIKACHU_BOX_KEY]: hydrateAllMoves(current, movesList) }
+            return updated
+          })
+          boxManager.setOriginalPokemon((prev) => {
+            const current = prev[GUEST_PIKACHU_BOX_KEY]
+            if (!current) return prev
+            return { ...prev, [GUEST_PIKACHU_BOX_KEY]: hydrateAllMoves(current, movesList) }
+          })
         }
 
         const resolvedP1Teams = await loadMyTeams(abilityList, itemsList, naturesList, movesList, typesList)

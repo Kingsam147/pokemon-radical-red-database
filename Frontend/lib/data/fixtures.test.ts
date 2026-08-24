@@ -1,6 +1,7 @@
 import { describe, test, expect } from "vitest"
-import { GUEST_STARTER_PIKACHU_FIXTURE } from "@/lib/data/guestStarterPikachuFixture"
+import { GUEST_STARTER_PIKACHU_FIXTURE, hydrateAllMoves } from "@/lib/data/guestStarterPikachuFixture"
 import { ENEMY_PREVIEW_FIXTURE } from "@/lib/data/enemyPreviewFixture"
+import type { PokemonMoves } from "@/lib/utils/types"
 
 describe("GUEST_STARTER_PIKACHU_FIXTURE", () => {
   test("is a fully-resolved Level 5 Pikachu with the S3 sprite convention", () => {
@@ -11,23 +12,42 @@ describe("GUEST_STARTER_PIKACHU_FIXTURE", () => {
     expect(GUEST_STARTER_PIKACHU_FIXTURE.currentHp).toBe(26)
   })
 
-  test("allMoves is the real level-5 legal movepool as fully-resolved PokemonMove objects", () => {
+  test("allMoves ships unhydrated — {name} stubs, no network dependency to render", () => {
     expect(GUEST_STARTER_PIKACHU_FIXTURE.allMoves).toHaveLength(21)
     expect(GUEST_STARTER_PIKACHU_FIXTURE.allMoves.map((m) => m.name)).toContain("Thunderbolt")
-    // Every entry must be a real, playable move object (not a bare name string)
-    // since this fixture is inserted directly into bench/box state, bypassing
-    // the usual string->object resolution every other Pokemon source goes through.
     GUEST_STARTER_PIKACHU_FIXTURE.allMoves.forEach((move) => {
-      expect(typeof move.basePower).toBe("number")
-      expect(typeof move.category).toBe("string")
+      expect(Object.keys(move)).toEqual(["name"])
     })
     expect(GUEST_STARTER_PIKACHU_FIXTURE.forms.Pikachu.allMoves).toEqual(GUEST_STARTER_PIKACHU_FIXTURE.allMoves)
   })
 
-  test("moveset is the equipped 4-move set", () => {
+  test("moveset is the equipped 4-move set, already fully resolved", () => {
     expect(GUEST_STARTER_PIKACHU_FIXTURE.moveset.map((m) => m.name)).toEqual([
       "Volt Tackle", "Thunderbolt", "Iron Tail", "Quick Attack",
     ])
+    expect(GUEST_STARTER_PIKACHU_FIXTURE.moveset[0]).toMatchObject({ basePower: 120, category: "Physical" })
+  })
+})
+
+describe("hydrateAllMoves", () => {
+  const movesList: PokemonMoves = {
+    thunderbolt: { name: "Thunderbolt", basePower: 90, category: "Special", type: "Electric" },
+  }
+
+  test("resolves matching stubs into full move objects, keeping unmatched stubs as-is", () => {
+    const hydrated = hydrateAllMoves(GUEST_STARTER_PIKACHU_FIXTURE, movesList)
+    const thunderbolt = hydrated.allMoves.find((m) => m.name === "Thunderbolt")
+    const growl = hydrated.allMoves.find((m) => m.name === "Growl")
+
+    expect(thunderbolt).toEqual({ name: "Thunderbolt", basePower: 90, category: "Special", type: "Electric" })
+    expect(growl).toEqual({ name: "Growl" })
+  })
+
+  test("also upgrades forms.Pikachu.allMoves, and does not mutate the original fixture", () => {
+    const hydrated = hydrateAllMoves(GUEST_STARTER_PIKACHU_FIXTURE, movesList)
+
+    expect(hydrated.forms.Pikachu.allMoves).toEqual(hydrated.allMoves)
+    expect(GUEST_STARTER_PIKACHU_FIXTURE.allMoves.find((m) => m.name === "Thunderbolt")).toEqual({ name: "Thunderbolt" })
   })
 })
 
