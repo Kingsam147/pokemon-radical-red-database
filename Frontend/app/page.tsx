@@ -36,7 +36,7 @@ const GUEST_PIKACHU_BOX_KEY = "guestStarterPikachu"
 
 export default function PokemonBattleSimulator() {
   const { isAuthenticated, isLoading } = useAuth0()
-  const [isInitializing, setIsInitializing] = useState(true)
+  const [isP1Loading, setIsP1Loading] = useState(true)
   const [isP2Loading, setIsP2Loading] = useState(true)
 
   const options = useBattleOptions()
@@ -94,6 +94,7 @@ export default function PokemonBattleSimulator() {
         // so "Clear Team" never calls the backend DELETE endpoint for this
         // synthetic label.
         teams.setP1SelectedTeamIndex("Example Pikachu Team")
+        setIsP1Loading(false)
       }
     })
 
@@ -200,6 +201,7 @@ export default function PokemonBattleSimulator() {
 
         const resolvedP1Teams = await loadMyTeams(abilityList, itemsList, naturesList, movesList, typesList)
         teams.setP1Teams(resolvedP1Teams)
+        setIsP1Loading(false)
 
         const resolvedP2Teams: Teams = await loadEnemyTeams(abilityList, itemsList, naturesList, movesList, typesList)
         teams.setP2Teams(resolvedP2Teams)
@@ -220,7 +222,9 @@ export default function PokemonBattleSimulator() {
       } catch (err) {
         toast.error(`Failed to load data: ${err}`)
       } finally {
-        setIsInitializing(false)
+        // Safety net for the error path and for authenticated users, who
+        // never get the early guest-only flip above.
+        setIsP1Loading(false)
       }
     }
 
@@ -568,7 +572,7 @@ export default function PokemonBattleSimulator() {
           <TurnEditor healTeam={healTeam} player1Active={player1Active} player2Active={player2Active} />
 
           <div className="flex flex-row items-start justify-center w-full flex-nowrap">
-            {isInitializing ? (
+            {isP1Loading ? (
               <TeamBenchSkeleton />
             ) : (
               <TeamBench
@@ -680,7 +684,7 @@ export default function PokemonBattleSimulator() {
             )}
           </div>
 
-          {isInitializing ? (
+          {isP1Loading ? (
             <PokemonBoxSkeleton />
           ) : (
             <PokemonBox
