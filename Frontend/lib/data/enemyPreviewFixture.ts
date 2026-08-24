@@ -78,7 +78,7 @@ const BULBASAUR_FIXTURE: Pokemon = createPokemon(
 )
 
 const TRAINER_INFO: TrainerInfo = {
-  name: "Wild Encounter",
+  name: "Rival Gary - Pallet Town (Bulbasuar)",
   rules: "",
   format: "Singles",
   partner: "",
