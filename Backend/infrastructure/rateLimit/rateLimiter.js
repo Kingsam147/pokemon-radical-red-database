@@ -20,10 +20,21 @@ const onLimitReached = (_req, res) => {
   });
 };
 
+// The e2e CI job runs 30+ Playwright tests sequentially against one backend
+// instance, all from the same runner IP, each doing a full page load (guest
+// init + misc data + box + teams). That traffic shape is nothing like a
+// single real client and trips these limits well before the suite finishes,
+// so requests outside the very first few tests come back 429 and cascade
+// into unrelated test failures (e.g. loadInitialData never completing).
+// NODE_ENV=test is only ever set by CI/local test runs (see .github/workflows/ci.yml
+// and Backend package.json test scripts) — production and normal dev keep
+// the tuned limits below untouched.
+const isTestEnv = process.env.NODE_ENV === 'test';
+
 // 200 requests per minute — covers all routes
 const globalLimiter = rateLimit({
   windowMs: 60_000,
-  max: 200,
+  max: isTestEnv ? 5000 : 200,
   standardHeaders: true,
   legacyHeaders: false,
   passOnStoreError: true,
@@ -35,7 +46,7 @@ const globalLimiter = rateLimit({
 // 150 requests per minute — damage calc is CPU-intensive
 const calcLimiter = rateLimit({
   windowMs: 60_000,
-  max: 150,
+  max: isTestEnv ? 5000 : 150,
   standardHeaders: true,
   legacyHeaders: false,
   passOnStoreError: true,
@@ -46,7 +57,7 @@ const calcLimiter = rateLimit({
 // 10 requests per minute — prevents mass guest session creation
 const guestInitLimiter = rateLimit({
   windowMs: 60_000,
-  max: 10,
+  max: isTestEnv ? 5000 : 10,
   standardHeaders: true,
   legacyHeaders: false,
   passOnStoreError: true,
