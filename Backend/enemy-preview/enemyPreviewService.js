@@ -10,11 +10,15 @@ const ENEMY_PREVIEW_TTL = 86400; // 24 hours — matches P2_TEAMS_TTL convention
 // from species2.Bulbasaur / abilities / natures / moves / typeChart directly;
 // treat this as scaffolding, not the long-term fix — the real /teams/2 pipeline
 // goes through HydrationService in teamControllers.js.
+// Sprite is the S3 pokemon/{ID}.png convention (see Frontend/lib/utils/sprites.ts
+// POKEMON_SPRITES) — matches how every other Pokemon in the app resolves its sprite.
+const BULBASAUR_SPRITE = 'https://pokemon-radical-red.s3.us-east-2.amazonaws.com/pokemon/1.png';
+
 const HARDCODED_BULBASAUR = {
   name: 'Bulbasaur',
   form: 'Bulbasaur',
   ID: 1,
-  sprite: 'https://raw.githubusercontent.com/funnotbun/funnotbun.github.io/main/data/species/frontspr/gFrontSprite001Bulbasaur.png',
+  sprite: BULBASAUR_SPRITE,
   femaleSprite: false,
   gender: 'Both',
   level: 5,

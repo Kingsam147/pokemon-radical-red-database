@@ -37,26 +37,9 @@ test.describe("Guest starter Pikachu fast-path", () => {
     }
   })
 
-  test("the guest-starter-pikachu request fires on initial page load", async ({
-    page,
-  }) => {
-    const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3500"
-    let starterRequested = false
-
-    page.on("request", (req) => {
-      if (req.url().includes("/public/guest-starter-pikachu")) starterRequested = true
-    })
-
-    await page.goto("/")
-    await page.waitForLoadState("networkidle")
-
-    // Only meaningful when the backend is actually reachable — otherwise every
-    // fetch (including this one) fails before it's ever observed as a request.
-    const health = await page.request
-      .get(`${apiUrl}/health`, { failOnStatusCode: false })
-      .catch(() => null)
-    if (health?.ok()) {
-      expect(starterRequested).toBe(true)
-    }
-  })
+  // The frontend no longer calls this endpoint on initial load — the guest
+  // starter Pikachu is now baked directly into the frontend (see
+  // Frontend/lib/data/guestStarterPikachuFixture.ts) so it paints on the very
+  // first render with zero round trips. The route above stays live and
+  // reachable in case another client still needs it.
 })

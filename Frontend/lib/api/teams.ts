@@ -98,12 +98,13 @@ export function resolveEnemyTeam(
       form.allMoves = rawForm.allMoves.map(m => typeof m === 'string' ? (movesList[m.toLowerCase().replaceAll(/[^a-z0-9]/g, "")] ?? { name: m }) : m);
       form.type1 = typeof rawForm.type1 === 'string' ? typeList[rawForm.type1] : rawForm.type1;
       form.type2 = typeof rawForm.type2 === 'string' ? typeList[rawForm.type2] : rawForm.type2;
+      form.sprite = POKEMON_SPRITES(String(rawForm.ID));
     }
 
     resolvedTeam[slotKey] = createPokemon(
       p.name,
       String(p.ID),
-      POKEMON_SPRITES(String(p.ID)), // already a full URL in the JSON
+      POKEMON_SPRITES(String(p.ID)),
       resolvedType1,
       resolvedType2,
       p.level,

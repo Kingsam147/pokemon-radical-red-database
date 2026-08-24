@@ -2,14 +2,29 @@
 // Backend/enemy-preview/enemyPreviewService.js. This is a static onboarding
 // fixture (not real trainer/team data), so there is nothing to look up from a
 // database and nothing to keep synced with a resolver pipeline.
+// Sprite and allMoves are built the same way the frontend's own hydration
+// paths build them: sprite is the S3 pokemon/{ID}.png convention (see
+// Frontend/lib/utils/sprites.ts POKEMON_SPRITES), and allMoves is the real
+// level-5 legal movepool computed via allAvaliableMoves + legalMoves — the
+// same functions Backend/pokemon/HydrationService.js calls for player 1 —
+// against the Pikachu species entry, then hardcoded here since this fixture
+// has nothing to resolve against at request time.
+const PIKACHU_SPRITE = 'https://pokemon-radical-red.s3.us-east-2.amazonaws.com/pokemon/25.png';
+const PIKACHU_ALL_MOVES = [
+  'Baby-Doll Eyes', 'Brick Break', 'Dig', 'Electroweb', 'Facade', 'Fake Out',
+  'Flash', 'Growl', 'Iron Tail', 'Light Screen', 'Play Rough', 'Reflect',
+  'Rest', 'Return', 'Sleep Talk', 'Tail Whip', 'Thief', 'Thunder Punch',
+  'Thunder Shock', 'Thunderbolt', 'Volt Switch',
+];
+
 const GUEST_STARTER_PIKACHU = {
   name: 'Pikachu',
   form: 'Pikachu',
   ID: 25,
-  sprite: 'https://raw.githubusercontent.com/funnotbun/funnotbun.github.io/main/data/species/frontspr/gFrontSprite025Pikachu.png',
+  sprite: PIKACHU_SPRITE,
   femaleSprite: false,
   gender: 'M',
-  level: 8,
+  level: 5,
   item: { name: 'Light Ball', spriteName: 'light-ball', description: '' },
   nature: { name: 'Naughty', increase: 'Atk', decrease: 'SpD' },
   ability: { name: 'Lightning Rod', description: '', toggle: false },
@@ -30,7 +45,7 @@ const GUEST_STARTER_PIKACHU = {
     { name: 'Iron Tail', num: 231, accuracy: 75, basePower: 100, category: 'Physical', pp: 15, priority: 0, type: 'Steel', target: 'normal', secondary: { chance: 30, boosts: { def: -1 } }, shortDesc: "30% chance to lower the target's Defense by 1." },
     { name: 'Quick Attack', num: 98, accuracy: 100, basePower: 40, category: 'Physical', pp: 30, priority: 1, type: 'Normal', target: 'normal', secondary: null, shortDesc: 'Usually goes first.' },
   ],
-  allMoves: [],
+  allMoves: PIKACHU_ALL_MOVES,
   forms: {},
   version: 0,
 };
@@ -45,7 +60,7 @@ GUEST_STARTER_PIKACHU.forms = {
     abilities: GUEST_STARTER_PIKACHU.abilities,
     baseStats: GUEST_STARTER_PIKACHU.baseStats,
     finalStats: GUEST_STARTER_PIKACHU.finalStats,
-    allMoves: [],
+    allMoves: PIKACHU_ALL_MOVES,
   },
 };
 

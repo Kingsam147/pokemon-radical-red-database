@@ -83,7 +83,7 @@ test.describe('Box switching — lazy load and prefetch', () => {
 
     await page.goto('/');
 
-    await expect(page.getByRole('tab', { name: 'Box 1' })).toBeVisible({ timeout: 15000 });
+    await expect(page.getByRole('tab', { name: 'Starter Pikachu Box' })).toBeVisible({ timeout: 15000 });
     await expect(page.getByRole('tab', { name: 'Box 2' })).toBeVisible();
     await expect(page.getByRole('tab', { name: 'Box 3' })).toBeVisible();
   });
@@ -100,7 +100,7 @@ test.describe('Box switching — lazy load and prefetch', () => {
     });
 
     await page.goto('/');
-    await expect(page.getByRole('tab', { name: 'Box 1' })).toBeVisible({ timeout: 15000 });
+    await expect(page.getByRole('tab', { name: 'Starter Pikachu Box' })).toBeVisible({ timeout: 15000 });
 
     // Click the second tab before prefetch resolves it — skeleton should appear
     await page.getByRole('tab', { name: 'Box 2' }).click();
@@ -126,7 +126,7 @@ test.describe('Box switching — lazy load and prefetch', () => {
     });
 
     await page.goto('/');
-    await expect(page.getByRole('tab', { name: 'Box 1' })).toBeVisible({ timeout: 15000 });
+    await expect(page.getByRole('tab', { name: 'Starter Pikachu Box' })).toBeVisible({ timeout: 15000 });
 
     // Poll for the prefetch loop to complete instead of a fixed wait — real
     // backend latency (unmocked requests elsewhere on the page) can push the
@@ -143,7 +143,7 @@ test.describe('Box switching — lazy load and prefetch', () => {
     );
 
     await page.goto('/');
-    await expect(page.getByRole('tab', { name: 'Box 1' })).toBeVisible({ timeout: 15000 });
+    await expect(page.getByRole('tab', { name: 'Starter Pikachu Box' })).toBeVisible({ timeout: 15000 });
 
     // Wait for prefetch to fill in all remaining boxes
     await page.waitForTimeout(3000);
@@ -164,7 +164,7 @@ test.describe('Box switching — lazy load and prefetch', () => {
     });
 
     await page.goto('/');
-    await expect(page.getByRole('tab', { name: 'Box 1' })).toBeVisible({ timeout: 15000 });
+    await expect(page.getByRole('tab', { name: 'Starter Pikachu Box' })).toBeVisible({ timeout: 15000 });
 
     await page.getByRole('tab', { name: 'Box 2' }).click();
 

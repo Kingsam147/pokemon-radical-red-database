@@ -36,28 +36,11 @@ test.describe("Enemy trainer fast-path preview", () => {
     }
   })
 
-  test("the enemy-preview request fires on initial page load, independent of the rest of the pipeline", async ({
-    page,
-  }) => {
-    const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3500"
-    let previewRequested = false
-
-    page.on("request", (req) => {
-      if (req.url().includes("/public/enemy-preview")) previewRequested = true
-    })
-
-    await page.goto("/")
-    await page.waitForLoadState("networkidle")
-
-    // Only meaningful when the backend is actually reachable — otherwise every
-    // fetch (including this one) fails before it's ever observed as a request.
-    const health = await page.request
-      .get(`${apiUrl}/health`, { failOnStatusCode: false })
-      .catch(() => null)
-    if (health?.ok()) {
-      expect(previewRequested).toBe(true)
-    }
-  })
+  // The frontend no longer calls this endpoint on initial load — the enemy
+  // preview Bulbasaur is now baked directly into the frontend (see
+  // Frontend/lib/data/enemyPreviewFixture.ts) so it paints on the very first
+  // render with zero round trips. The route above stays live and reachable
+  // in case another client still needs it.
 
   test("player 2 bench renders before the box finishes loading when the preview resolves first", async ({
     page,
