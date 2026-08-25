@@ -565,10 +565,14 @@ export default function PokemonBattleSimulator() {
         setSidebarOpen={ui.setSidebarOpen}
         notes={ui.notes}
         setNotes={ui.setNotes}
+        checkedTMs={ui.checkedTMs}
+        toggleCheckedTM={ui.toggleCheckedTM}
+        tutorTier={ui.tutorTier}
+        setTutorTier={ui.setTutorTier}
       />
       <main className="flex-1 overflow-auto">
         <div className="container mx-auto p-4 space-y-6">
-          <Header battleMode={field.battleMode} setBattleMode={field.setBattleMode} setSidebarOpen={ui.setSidebarOpen} />
+          <Header battleMode={field.battleMode} setBattleMode={field.setBattleMode} sidebarOpen={ui.sidebarOpen} setSidebarOpen={ui.setSidebarOpen} />
           <TurnEditor healTeam={healTeam} player1Active={player1Active} player2Active={player2Active} />
 
           <div className="flex flex-row items-start justify-center w-full flex-nowrap">
