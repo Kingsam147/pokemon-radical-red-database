@@ -8,7 +8,7 @@ const {
   toxicExceptions,
   bannedAbilities,
   abilityExceptions,
-} = require('../Config/jsOptions');
+} = require('../game-data/jsOptions');
 const allAvaliableMoves = require('../legality/pokemonMovesets');
 const legalMoves = require('../legality/legalMoves');
 const legalAbility = require('../legality/legalAbilities');

@@ -25,12 +25,12 @@ let mongoClient;
 let app;
 
 // Routers pull in boxControllers/teamControllers, which pull in BoxRepository/TeamRepository,
-// which destructure `db` from Config/mongodbOptions at require time — so these must be
-// required only after jest.doMock('../../Config/mongodbOptions', ...) below has taken effect.
+// which destructure `db` from infrastructure/mongodbOptions at require time — so these must be
+// required only after jest.doMock('../../infrastructure/mongodbOptions', ...) below has taken effect.
 const buildApp = () => {
   const resolveIdentity = require('../../identity/resolveIdentity');
-  const myBoxRoutes = require('../../Routes/myBoxRoutes');
-  const teamRoutes = require('../../Routes/teamRoutes');
+  const myBoxRoutes = require('../../interfaces/routes/myBoxRoutes');
+  const teamRoutes = require('../../interfaces/routes/teamRoutes');
 
   const application = express();
   application.use(express.json());
@@ -49,7 +49,7 @@ beforeAll(async () => {
   mongoServer = await MongoMemoryServer.create();
   mongoClient = new MongoClient(mongoServer.getUri());
   await mongoClient.connect();
-  jest.doMock('../../Config/mongodbOptions', () => ({
+  jest.doMock('../../infrastructure/mongodbOptions', () => ({
     db: mongoClient.db('test'),
     fetchModels: jest.fn(),
   }));
