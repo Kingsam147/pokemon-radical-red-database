@@ -229,8 +229,12 @@ export default function PokemonBattleSimulator() {
     }
 
     const run = async () => {
+      // Best-effort: guest_id cookie minting shouldn't block the rest of
+      // the pipeline. Without this catch, any failure here (rate limit,
+      // network blip, cold start) threw unhandled and skipped
+      // loadInitialData() entirely, breaking the whole page for the guest.
       if (!isAuthenticated) {
-        await apiClient.get("/api/guest/init")
+        await apiClient.get("/api/guest/init").catch(() => {})
       } else {
         await apiClient.post("/api/auth/migrate").catch(() => {})
       }
