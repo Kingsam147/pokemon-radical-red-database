@@ -350,6 +350,9 @@
 .pokemon-editor-move-option {
   @apply text-xs;
 }
+.pokemon-editor-move-option-pre-evolution {
+  @apply text-yellow-500;
+}
 .pokemon-editor-move-base-power-cell {
   @apply h-7 w-8 text-xs border rounded bg-muted flex items-center justify-center font-semibold flex-shrink-0;
 }

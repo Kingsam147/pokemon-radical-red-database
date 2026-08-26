@@ -10,7 +10,6 @@ module.exports = {
     '!**/__tests__/**',
     '!coverage/**',
     '!jest.config.js',
-    '!dataAlteringFiles/**',
     '!infrastructure/logger/logger.js',
   ],
   coverageDirectory: 'coverage',

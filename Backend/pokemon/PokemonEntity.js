@@ -51,6 +51,7 @@ class PokemonEntity {
   #player;
   #version;
   #userId;
+  #allMoves;
 
   constructor(fields) {
     const name = fields.name;
@@ -66,6 +67,7 @@ class PokemonEntity {
     const player = fields.player;
     const version = fields.version === undefined ? 0 : fields.version;
     const userId = fields.userId;
+    const allMoves = fields.allMoves;
 
     if (!name || typeof name !== 'string') throw new Error('name is required');
     if (!form || typeof form !== 'string') throw new Error('form is required');
@@ -80,6 +82,8 @@ class PokemonEntity {
     if (!Array.isArray(moveIds) || moveIds.length > 4)
       throw new Error('move_ids must be an array of at most 4 strings');
     if (![1, 2].includes(player)) throw new Error('player must be 1 or 2');
+    if (allMoves !== undefined && !Array.isArray(allMoves))
+      throw new Error('allMoves must be an array when provided');
 
     validateStatBlock(EVs, 'EVs');
     validateStatBlock(IVs, 'IVs');
@@ -98,6 +102,9 @@ class PokemonEntity {
     this.#player = player;
     this.#version = version;
     this.#userId = userId;
+    // Computed once at box->bench placement by the move-availability endpoint, then
+    // persisted as-is -- blank/undefined while the Pokemon still sits in box storage.
+    this.#allMoves = allMoves === undefined ? undefined : allMoves.slice();
   }
 
   get name() {
@@ -150,6 +157,10 @@ class PokemonEntity {
 
   get userId() {
     return this.#userId;
+  }
+
+  get allMoves() {
+    return this.#allMoves === undefined ? undefined : this.#allMoves.slice();
   }
 
   changeMoves(moveIds) {
@@ -239,6 +250,7 @@ class PokemonEntity {
       version: this.#version,
     };
     if (this.#userId !== undefined) json.userId = this.#userId;
+    if (this.#allMoves !== undefined) json.allMoves = this.#allMoves.slice();
     return json;
   }
 
@@ -270,6 +282,7 @@ class PokemonEntity {
       player: doc.player === undefined ? resolvedPlayer : doc.player,
       version: doc.version === undefined ? 0 : doc.version,
       userId: doc.userId === undefined ? userId : doc.userId,
+      allMoves: doc.allMoves,
     });
   }
 

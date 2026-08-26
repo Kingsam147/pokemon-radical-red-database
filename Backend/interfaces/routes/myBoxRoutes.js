@@ -4,7 +4,7 @@ const router = express.Router();
 const { getAllMyBoxes, getBoxCount, findBox, addBox, removeBox,
     addToBox, findInBox, deleteInBox, updateInBox, clearMyBox,
     clearMyBoxes}
-    = require('../boxes/boxControllers');
+    = require('../../boxes/boxControllers');
 
 router.route('/')
     .get(getAllMyBoxes)

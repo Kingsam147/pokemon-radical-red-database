@@ -1,4 +1,4 @@
-const { db } = require('../Config/mongodbOptions');
+const { db } = require('../infrastructure/mongodbOptions');
 const redis = require('../infrastructure/redis/redisClient');
 const { getModels } = require('../game-data/loadModels');
 const TeamEntity = require('./TeamEntity');

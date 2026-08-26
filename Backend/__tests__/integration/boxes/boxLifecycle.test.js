@@ -73,7 +73,7 @@ beforeAll(async () => {
   mongoServer = await MongoMemoryServer.create();
   client = new MongoClient(mongoServer.getUri());
   await client.connect();
-  jest.doMock('../../../Config/mongodbOptions', () => ({ db: client.db('test') }));
+  jest.doMock('../../../infrastructure/mongodbOptions', () => ({ db: client.db('test') }));
   BoxRepository = require('../../../boxes/BoxRepository');
   BoxEntity = require('../../../boxes/BoxEntity');
   PokemonEntity = require('../../../pokemon/PokemonEntity');

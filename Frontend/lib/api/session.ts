@@ -20,7 +20,7 @@ export async function patchSession(sessionId: string, changes: Record<string, un
   return res.data;
 }
 
-export async function saveSession(sessionId: string, teamName: string, pokemonName: string) {
-  const res = await apiClient.post(`/api/pokemon/save/${sessionId}`, { teamName, pokemonName });
+export async function saveSession(sessionId: string, teamName: string, pokemonName: string, restrictedMode: boolean) {
+  const res = await apiClient.post(`/api/pokemon/save/${sessionId}`, { teamName, pokemonName, restrictedMode });
   return res.data as { message: string };
 }
