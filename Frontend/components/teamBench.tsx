@@ -6,7 +6,7 @@ import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { X, Save, Trash2, ChevronLeft, ChevronRight } from "lucide-react"
 
-import { Pokemon, Natures, Items, PokemonStatuses, PokemonStats, Gender, TrainerInfo } from "@/lib/utils/types.ts"
+import { Pokemon, Natures, Items, PokemonStatuses, PokemonStats, Gender, TrainerInfo, PokemonMoves } from "@/lib/utils/types.ts"
 import { getStatusStyle } from "@/lib/utils/formatters.ts"
 import { ITEM_SPRITE, FEMALE_POKEMON_SPRITES, IS_MEGA_ITEM, MEGA_SYMBOL } from "@/lib/utils/sprites"
 import PokemonEditor from "@/components/PokemonEditor/pokemonEditor"
@@ -45,6 +45,8 @@ type TeamBenchProps = {
   natureOptions: Natures;
   itemOptions: Items;
   statusOptions: PokemonStatuses;
+  allMoveOptions: PokemonMoves;
+  restrictedMode: boolean;
   onTeamChange: (player: 1 | 2, teamName: string) => void;
   onDragStart: (pokemon: Pokemon, source: string) => void;
   onDragOver: (e: React.DragEvent) => void;
@@ -87,6 +89,8 @@ export default function TeamBench({
   natureOptions,
   itemOptions,
   statusOptions,
+  allMoveOptions,
+  restrictedMode,
   onTeamChange,
   onDragStart,
   onDragOver,
@@ -207,6 +211,8 @@ export default function TeamBench({
               natureOptions={natureOptions}
               itemOptions={itemOptions}
               statusOptions={statusOptions}
+              allMoveOptions={allMoveOptions}
+              restrictedMode={restrictedMode}
               updatePokemonForm={updatePokemonForm}
               updatePokemonHp={updatePokemonHp}
               updatePokemonStatus={updatePokemonStatus}

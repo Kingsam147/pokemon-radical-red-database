@@ -30,6 +30,27 @@ describe('PokemonEntity construction', () => {
     expect(entity.EVs.Atk).toBe(252);
   });
 
+  test('allMoves is undefined when not provided (box storage never carries it)', () => {
+    const entity = PokemonEntity.create(validFields());
+    expect(entity.allMoves).toBeUndefined();
+    expect(entity.toJSON().allMoves).toBeUndefined();
+  });
+
+  test('allMoves is stored and returned as an array-level defensive copy when provided', () => {
+    const moves = [{ name: 'Blaze Kick', fromPreEvolution: false }];
+    const entity = PokemonEntity.create({ ...validFields(), allMoves: moves });
+    expect(entity.allMoves).toEqual(moves);
+    entity.allMoves.push({ name: 'injected' });
+    expect(entity.allMoves).toHaveLength(1);
+    expect(entity.toJSON().allMoves).toEqual(moves);
+  });
+
+  test('rejects a non-array allMoves', () => {
+    expect(() => PokemonEntity.create({ ...validFields(), allMoves: 'not-an-array' })).toThrow(
+      'allMoves must be an array when provided',
+    );
+  });
+
   test('rejects missing name', () => {
     expect(() => PokemonEntity.create({ ...validFields(), name: '' })).toThrow('name is required');
   });
@@ -240,5 +261,32 @@ describe('PokemonEntity.fromStoredDoc', () => {
     expect(entity.move_ids).toEqual(['High Jump Kick', 'Blaze Kick', 'Brave Bird', 'Detect']);
     expect(entity.item).toBe('');
     expect(entity.version).toBe(0);
+  });
+
+  test('lean shape passes allMoves through when present', () => {
+    const moves = [{ name: 'Blaze Kick', fromPreEvolution: false }];
+    const doc = { ...validFields(), allMoves: moves };
+    const entity = PokemonEntity.fromStoredDoc(doc, models, 1, 'user-1');
+    expect(entity.allMoves).toEqual(moves);
+  });
+
+  test('legacy shape passes allMoves through when present', () => {
+    const legacyDoc = {
+      name: 'Blaziken',
+      form: 'Blaziken',
+      gender: 'M',
+      level: 47,
+      nature: 'Jolly',
+      item: 'None',
+      ability: 'Speed Boost',
+      moveset: ['High Jump Kick', 'Blaze Kick', 'Brave Bird', 'Detect'],
+      EVs: validFields().EVs,
+      IVs: validFields().IVs,
+      player: 1,
+      baseStats: { HP: 80, Atk: 120, Def: 70, SpA: 110, SpD: 70, Spe: 80 },
+      allMoves: [{ name: 'Blaze Kick', fromPreEvolution: false }],
+    };
+    const entity = PokemonEntity.fromStoredDoc(legacyDoc, models, 1, 'user-1');
+    expect(entity.allMoves).toEqual([{ name: 'Blaze Kick', fromPreEvolution: false }]);
   });
 });

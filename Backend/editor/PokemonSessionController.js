@@ -39,7 +39,7 @@ const saveDraft = async (req, res) => {
   try {
     const userId = req.auth.payload.sub;
     const { sessionId } = req.params;
-    const { teamName, pokemonName } = req.body;
+    const { teamName, pokemonName, restrictedMode } = req.body;
 
     if (!teamName || !pokemonName) {
       return res.status(400).json({ message: 'teamName and pokemonName are required' });
@@ -47,7 +47,7 @@ const saveDraft = async (req, res) => {
 
     const entity = SessionService.getDraftEntity(userId, sessionId);
 
-    const { valid, errors } = validate(entity);
+    const { valid, errors } = validate(entity, { restrictedMode });
     if (!valid) {
       return res.status(422).json({ message: 'Validation failed', errors });
     }

@@ -15,6 +15,7 @@ import {
     Natures,
     Items,
     PokemonStatuses,
+    PokemonMoves,
     Gender,
     Pokemon,
     Ability,
@@ -41,6 +42,8 @@ type Props = {
     natureOptions: Natures
     itemOptions: Items
     statusOptions: PokemonStatuses
+    allMoveOptions: PokemonMoves
+    restrictedMode: boolean
     player1Bench: (Pokemon | null)[]
     player2Bench: (Pokemon | null)[]
     faintPokemon: (player: 1 | 2, slotIndex: number) => void
@@ -63,7 +66,7 @@ export default function PokemonEditor({
     battleMode, doublesType,
     teamName,
     toggleHazard, p1Hazards, p2Hazards, activeEffects,
-    natureOptions, itemOptions, statusOptions,
+    natureOptions, itemOptions, statusOptions, allMoveOptions, restrictedMode,
     updatePokemonForm, updatePokemonHp, updatePokemonStatus,
     updatePokemonNature, updatePokemonItem, updatePokemonAbility, updateAbilityToggle,
     updatePokemonMove, updatePokemonGender, updatePokemonStat, updatePokemonLevel,
@@ -153,7 +156,7 @@ export default function PokemonEditor({
         if (!sessionId || !teamName || !pokemon) return;
         setSaveStatus('saving');
         try {
-            await saveSession(sessionId, teamName, pokemon.name);
+            await saveSession(sessionId, teamName, pokemon.name, restrictedMode);
             setSaveStatus('saved');
             setTimeout(() => setSaveStatus('idle'), 2000);
         } catch {
@@ -239,6 +242,12 @@ export default function PokemonEditor({
     ]);
 
     if (!pokemon) return null;
+
+    // Restricted Mode on: this Pokemon's own precomputed pool (yellow-highlighted where
+    // fromPreEvolution). Off: every move in the game, ignoring allMoves entirely.
+    const moveSelectorOptions = restrictedMode
+        ? pokemon.allMoves
+        : Object.values(allMoveOptions).sort((a, b) => a.name.localeCompare(b.name));
 
     const getSaveButtonClass = () => {
         if (saveStatus === 'saved') return "pokemon-editor-save-button pokemon-editor-save-button-saved";
@@ -668,8 +677,14 @@ export default function PokemonEditor({
                                                     </SelectTrigger>
                                                     <SelectContent>
                                                         <SelectItem value="None" className="pokemon-editor-move-none-option">None</SelectItem>
-                                                        {pokemon.allMoves.map((m) => (
-                                                            <SelectItem key={m.name} value={m.name} className="pokemon-editor-move-option">{m.name}</SelectItem>
+                                                        {moveSelectorOptions.map((m) => (
+                                                            <SelectItem
+                                                                key={m.name}
+                                                                value={m.name}
+                                                                className={`pokemon-editor-move-option${m.fromPreEvolution ? " pokemon-editor-move-option-pre-evolution" : ""}`}
+                                                            >
+                                                                {m.name}
+                                                            </SelectItem>
                                                         ))}
                                                     </SelectContent>
                                                 </Select>
