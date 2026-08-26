@@ -426,13 +426,19 @@ export default function PokemonBattleSimulator() {
     setBench(newBench)
   }
 
-  const togglePokemonInBench = async (pokemon: Pokemon, player: 1 | 2) => {
+  const togglePokemonInBench = async (pokemon: Pokemon, player: 1 | 2, boxKey?: string) => {
     const setBench = player === 1 ? bench.setPlayer1Bench : bench.setPlayer2Bench
     const currentBench = player === 1 ? bench.player1Bench : bench.player2Bench
     const isP1 = player === 1
 
-    if (bench.isInBench(pokemon, player)) {
-      const benchIndex = currentBench.findIndex(p => p?.ID === pokemon.ID)
+    if (bench.isInBench(pokemon, player, boxKey)) {
+      // Match by boxKey (the exact box slot this card came from) rather than
+      // pokemon.ID (species ID), which collides whenever two Pokemon of the same
+      // species exist -- e.g. the guest-starter Pikachu already benched and a
+      // freshly imported real Pikachu still sitting in the box.
+      const benchIndex = boxKey !== undefined
+        ? currentBench.findIndex(p => p?.boxKey === boxKey)
+        : currentBench.findIndex(p => p?.ID === pokemon.ID)
       if (benchIndex === -1) return
 
       if (pokemon.boxKey !== undefined && pokemon.boxIndex !== undefined && isP1) {
@@ -461,9 +467,12 @@ export default function PokemonBattleSimulator() {
 
       const currentBox = boxManager.p1Boxes[boxManager.activeBoxIndex]
       if (!currentBox) return
-      const boxEntry = Object.entries(currentBox).find(([_, p]) => p?.ID === pokemon.ID)
-      if (!boxEntry) return
-      const [key] = boxEntry
+      // Prefer the exact slot key the card was clicked from; only fall back to an
+      // ID-based search (species-level, collision-prone) if it wasn't provided.
+      const key = boxKey !== undefined && currentBox[boxKey] !== undefined
+        ? boxKey
+        : Object.entries(currentBox).find(([_, p]) => p?.ID === pokemon.ID)?.[0]
+      if (!key) return
 
       setBench(prev => {
         const newBench = [...prev]
