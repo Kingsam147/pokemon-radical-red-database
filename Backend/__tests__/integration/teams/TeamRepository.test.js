@@ -21,7 +21,7 @@ beforeAll(async () => {
   mongoServer = await MongoMemoryServer.create();
   client = new MongoClient(mongoServer.getUri());
   await client.connect();
-  jest.doMock('../../../Config/mongodbOptions', () => ({ db: client.db('test') }));
+  jest.doMock('../../../infrastructure/mongodbOptions', () => ({ db: client.db('test') }));
   TeamRepository = require('../../../teams/TeamRepository');
   TeamEntity = require('../../../teams/TeamEntity');
   PokemonEntity = require('../../../pokemon/PokemonEntity');

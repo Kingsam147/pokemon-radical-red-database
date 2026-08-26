@@ -1,7 +1,7 @@
 const path = require("path"); 
 const fs = require("fs"); 
 
-const models = path.join(__dirname, "..", "Models"); 
+const models = path.join(__dirname, "Models");
 
 const tutorEggMoveInfo = require(path.join(models, "avaliableTutors+TMS", "tutorEggMoveInfo.js")); 
 const bannedMovesFile = require(path.join(models, "restrictedBannedStuff", "bannedMoves.js")); 

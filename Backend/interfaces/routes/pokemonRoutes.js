@@ -1,6 +1,6 @@
 const express = require('express'); 
 const router = express.Router(); 
-const { addPokemon, findPokemon, deletePokemon, updatePokemon, clearAllPokemon } = require('../teams/pokemonInTeamControllers');
+const { addPokemon, findPokemon, deletePokemon, updatePokemon, clearAllPokemon } = require('../../teams/pokemonInTeamControllers');
 
 router.route('/:player/:teamName')
     .post(addPokemon)

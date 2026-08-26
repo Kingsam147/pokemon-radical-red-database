@@ -1,6 +1,6 @@
 const express = require('express'); 
 const router = express.Router(); 
-const { getTeam, getAllTeams, addTeam, removeTeam, removeAllTeams, saveFullTeam } = require('../teams/teamControllers')
+const { getTeam, getAllTeams, addTeam, removeTeam, removeAllTeams, saveFullTeam } = require('../../teams/teamControllers')
 
 router.route('/:player/:teamName')
     .get(getTeam)

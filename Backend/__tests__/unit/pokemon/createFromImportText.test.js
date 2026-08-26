@@ -20,7 +20,7 @@ jest.mock('../../../game-data/loadModels', () => ({
   megaStones: {},
 }));
 
-jest.mock('../../../Config/jsOptions.js', () => ({
+jest.mock('../../../game-data/jsOptions.js', () => ({
   bannedAbilities: {},
   abilityExceptions: {},
 }));

@@ -1,5 +1,5 @@
 const { getModels, megaStones } = require('../game-data/loadModels');
-const { bannedAbilities, abilityExceptions } = require('../Config/jsOptions.js');
+const { bannedAbilities, abilityExceptions } = require('../game-data/jsOptions.js');
 const getPokemonInfo = require('../import/parsePokemonText');
 const legalAbility = require('../legality/legalAbilities');
 const PokemonEntity = require('./PokemonEntity');

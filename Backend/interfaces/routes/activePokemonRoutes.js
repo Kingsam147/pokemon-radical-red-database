@@ -1,6 +1,6 @@
 const express = require('express'); 
 const router = express.Router(); 
-const { getOtherForms, changeForm, resetForm } = require('../battling/activePokemonControllers');
+const { getOtherForms, changeForm, resetForm } = require('../../battling/activePokemonControllers');
 
 router.route('/:player') 
     .get(getOtherForms)

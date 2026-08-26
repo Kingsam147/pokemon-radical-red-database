@@ -79,16 +79,16 @@ const init = mongoose.connect(MONGODB_URI, {
     HydrationService.load();
 
     app.use('/misc/damage', rateLimiter.calcLimiter);
-    app.use('/misc', require('./Routes/miscRoutes'));
-    app.use('/public', require('./Routes/publicRoutes'));
+    app.use('/misc', require('./interfaces/routes/miscRoutes'));
+    app.use('/public', require('./interfaces/routes/publicRoutes'));
     app.use('/api/guest/init', rateLimiter.guestInitLimiter);
     app.use('/api/guest', require('./interfaces/routes/guestRoutes'));
     app.use('/api/auth', jwtCheck, require('./interfaces/routes/authRoutes'));
     app.use('/api/pokemon', jwtCheck, require('./interfaces/routes/pokemonSessionRoutes'));
-    app.use('/activePokemon', jwtCheck, require('./Routes/activePokemonRoutes'));
-    app.use('/myBoxes', resolveIdentity, require('./Routes/myBoxRoutes'));
-    app.use('/teams', resolveIdentity, require('./Routes/teamRoutes'));
-    app.use('/', resolveIdentity, require('./Routes/pokemonRoutes'));
+    app.use('/activePokemon', jwtCheck, require('./interfaces/routes/activePokemonRoutes'));
+    app.use('/myBoxes', resolveIdentity, require('./interfaces/routes/myBoxRoutes'));
+    app.use('/teams', resolveIdentity, require('./interfaces/routes/teamRoutes'));
+    app.use('/', resolveIdentity, require('./interfaces/routes/pokemonRoutes'));
 
     clearTimeout(initTimeoutId);
     ready = true;
