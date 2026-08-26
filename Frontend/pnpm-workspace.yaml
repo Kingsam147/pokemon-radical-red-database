@@ -1,0 +1,12 @@
+packages:
+  - '.'
+allowBuilds:
+  '@sentry/cli': true
+  browser-tabs-lock: true
+  sharp: true
+  unrs-resolver: true
+onlyBuiltDependencies:
+  - '@sentry/cli'
+  - browser-tabs-lock
+  - sharp
+  - unrs-resolver
