@@ -26,8 +26,10 @@ test.describe('Team creation and management', () => {
     if (await card.isVisible()) {
       const addButton = page.getByTestId('bench-toggle-Pikachu');
       await addButton.click();
-      // After adding, button should switch to Remove
-      await expect(addButton).toContainText('Remove');
+      // Adding moves the Pokemon out of the box onto the bench -- the box card
+      // (and its toggle button) is removed from the DOM entirely, not flipped
+      // to a "Remove" state in place, since it no longer sits in box storage.
+      await expect(card).not.toBeVisible();
     }
   });
 
@@ -41,10 +43,12 @@ test.describe('Team creation and management', () => {
     );
     await page.getByTestId('import-modal-confirm').click();
 
+    const card = page.getByTestId('pokemon-card-Bulbasaur');
     const addButton = page.getByTestId('bench-toggle-Bulbasaur');
     if (await addButton.isVisible()) {
       await addButton.click();
-      await expect(addButton).toContainText('Remove');
+      // Same as above: a successful add removes the box card entirely.
+      await expect(card).not.toBeVisible();
     }
   });
 });

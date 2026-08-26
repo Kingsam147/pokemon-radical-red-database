@@ -10,6 +10,17 @@ type Options = {
   itemOptions: Items
 }
 
+// boxKey uniquely identifies which box slot a card came from -- pokemon.ID is only the
+// species ID, which collides whenever two Pokemon of the same species exist (e.g. the
+// guest-starter Pikachu already on the bench and a freshly imported real Pikachu still
+// in the box), incorrectly reporting both as benched. Exported standalone for testing.
+export function isPokemonInBench(bench: (Pokemon | null)[], pokemon: Pokemon, boxKey?: string): boolean {
+  if (boxKey !== undefined) {
+    return bench.some((p) => p?.boxKey === boxKey)
+  }
+  return bench.some((p) => p?.ID === pokemon.ID)
+}
+
 export function useBench({ statusOptions, natureOptions, itemOptions }: Options) {
   const [player1Bench, setPlayer1Bench] = useState<(Pokemon | null)[]>(Array(6).fill(null))
   const [player2Bench, setPlayer2Bench] = useState<(Pokemon | null)[]>(Array(6).fill(null))
@@ -23,9 +34,9 @@ export function useBench({ statusOptions, natureOptions, itemOptions }: Options)
     e.preventDefault()
   }
 
-  const isInBench = (pokemon: Pokemon, player: 1 | 2) => {
+  const isInBench = (pokemon: Pokemon, player: 1 | 2, boxKey?: string) => {
     const bench = player === 1 ? player1Bench : player2Bench
-    return bench.some((p) => p?.ID === pokemon.ID)
+    return isPokemonInBench(bench, pokemon, boxKey)
   }
 
   const faintPokemon = (player: 1 | 2, slotIndex: number) => {
