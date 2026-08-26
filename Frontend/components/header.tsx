@@ -8,16 +8,17 @@ import "./header.css"
 type Props = {
     battleMode: "singles" | "doubles"
     setBattleMode: (mode: "singles" | "doubles") => void
+    sidebarOpen: boolean
     setSidebarOpen: (sidebar: boolean) => void
 }
 
-export default function Header({ battleMode, setBattleMode, setSidebarOpen }: Props) {
+export default function Header({ battleMode, setBattleMode, sidebarOpen, setSidebarOpen }: Props) {
     const { isAuthenticated, isLoading, user, loginWithRedirect, logout } = useAuth0();
 
     return (
         <>
             <div className="header-bar">
-                <Button variant="outline" size="sm" onClick={() => setSidebarOpen(true)}>
+                <Button variant="outline" size="sm" className="relative z-[60]" onClick={() => setSidebarOpen(!sidebarOpen)}>
                     ☰ Tools
                 </Button>
 
