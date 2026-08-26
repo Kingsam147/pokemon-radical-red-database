@@ -44,6 +44,18 @@
   @apply font-bold text-foreground;
 }
 
+.tool-sidebar-restricted-mode-field {
+  @apply flex items-start gap-3 bg-muted/30 border border-border rounded-md px-3 py-2 cursor-pointer;
+}
+
+.tool-sidebar-restricted-mode-field span {
+  @apply text-sm leading-relaxed text-foreground/80;
+}
+
+.tool-sidebar-restricted-mode-field span strong {
+  @apply font-bold text-foreground;
+}
+
 .tool-sidebar-notes-field {
   @apply space-y-2;
 }

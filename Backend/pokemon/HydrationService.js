@@ -78,9 +78,9 @@ const buildFormEntry = (formData, abilityIndex, activeSpeciesAbilityCount, EVs, 
   };
 };
 
-const hydrate = (entity) => {
+const hydrate = (entity, { includeAllMoves = true } = {}) => {
   const { species2, natures } = getModels();
-  const { name, form, gender, level, nature: natureName, item, ability_id, move_ids, EVs, IVs, player, version } = entity;
+  const { name, form, gender, level, nature: natureName, item, ability_id, move_ids, EVs, IVs, player, version, allMoves: storedAllMoves } = entity;
 
   if (!species2[name]) throw new Error(`${name} is not a valid Pokémon species`);
 
@@ -98,10 +98,21 @@ const hydrate = (entity) => {
 
   const abilityIndex = activeForm.abilities.findIndex(ab => ab === ability_id);
 
-  const movesPool = allAvaliableMoves(activeForm, level, tutorTable, tutorLevel, avaliableTMS, isEggMoves);
-  const filteredMoves = player === 1
-    ? legalMoves(name, movesPool, bannedMoves, leechSeedExceptions, toxicExceptions)
-    : movesPool;
+  // allMoves is computed once at box->bench placement (see game-data/moveAvailabilityController.js)
+  // and persisted on the entity from then on -- pass it through rather than recomputing here.
+  // The static-default computation below only runs as a fallback for entities that never
+  // went through that flow (legacy data), and is skipped entirely for box-context reads.
+  let filteredMoves;
+  if (!includeAllMoves) {
+    filteredMoves = [];
+  } else if (storedAllMoves !== undefined) {
+    filteredMoves = storedAllMoves;
+  } else {
+    const movesPool = allAvaliableMoves(activeForm, level, tutorTable, tutorLevel, avaliableTMS, isEggMoves);
+    filteredMoves = player === 1
+      ? legalMoves(name, movesPool, bannedMoves, leechSeedExceptions, toxicExceptions)
+      : movesPool;
+  }
 
   const baseStats = {
     HP: activeForm.baseHP,

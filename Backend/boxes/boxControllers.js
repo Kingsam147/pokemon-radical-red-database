@@ -14,7 +14,7 @@ const parseBoxIndex = (param) => {
 const hydrateBox = (box) => {
   const result = {};
   box.listPokemon().forEach((entity) => {
-    result[entity.name] = HydrationService.hydrate(entity);
+    result[entity.name] = HydrationService.hydrate(entity, { includeAllMoves: false });
   });
   return result;
 };
@@ -128,7 +128,7 @@ const addToBox = async (req, res) => {
       return res.status(409).json({
         partialSuccess: `still added ${validPokemon.map((p) => p.name).join(', ')} to my box`,
         error: `${duplicates.map((p) => p.name).join(', ')} already exists in my box`,
-        addedPokemon: validPokemon.map((entity) => HydrationService.hydrate(entity)),
+        addedPokemon: validPokemon.map((entity) => HydrationService.hydrate(entity, { includeAllMoves: false })),
         updatedBox: hydrateBox(box),
       });
     }
@@ -141,7 +141,7 @@ const addToBox = async (req, res) => {
     });
     return res.status(201).json({
       message: `Successfully added ${newPokemons.map((p) => p.name)} to my box`,
-      addedPokemon: validPokemon.map((entity) => HydrationService.hydrate(entity)),
+      addedPokemon: validPokemon.map((entity) => HydrationService.hydrate(entity, { includeAllMoves: false })),
       updatedBox: hydrateBox(box),
     });
   } catch (err) {
@@ -160,7 +160,7 @@ const findInBox = async (req, res) => {
   if (!boxes[index]) return res.status(404).json({ message: `Box ${index} not found` });
   const entity = boxes[index].getPokemon(pokemonName);
   if (!entity) return res.status(404).json({ message: `${pokemonName} not found in my box` });
-  return res.status(200).json({ message: `Successfully found ${pokemonName}`, pokemon: HydrationService.hydrate(entity) });
+  return res.status(200).json({ message: `Successfully found ${pokemonName}`, pokemon: HydrationService.hydrate(entity, { includeAllMoves: false }) });
 };
 
 const deleteInBox = async (req, res) => {
@@ -182,7 +182,7 @@ const deleteInBox = async (req, res) => {
   logger.info(USER_ACTION_EVENTS.POKEMON_DELETED, { userId, boxIndex: index, pokemonName });
   return res.status(200).json({
     message: `${pokemonName} successfully deleted from my box`,
-    deletedPokemon: HydrationService.hydrate(removed),
+    deletedPokemon: HydrationService.hydrate(removed, { includeAllMoves: false }),
     updatedBox: hydrateBox(box),
   });
 };
@@ -211,7 +211,7 @@ const updateInBox = async (req, res) => {
     logger.info(USER_ACTION_EVENTS.POKEMON_UPDATED, { userId, boxIndex: index, pokemonName: updatedEntity.name });
     return res.status(200).json({
       message: `${updatedEntity.name} was successfully updated in my box`,
-      theUpdatedPokemon: HydrationService.hydrate(updatedEntity),
+      theUpdatedPokemon: HydrationService.hydrate(updatedEntity, { includeAllMoves: false }),
       allBoxes: (await BoxRepository.loadAll(userId)).map(hydrateBox),
     });
   } catch (err) {

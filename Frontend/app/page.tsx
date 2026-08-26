@@ -9,6 +9,7 @@ import { isUnsavedP1Selection } from "@/lib/utils/guestStarterPikachuGuards"
 import { GUEST_STARTER_PIKACHU_FIXTURE, hydrateAllMoves } from "@/lib/data/guestStarterPikachuFixture"
 import { ENEMY_PREVIEW_FIXTURE } from "@/lib/data/enemyPreviewFixture"
 import { readMiscCache, writeMiscCache } from "@/lib/cache/miscCache"
+import { getMoveAvailability } from "@/lib/api/moveAvailability"
 import { useAuth0 } from "@auth0/auth0-react"
 import { toast } from "sonner"
 import apiClient from "@/lib/infrastructure/apiClient"
@@ -441,6 +442,8 @@ export default function PokemonBattleSimulator() {
           currentHp: pokemon.maxHp,
           status: options.statusOptions["Healthy"],
           statBoosts: { Atk: 0, Def: 0, SpA: 0, SpD: 0, Spe: 0 },
+          // Box storage always holds a blank allMoves -- only bench placement computes it.
+          allMoves: [],
         }
         boxManager.setP1Boxes(prev => {
           const updated = [...prev]
@@ -465,12 +468,28 @@ export default function PokemonBattleSimulator() {
       if (!boxEntry) return
       const [key] = boxEntry
 
+      // allMoves is computed once here, at box->bench placement, and persisted with the
+      // Pokemon from then on -- see Backend/game-data/moveAvailabilityController.js.
+      let benchedPokemon = pokemon
+      try {
+        const { allMoves } = await getMoveAvailability({
+          species: pokemon.name,
+          form: pokemon.form.formName,
+          level: pokemon.level,
+          checkedTMs: ui.checkedTMs,
+          tutorTier: ui.tutorTier,
+        })
+        benchedPokemon = { ...pokemon, allMoves }
+      } catch {
+        toast.error(`Failed to compute available moves for ${pokemon.name}`)
+      }
+
       setBench(prev => {
         const newBench = [...prev]
-        newBench[emptySlot] = { ...pokemon, boxKey: key, boxIndex: boxManager.activeBoxIndex }
+        newBench[emptySlot] = { ...benchedPokemon, boxKey: key, boxIndex: boxManager.activeBoxIndex }
         return newBench
       })
-      boxManager.setOriginalPokemon(prev => ({ ...prev, [key]: { ...pokemon, boxKey: key, boxIndex: boxManager.activeBoxIndex } }))
+      boxManager.setOriginalPokemon(prev => ({ ...prev, [key]: { ...benchedPokemon, boxKey: key, boxIndex: boxManager.activeBoxIndex } }))
       if (isP1) {
         boxManager.setP1Boxes(prev => {
           const updated = [...prev]
@@ -573,6 +592,8 @@ export default function PokemonBattleSimulator() {
         toggleCheckedTM={ui.toggleCheckedTM}
         tutorTier={ui.tutorTier}
         setTutorTier={ui.setTutorTier}
+        restrictedMode={ui.restrictedMode}
+        setRestrictedMode={ui.setRestrictedMode}
       />
       <main className="flex-1 overflow-auto">
         <div className="container mx-auto p-4 space-y-6">
@@ -599,6 +620,8 @@ export default function PokemonBattleSimulator() {
                 natureOptions={options.natureOptions}
                 itemOptions={options.itemOptions}
                 statusOptions={options.statusOptions}
+                allMoveOptions={options.movesOptions}
+                restrictedMode={ui.restrictedMode}
                 onTeamChange={handleTeamChange}
                 onSaveTeam={saveCurrentTeam}
                 onDeleteTeam={deleteP1Team}
@@ -666,6 +689,8 @@ export default function PokemonBattleSimulator() {
                 natureOptions={options.natureOptions}
                 itemOptions={options.itemOptions}
                 statusOptions={options.statusOptions}
+                allMoveOptions={options.movesOptions}
+                restrictedMode={ui.restrictedMode}
                 onTeamChange={handleTeamChange}
                 onNavigate={navigateP2Teams}
                 trainerInfo={teams.p2SelectedTeamIndex && teams.p2Teams[teams.p2SelectedTeamIndex]

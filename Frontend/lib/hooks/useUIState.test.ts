@@ -1,5 +1,5 @@
 import { describe, test, expect, afterEach, vi } from "vitest"
-import { readStoredCheckedTMs, readStoredTutorTier, nextCheckedTMs } from "@/lib/hooks/useUIState"
+import { readStoredCheckedTMs, readStoredTutorTier, readStoredRestrictedMode, nextCheckedTMs } from "@/lib/hooks/useUIState"
 
 function stubLocalStorage(values: Record<string, string>) {
   vi.stubGlobal("window", {
@@ -64,5 +64,32 @@ describe("readStoredTutorTier", () => {
   test("returns null when the stored value is malformed", () => {
     stubLocalStorage({ rr_tutor_tier: "{not json" })
     expect(readStoredTutorTier()).toBe(null)
+  })
+})
+
+describe("readStoredRestrictedMode", () => {
+  test("defaults to true when window is unavailable", () => {
+    vi.stubGlobal("window", undefined)
+    expect(readStoredRestrictedMode()).toBe(true)
+  })
+
+  test("defaults to true for a first-time visitor with nothing stored", () => {
+    stubLocalStorage({})
+    expect(readStoredRestrictedMode()).toBe(true)
+  })
+
+  test("parses a previously stored false value", () => {
+    stubLocalStorage({ rr_restricted_mode: "false" })
+    expect(readStoredRestrictedMode()).toBe(false)
+  })
+
+  test("parses a previously stored true value", () => {
+    stubLocalStorage({ rr_restricted_mode: "true" })
+    expect(readStoredRestrictedMode()).toBe(true)
+  })
+
+  test("defaults to true when the stored value is malformed", () => {
+    stubLocalStorage({ rr_restricted_mode: "{not json" })
+    expect(readStoredRestrictedMode()).toBe(true)
   })
 })

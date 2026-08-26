@@ -203,6 +203,7 @@ export interface PokemonMove {
   category?: string,
   accuracy?: number | null,
   secondary?: unknown,
+  fromPreEvolution?: boolean,
   [key: string]: unknown
 }
 

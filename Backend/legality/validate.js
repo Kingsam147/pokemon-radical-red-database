@@ -14,9 +14,9 @@ const legalMovesFilter = require('./legalMoves');
 const legalAbilityFilter = require('./legalAbilities');
 const { STAT_KEYS } = require('../pokemon/PokemonEntity');
 
-const validate = (entity) => {
+const validate = (entity, { restrictedMode = true } = {}) => {
   const { species2, natures, items } = getModels();
-  const { name, form, nature, item, ability_id, move_ids, EVs, IVs, player, level } = entity;
+  const { name, form, nature, item, ability_id, move_ids, EVs, IVs, player, level, allMoves } = entity;
   const errors = [];
 
   if (!species2[name]) {
@@ -41,17 +41,28 @@ const validate = (entity) => {
     errors.push(`"${ability_id}" is not a legal ability for ${name}`);
   }
 
-  const movesPool = allAvaliableMoves(activeForm, level, tutorTable, tutorLevel, avaliableTMS, isEggMoves);
-  const legalPool = player === 1
-    ? legalMovesFilter(name, movesPool, bannedMoves, leechSeedExceptions, toxicExceptions)
-    : movesPool;
-  const legalPoolSet = new Set(legalPool);
+  // Restricted Mode off is the user's explicit escape hatch: any move can be saved on
+  // any Pokemon, matching what the resolver/dropdown already showed as available.
+  if (restrictedMode) {
+    // allMoves is computed once at box->bench placement (see game-data/moveAvailabilityController.js)
+    // and persisted on the entity -- fall back to the old static computation only for
+    // entities that never went through that flow (legacy data).
+    const legalPool = Array.isArray(allMoves) && allMoves.length > 0
+      ? allMoves.map(move => move.name)
+      : (() => {
+          const movesPool = allAvaliableMoves(activeForm, level, tutorTable, tutorLevel, avaliableTMS, isEggMoves);
+          return player === 1
+            ? legalMovesFilter(name, movesPool, bannedMoves, leechSeedExceptions, toxicExceptions)
+            : movesPool;
+        })();
+    const legalPoolSet = new Set(legalPool);
 
-  move_ids.forEach(move => {
-    if (move && move !== '' && move !== 'None' && !legalPoolSet.has(move)) {
-      errors.push(`"${move}" is not in ${name}'s legal move pool`);
-    }
-  });
+    move_ids.forEach(move => {
+      if (move && move !== '' && move !== 'None' && !legalPoolSet.has(move)) {
+        errors.push(`"${move}" is not in ${name}'s legal move pool`);
+      }
+    });
+  }
 
   STAT_KEYS.forEach(key => {
     if (EVs[key] > 252) errors.push(`EVs.${key} (${EVs[key]}) exceeds the per-stat maximum of 252`);
