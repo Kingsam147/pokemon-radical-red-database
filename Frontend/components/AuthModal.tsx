@@ -32,6 +32,7 @@ export default function AuthModal({ open, onOpenChange }: Props) {
   const isPending = pendingAction !== null
 
   const handleAuthAction = async (action: AuthModalAction) => {
+    if (pendingAction !== null) return
     setPendingAction(action)
     try {
       await loginWithPopup({
@@ -59,6 +60,7 @@ export default function AuthModal({ open, onOpenChange }: Props) {
             strokeWidth={2}
             strokeLinecap="round"
             strokeLinejoin="round"
+            aria-hidden="true"
           >
             <circle cx="12" cy="12" r="9" />
             <path d="M3 12h18M12 3a9 9 0 0 1 0 18 9 9 0 0 1 0-18Z" />
