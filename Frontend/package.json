@@ -99,5 +99,13 @@
   "bugs": {
     "url": "https://github.com/Kingsam147/v0-pokemon-simulator-demo/issues"
   },
-  "homepage": "https://github.com/Kingsam147/v0-pokemon-simulator-demo#readme"
+  "homepage": "https://github.com/Kingsam147/v0-pokemon-simulator-demo#readme",
+  "pnpm": {
+    "onlyBuiltDependencies": [
+      "@sentry/cli",
+      "browser-tabs-lock",
+      "sharp",
+      "unrs-resolver"
+    ]
+  }
 }
