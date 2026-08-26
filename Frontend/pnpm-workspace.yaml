@@ -1,0 +1,5 @@
+onlyBuiltDependencies:
+  - '@sentry/cli'
+  - browser-tabs-lock
+  - sharp
+  - unrs-resolver
