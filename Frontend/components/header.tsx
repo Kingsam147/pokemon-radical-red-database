@@ -1,8 +1,10 @@
 "use client"
 
+import { useState } from "react"
 import { Tabs, TabsTrigger, TabsList } from "@/components/ui/tabs"
 import { Button } from "@/components/ui/button"
 import { useAuth0 } from "@auth0/auth0-react"
+import AuthModal from "@/components/AuthModal"
 import "./header.css"
 
 type Props = {
@@ -13,7 +15,8 @@ type Props = {
 }
 
 export default function Header({ battleMode, setBattleMode, sidebarOpen, setSidebarOpen }: Props) {
-    const { isAuthenticated, isLoading, user, loginWithRedirect, logout } = useAuth0();
+    const [authModalOpen, setAuthModalOpen] = useState(false);
+    const { isAuthenticated, isLoading, user, logout } = useAuth0();
 
     return (
         <>
@@ -31,8 +34,9 @@ export default function Header({ battleMode, setBattleMode, sidebarOpen, setSide
                         <Button
                             type="button"
                             size="sm"
-                            onClick={() => loginWithRedirect()}
+                            onClick={() => setAuthModalOpen(true)}
                             className="header-login-button"
+                            data-testid="header-login-button"
                         >
                             Log In
                         </Button>
@@ -71,6 +75,8 @@ export default function Header({ battleMode, setBattleMode, sidebarOpen, setSide
                     </TabsList>
                 </Tabs>
             </div>
+
+            <AuthModal open={authModalOpen} onOpenChange={setAuthModalOpen} />
         </>
     );
 }

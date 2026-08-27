@@ -1,0 +1,36 @@
+@reference "../app/globals.css";
+
+.auth-modal-crest {
+  @apply w-11 h-11 rounded-full flex items-center justify-center text-primary-foreground;
+  background: linear-gradient(135deg, var(--primary), var(--secondary));
+}
+
+.auth-modal-crest svg {
+  @apply w-5 h-5;
+}
+
+.auth-modal-actions {
+  @apply flex flex-col gap-2 w-full mt-2;
+}
+
+.auth-modal-primary-button {
+  @apply bg-gradient-to-r from-primary to-secondary text-white rounded-full cursor-pointer hover:opacity-90 transition-opacity;
+}
+
+.auth-modal-outline-button {
+  @apply rounded-full cursor-pointer;
+}
+
+.auth-modal-google-button {
+  @apply rounded-full cursor-pointer gap-2 mt-3;
+}
+
+.auth-modal-divider {
+  @apply flex items-center gap-3 w-full text-xs uppercase tracking-wide text-muted-foreground mt-4;
+}
+
+.auth-modal-divider::before,
+.auth-modal-divider::after {
+  content: "";
+  @apply flex-1 h-px bg-border;
+}
