@@ -21,7 +21,7 @@ import {
     Ability,
     DamageResult,
 } from "@/lib/utils/types";
-import { Hazards } from "@/lib/hooks/useBattleField";
+import { Hazards, fieldToggleRecalcSignature } from "@/lib/hooks/useBattleField";
 import { ITEM_SPRITE, TYPE_SPRITES, FEMALE_POKEMON_SPRITES, TYPE_ICONS } from "@/lib/utils/sprites";
 import { fetchTypeInteractions } from "@/lib/api/misc"
 import { useAuth0 } from "@auth0/auth0-react";
@@ -61,16 +61,6 @@ type Props = {
     updatePokemonLevel: (player: 1 | 2, slotIndex: number, level: string) => void
 }
 
-// Field toggles whose effect belongs to the opposing player's damage: flipping one
-// on a side only re-runs the *other* player's calcs.
-const OPPONENT_RECALC_HAZARD_KEYS: (keyof Hazards)[] = [
-    "reflect", "lightScreen", "auroraVeil", "protect", "switchingOut", "friendGuard",
-]
-
-// Field toggles that only buff their owner's outgoing damage: flipping one on a side
-// only re-runs *that* player's calcs.
-const SELF_RECALC_HAZARD_KEYS: (keyof Hazards)[] = ["helpingHand", "flowerGift"]
-
 export default function PokemonEditor({
     pokemon, player, slotIndex,
     battleMode, doublesType,
@@ -87,12 +77,10 @@ export default function PokemonEditor({
 
     const isDoubles = battleMode === "doubles"
     const hazards = player === 1 ? p1Hazards : p2Hazards;
-    const opponentHazards = player === 1 ? p2Hazards : p1Hazards;
 
-    // Narrow recalc triggers: only the toggles that actually affect this editor's
-    // displayed damage, sourced from the side that owns each effect.
-    const ownHazardRecalcSignature = SELF_RECALC_HAZARD_KEYS.map((key) => hazards[key]).join("|");
-    const opponentHazardRecalcSignature = OPPONENT_RECALC_HAZARD_KEYS.map((key) => opponentHazards[key]).join("|");
+    // Single dependency for the batch-recalc effect: changes only when a field toggle
+    // that actually affects this side's displayed damage flips.
+    const fieldRecalcSignature = fieldToggleRecalcSignature(player, p1Hazards, p2Hazards);
 
     const [moveCrits, setMoveCrits] = useState<Record<string, boolean[]>>({});
     const [moveZPowered, setMoveZPowered] = useState<Record<string, boolean[]>>({});
@@ -206,8 +194,7 @@ export default function PokemonEditor({
         JSON.stringify(player1Bench[0]?.statBoosts), JSON.stringify(player2Bench[0]?.statBoosts),
         JSON.stringify(abilityToggles),
         JSON.stringify(activeEffects),
-        p1Hazards.tailWind, p2Hazards.tailWind,
-        opponentHazardRecalcSignature, ownHazardRecalcSignature,
+        fieldRecalcSignature,
         battleMode,
     ]);
 
@@ -312,7 +299,7 @@ export default function PokemonEditor({
                         </button>
 
                         {[
-                            { id: "stealthRocks", label: "STEALTH ROCKS" },
+                            { id: "sRock", label: "STEALTH ROCKS" },
                             { id: "stickyWebs", label: "STICKY WEBS" },
                         ].map((h) => (
                             <button
