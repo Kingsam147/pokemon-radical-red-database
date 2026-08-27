@@ -142,6 +142,16 @@ const performCalculation = ({ attacker, defender, move, field, abilityToggles = 
     ...attackerOverrides,
   });
 
+  // Radical Red rewrites Flower Gift: instead of the vanilla in-sun Atk/SpD boost, it
+  // raises the holder's Attack and Speed by 50%. @smogon/calc rebuilds rawStats from
+  // species.baseStats on the internal clone it calculates against, so the scaling has to
+  // live on species.baseStats (which the clone carries over). Unconditional — no weather
+  // gate — and the vanilla isFlowerGift Side flag is never forwarded to the engine.
+  if (field?.attackerSide?.isFlowerGift) {
+    p1.species.baseStats.atk = Math.floor(p1.species.baseStats.atk * 1.5);
+    p1.species.baseStats.spe = Math.floor(p1.species.baseStats.spe * 1.5);
+  }
+
   const p2 = new Pokemon(gen, defender.name, {
     level: defender.level,
     nature: defender.nature?.toLowerCase().replace(/\s/g, ''),
@@ -176,7 +186,6 @@ const performCalculation = ({ attacker, defender, move, field, abilityToggles = 
       isAuroraVeil: field?.attackerSide?.isAuroraVeil ?? false,
       isTailwind: field?.attackerSide?.isTailwind ?? false,
       isHelpingHand: field?.attackerSide?.isHelpingHand ?? false,
-      isFlowerGift: field?.attackerSide?.isFlowerGift ?? false,
       isFriendGuard: field?.attackerSide?.isFriendGuard ?? false,
     }),
     defenderSide: new Side({
@@ -184,6 +193,7 @@ const performCalculation = ({ attacker, defender, move, field, abilityToggles = 
       isLightScreen: field?.defenderSide?.isLightScreen ?? false,
       isAuroraVeil: field?.defenderSide?.isAuroraVeil ?? false,
       isTailwind: field?.defenderSide?.isTailwind ?? false,
+      isFriendGuard: field?.defenderSide?.isFriendGuard ?? false,
       spikes: field?.defenderSide?.spikes ?? 0,
       isSR: field?.defenderSide?.isSR ?? false,
       isStickyWeb: field?.defenderSide?.isStickyWeb ?? false,

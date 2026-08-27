@@ -470,6 +470,78 @@ const cases = [
       range: ['9%', '11%'],
     },
   },
+  {
+    name: 'Azumarill Play Rough vs Abomasnow-Mega with Radical Red Flower Gift (+50% Atk/Spe base stats)',
+    attacker: {
+      name: 'Azumarill', level: 56, nature: 'Adamant', ability: 'Huge Power', item: 'Mystic Water',
+      status: 'Healthy', gender: 'M', currentHP: 230, maxHP: 230,
+      rawStats: { hp: 100, atk: 50, def: 80, spa: 60, spd: 80, spe: 50 },
+      types: ['Water', 'Fairy'],
+      evs: { hp: 252, atk: 0, def: 0, spa: 0, spd: 0, spe: 0 },
+      ivs: { hp: 31, atk: 31, def: 31, spa: 31, spd: 31, spe: 31 },
+      boosts: { atk: 0, def: 0, spa: 0, spd: 0, spe: 0 },
+    },
+    defender: {
+      name: 'Abomasnow-Mega', level: 85, nature: 'Naive', ability: 'Slush Rush', item: 'No Item',
+      status: 'Healthy', gender: 'M', currentHP: 274, maxHP: 274,
+      rawStats: { hp: 90, atk: 132, def: 105, spa: 132, spd: 105, spe: 60 },
+      types: ['Grass', 'Ice'],
+      evs: { hp: 0, atk: 0, def: 0, spa: 0, spd: 0, spe: 0 },
+      ivs: { hp: 31, atk: 30, def: 31, spa: 30, spd: 31, spe: 30 },
+      boosts: { atk: 0, def: 0, spa: 0, spd: 0, spe: 0 },
+    },
+    move: {
+      name: 'Play Rough', isCrit: false, isZ: false,
+      basePower: 90, type: 'Fairy', category: 'Physical', flags: { contact: 1 },
+    },
+    field: {
+      gameType: 'Singles', weather: 'Rain', terrain: 'Grassy',
+      attackerSide: { isFlowerGift: true },
+    },
+    abilityToggles: {},
+    expected: {
+      damage: [61, 63, 63, 64, 64, 66, 66, 67, 67, 69, 69, 70, 70, 72, 72, 73],
+      minDamage: 61,
+      maxDamage: 73,
+      range: ['22%', '27%'],
+    },
+  },
+  {
+    name: 'Typhlosion-Hisui Flamethrower vs Abomasnow-Mega behind Friend Guard (0.75x)',
+    attacker: {
+      name: 'Typhlosion-Hisui', level: 50, nature: 'Serious', ability: 'Blaze', item: 'Choice Specs',
+      status: 'Healthy', gender: 'M', currentHP: 148, maxHP: 148,
+      rawStats: { hp: 73, atk: 84, def: 78, spa: 119, spd: 85, spe: 95 },
+      types: ['Fire', 'Ghost'],
+      evs: { hp: 0, atk: 0, def: 0, spa: 0, spd: 0, spe: 0 },
+      ivs: { hp: 31, atk: 0, def: 31, spa: 31, spd: 31, spe: 31 },
+      boosts: { atk: 0, def: 0, spa: 0, spd: 0, spe: 0 },
+    },
+    defender: {
+      name: 'Abomasnow-Mega', level: 85, nature: 'Naive', ability: 'Slush Rush', item: 'No Item',
+      status: 'Healthy', gender: 'M', currentHP: 274, maxHP: 274,
+      rawStats: { hp: 90, atk: 132, def: 105, spa: 132, spd: 105, spe: 60 },
+      types: ['Grass', 'Ice'],
+      evs: { hp: 0, atk: 0, def: 0, spa: 0, spd: 0, spe: 0 },
+      ivs: { hp: 31, atk: 30, def: 31, spa: 30, spd: 31, spe: 30 },
+      boosts: { atk: 0, def: 0, spa: 0, spd: 0, spe: 0 },
+    },
+    move: {
+      name: 'Flamethrower', isCrit: false, isZ: false,
+      basePower: 90, type: 'Fire', category: 'Special', flags: {},
+    },
+    field: {
+      gameType: 'Singles',
+      defenderSide: { isFriendGuard: true },
+    },
+    abilityToggles: {},
+    expected: {
+      damage: [171, 171, 174, 174, 180, 180, 180, 183, 183, 189, 189, 192, 192, 198, 198, 201],
+      minDamage: 171,
+      maxDamage: 201,
+      range: ['62%', '73%'],
+    },
+  },
 ];
 
 describe('Golden damage calculations (Radical Red mechanics)', () => {

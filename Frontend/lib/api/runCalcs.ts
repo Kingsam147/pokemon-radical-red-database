@@ -31,6 +31,7 @@ const buildField = (player: number, p1Hazards: Hazards, p2Hazards: Hazards, acti
             isLightScreen: defenderHazards.lightScreen,
             isAuroraVeil: defenderHazards.auroraVeil,
             isTailwind: defenderHazards.tailWind,
+            isFriendGuard: defenderHazards.friendGuard,
             spikes: defenderHazards.spikes,
             isSR: defenderHazards.sRock,
             isStickyWeb: defenderHazards.stickyWebs,
