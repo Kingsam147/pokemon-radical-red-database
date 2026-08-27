@@ -108,6 +108,32 @@ changes. Until it's done, the Google button will surface the same "genuine
 rejection" error path described above (logged, toast shown) rather than silently
 failing.
 
+### Allowed Callback URLs setup (manual, outside this codebase — discovered during manual verification)
+
+Manual browser verification against the live tenant found that **Sign In and Create
+Account also do not yet complete end to end** — not just Google. Both popups
+correctly open Auth0's hosted Universal Login (URL matches `auth0.com`, correct
+`screen_hint`/no-hint per button), but Auth0 then shows "Oops, something went
+wrong — Callback URL mismatch" for `redirect_uri=http://localhost:3000`.
+
+This is a pre-existing Auth0 Application configuration gap, not a regression from
+this feature: `Auth0ProviderWrapper.tsx` passes `redirect_uri: window.location.origin`
+unchanged from what the old `loginWithRedirect()` call already used, so the old
+redirect-based login would have hit the identical error — it was never caught
+before because the previous e2e test only asserted navigation reached an
+`auth0.com` URL and never exercised a full login round-trip.
+
+Before any of the three buttons can complete a real login in any environment:
+
+1. Auth0 Dashboard → Applications → this app (`zrdXjBC7peXGrJ72Cbg0ory7f8CpkABr`) →
+   Settings → Allowed Callback URLs.
+2. Add `http://localhost:3000` (local dev) and the production origin(s) this app is
+   deployed to.
+
+Until this is done, Sign In/Create Account will surface the same "genuine
+rejection" error path (logged, toast shown) as an unconfigured Google connection
+does — the popup opens, then rejects.
+
 ## Data flow
 
 ```
