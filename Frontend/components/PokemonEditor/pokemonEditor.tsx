@@ -61,6 +61,16 @@ type Props = {
     updatePokemonLevel: (player: 1 | 2, slotIndex: number, level: string) => void
 }
 
+// Field toggles whose effect belongs to the opposing player's damage: flipping one
+// on a side only re-runs the *other* player's calcs.
+const OPPONENT_RECALC_HAZARD_KEYS: (keyof Hazards)[] = [
+    "reflect", "lightScreen", "auroraVeil", "protect", "switchingOut", "friendGuard",
+]
+
+// Field toggles that only buff their owner's outgoing damage: flipping one on a side
+// only re-runs *that* player's calcs.
+const SELF_RECALC_HAZARD_KEYS: (keyof Hazards)[] = ["helpingHand", "flowerGift"]
+
 export default function PokemonEditor({
     pokemon, player, slotIndex,
     battleMode, doublesType,
@@ -77,6 +87,12 @@ export default function PokemonEditor({
 
     const isDoubles = battleMode === "doubles"
     const hazards = player === 1 ? p1Hazards : p2Hazards;
+    const opponentHazards = player === 1 ? p2Hazards : p1Hazards;
+
+    // Narrow recalc triggers: only the toggles that actually affect this editor's
+    // displayed damage, sourced from the side that owns each effect.
+    const ownHazardRecalcSignature = SELF_RECALC_HAZARD_KEYS.map((key) => hazards[key]).join("|");
+    const opponentHazardRecalcSignature = OPPONENT_RECALC_HAZARD_KEYS.map((key) => opponentHazards[key]).join("|");
 
     const [moveCrits, setMoveCrits] = useState<Record<string, boolean[]>>({});
     const [moveZPowered, setMoveZPowered] = useState<Record<string, boolean[]>>({});
@@ -189,7 +205,9 @@ export default function PokemonEditor({
         JSON.stringify(player1Bench[0]?.IVs), JSON.stringify(player2Bench[0]?.IVs),
         JSON.stringify(player1Bench[0]?.statBoosts), JSON.stringify(player2Bench[0]?.statBoosts),
         JSON.stringify(abilityToggles),
-        JSON.stringify(activeEffects), JSON.stringify(p1Hazards), JSON.stringify(p2Hazards),
+        JSON.stringify(activeEffects),
+        p1Hazards.tailWind, p2Hazards.tailWind,
+        opponentHazardRecalcSignature, ownHazardRecalcSignature,
         battleMode,
     ]);
 
