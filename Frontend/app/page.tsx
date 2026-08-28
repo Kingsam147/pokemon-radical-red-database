@@ -68,10 +68,13 @@ export default function PokemonBattleSimulator() {
     // it resolves. Deferred a microtask (same pattern the old promise-based
     // fast paths used) so state isn't set synchronously in the effect body.
     const guestBoxPikachu: Pokemon = { ...GUEST_STARTER_PIKACHU_FIXTURE, boxKey: GUEST_PIKACHU_BOX_KEY, boxIndex: 0 }
-    // The starter Pikachu is re-seeded into box 0 on every guest load. Once a
-    // guest explicitly removes it (or clears box 0) that choice is remembered in
-    // localStorage, so it must not come back on the next visit.
-    const injectGuestPikachu = shouldInjectGuestStarterPikachu(isAuthenticated, readGuestPikachuRemoved())
+    // The starter Pikachu is re-seeded into box 0 on every load — for guests and
+    // signed-in users alike — until the user explicitly removes it (or clears
+    // box 0). That choice is remembered in localStorage, so it must not come
+    // back on the next visit. The guest-only fast-path paint below still just
+    // covers guests, who have no real box 0 to wait on; a signed-in user's
+    // starter is merged into their loaded box 0 further down.
+    const injectGuestPikachu = shouldInjectGuestStarterPikachu(readGuestPikachuRemoved())
 
     Promise.resolve().then(() => {
       const previewSlots = Object.entries(ENEMY_PREVIEW_FIXTURE.team)
@@ -182,13 +185,14 @@ export default function PokemonBattleSimulator() {
           }
         }
 
-        // The guest Pikachu was seeded with unhydrated {name}-only allMoves
+        // The starter Pikachu was seeded with unhydrated {name}-only allMoves
         // stubs (no network call needed to show it). Now that movesOptions
         // has loaded — a fetch the app needs regardless of this Pokemon, not
         // one made on its behalf — upgrade allMoves to fully-resolved move
-        // objects in place. Reads the latest state via functional updaters
-        // and no-ops if the guest already removed/replaced it.
-        if (!isAuthenticated) {
+        // objects in place. Runs for signed-in users too, since the starter
+        // now persists past sign-in; each updater no-ops if the Pikachu isn't
+        // where it looks (e.g. never benched, or already removed/replaced).
+        if (injectGuestPikachu) {
           bench.setPlayer1Bench((prev) => prev.map((p) =>
             p?.boxKey === GUEST_PIKACHU_BOX_KEY ? hydrateAllMoves(p, movesList) : p
           ))
@@ -590,11 +594,12 @@ export default function PokemonBattleSimulator() {
   }
 
   const handleRemovePokemonFromBox = async (boxIndex: number, pokemonName: string, slotKey: string) => {
-    // The guest starter Pikachu only exists as a client-side injection — there
-    // is no backend row to DELETE, and a name-based delete would clobber a real
-    // imported Pikachu. Remember the removal so it doesn't re-seed next visit,
-    // then drop it from local state directly.
-    if (!isAuthenticated && slotKey === GUEST_PIKACHU_BOX_KEY) {
+    // The starter Pikachu only exists as a client-side injection — there is no
+    // backend row to DELETE, and a name-based delete would clobber a real
+    // imported Pikachu. This holds whether or not the user is signed in, since
+    // the starter now persists past sign-in. Remember the removal so it doesn't
+    // re-seed next visit, then drop it from local state directly.
+    if (slotKey === GUEST_PIKACHU_BOX_KEY) {
       markGuestPikachuRemoved()
       boxManager.setP1Boxes((prev) => {
         const box = prev[boxIndex]
@@ -619,11 +624,11 @@ export default function PokemonBattleSimulator() {
   }
 
   const handleClearBox = async () => {
-    const clearedGuestBoxZero = !isAuthenticated && boxManager.activeBoxIndex === 0
+    const clearedBoxZero = boxManager.activeBoxIndex === 0
     const didClear = await boxManager.clearBox()
-    // Clearing box 0 as a guest is an explicit "I don't want this content"
-    // gesture — the seeded starter Pikachu must not reappear afterwards.
-    if (didClear && clearedGuestBoxZero) {
+    // Clearing box 0 is an explicit "I don't want this content" gesture — the
+    // seeded starter Pikachu must not reappear afterwards, signed in or not.
+    if (didClear && clearedBoxZero) {
       markGuestPikachuRemoved()
       boxManager.setOriginalPokemon((prev) => {
         const updated = { ...prev }

@@ -32,6 +32,9 @@ export function markGuestPikachuRemoved(): void {
   }
 }
 
-export function shouldInjectGuestStarterPikachu(isAuthenticated: boolean, removed: boolean): boolean {
-  return !isAuthenticated && !removed
+export function shouldInjectGuestStarterPikachu(removed: boolean): boolean {
+  // The starter Pikachu is a browser-scoped onboarding gift, not a guest-only one:
+  // it stays in box 0 across a sign-in and is only gone once the user explicitly
+  // removes it (or clears box 0), which sets the removed flag in localStorage.
+  return !removed
 }
