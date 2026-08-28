@@ -5,7 +5,7 @@ import { Pokemon, Teams, Box, TrainerInfo, Abilities, Items, Natures, PokemonMov
 import { addPokemon, fetchBoxCount, loadSingleBox, resolveSingleBox } from "@/lib/api/boxes"
 import { MOVES_OPTIONS, ABILITY_OPTIONS, ITEMS_OPTIONS, NATURE_OPTIONS, TYPE_OPTIONS, STATUS_OPTIONS, MISC_VERSION } from "@/lib/api/misc"
 import { loadMyTeams, loadEnemyTeams, removeTeam, saveFullTeam } from "@/lib/api/teams"
-import { isUnsavedP1Selection } from "@/lib/utils/guestStarterPikachuGuards"
+import { isUnsavedP1Selection, readGuestPikachuRemoved, markGuestPikachuRemoved, shouldInjectGuestStarterPikachu } from "@/lib/utils/guestStarterPikachuGuards"
 import { GUEST_STARTER_PIKACHU_FIXTURE, hydrateAllMoves } from "@/lib/data/guestStarterPikachuFixture"
 import { ENEMY_PREVIEW_FIXTURE } from "@/lib/data/enemyPreviewFixture"
 import { readMiscCache, writeMiscCache } from "@/lib/cache/miscCache"
@@ -68,6 +68,10 @@ export default function PokemonBattleSimulator() {
     // it resolves. Deferred a microtask (same pattern the old promise-based
     // fast paths used) so state isn't set synchronously in the effect body.
     const guestBoxPikachu: Pokemon = { ...GUEST_STARTER_PIKACHU_FIXTURE, boxKey: GUEST_PIKACHU_BOX_KEY, boxIndex: 0 }
+    // The starter Pikachu is re-seeded into box 0 on every guest load. Once a
+    // guest explicitly removes it (or clears box 0) that choice is remembered in
+    // localStorage, so it must not come back on the next visit.
+    const injectGuestPikachu = shouldInjectGuestStarterPikachu(isAuthenticated, readGuestPikachuRemoved())
 
     Promise.resolve().then(() => {
       const previewSlots = Object.entries(ENEMY_PREVIEW_FIXTURE.team)
@@ -81,20 +85,23 @@ export default function PokemonBattleSimulator() {
       setIsP2Loading(false)
 
       if (!isAuthenticated) {
-        bench.setPlayer1Bench([guestBoxPikachu, null, null, null, null, null])
-        boxManager.setP1Boxes((prev) => {
-          const updated = [...prev]
-          updated[0] = { ...(updated[0] ?? {}), [GUEST_PIKACHU_BOX_KEY]: guestBoxPikachu }
-          return updated
-        })
-        boxManager.setOriginalPokemon((prev) => ({ ...prev, [GUEST_PIKACHU_BOX_KEY]: guestBoxPikachu }))
-        // Display-only label for the P1 team selector — intentionally NOT added
-        // to teams.p1Teams, since that dict backs real saved/deletable teams.
-        // isUnsavedP1Selection (used by deleteP1Team) treats any selected index
-        // with no matching teams.p1Teams entry as "nothing real is selected,"
-        // so "Clear Team" never calls the backend DELETE endpoint for this
-        // synthetic label.
-        teams.setP1SelectedTeamIndex("Example Pikachu Team")
+        if (injectGuestPikachu) {
+          bench.setPlayer1Bench([guestBoxPikachu, null, null, null, null, null])
+          boxManager.setP1Boxes((prev) => {
+            const updated = [...prev]
+            updated[0] = { ...(updated[0] ?? {}), [GUEST_PIKACHU_BOX_KEY]: guestBoxPikachu }
+            return updated
+          })
+          boxManager.setOriginalPokemon((prev) => ({ ...prev, [GUEST_PIKACHU_BOX_KEY]: guestBoxPikachu }))
+          // Display-only label for the P1 team selector — intentionally NOT added
+          // to teams.p1Teams, since that dict backs real saved/deletable teams.
+          // isUnsavedP1Selection (used by deleteP1Team) treats any selected index
+          // with no matching teams.p1Teams entry as "nothing real is selected,"
+          // so "Clear Team" never calls the backend DELETE endpoint for this
+          // synthetic label. Skipped once the guest has removed the starter, so
+          // they get a clean slate rather than a phantom team.
+          teams.setP1SelectedTeamIndex("Example Pikachu Team")
+        }
         setIsP1Loading(false)
       }
     })
@@ -165,7 +172,7 @@ export default function PokemonBattleSimulator() {
           const box0 = await loadSingleBox(0, abilityList, itemsList, naturesList, movesList, typesList)
           boxManager.setP1Boxes(prev => {
             const updated = [...prev]
-            updated[0] = !isAuthenticated
+            updated[0] = injectGuestPikachu
               ? { ...box0, [GUEST_PIKACHU_BOX_KEY]: guestBoxPikachu }
               : box0
             return updated
@@ -582,9 +589,49 @@ export default function PokemonBattleSimulator() {
     }
   }
 
-  const handleRemovePokemonFromBox = async (boxIndex: number, pokemonName: string) => {
+  const handleRemovePokemonFromBox = async (boxIndex: number, pokemonName: string, slotKey: string) => {
+    // The guest starter Pikachu only exists as a client-side injection — there
+    // is no backend row to DELETE, and a name-based delete would clobber a real
+    // imported Pikachu. Remember the removal so it doesn't re-seed next visit,
+    // then drop it from local state directly.
+    if (!isAuthenticated && slotKey === GUEST_PIKACHU_BOX_KEY) {
+      markGuestPikachuRemoved()
+      boxManager.setP1Boxes((prev) => {
+        const box = prev[boxIndex]
+        if (!box) return prev
+        const updatedBox = { ...box }
+        delete updatedBox[GUEST_PIKACHU_BOX_KEY]
+        const updated = [...prev]
+        updated[boxIndex] = updatedBox
+        return updated
+      })
+      boxManager.setOriginalPokemon((prev) => {
+        const updated = { ...prev }
+        delete updated[GUEST_PIKACHU_BOX_KEY]
+        return updated
+      })
+      bench.setPlayer1Bench((prev) => prev.map((p) => (p?.boxKey === GUEST_PIKACHU_BOX_KEY ? null : p)))
+      ui.setRemoveMode(false)
+      return
+    }
     await boxManager.removePokemonFromBox(boxIndex, pokemonName)
     ui.setRemoveMode(false)
+  }
+
+  const handleClearBox = async () => {
+    const clearedGuestBoxZero = !isAuthenticated && boxManager.activeBoxIndex === 0
+    const didClear = await boxManager.clearBox()
+    // Clearing box 0 as a guest is an explicit "I don't want this content"
+    // gesture — the seeded starter Pikachu must not reappear afterwards.
+    if (didClear && clearedGuestBoxZero) {
+      markGuestPikachuRemoved()
+      boxManager.setOriginalPokemon((prev) => {
+        const updated = { ...prev }
+        delete updated[GUEST_PIKACHU_BOX_KEY]
+        return updated
+      })
+      bench.setPlayer1Bench((prev) => prev.map((p) => (p?.boxKey === GUEST_PIKACHU_BOX_KEY ? null : p)))
+    }
   }
 
   const player1Active = field.battleMode !== "singles" ? bench.player1Bench[0] : [bench.player1Bench[0], bench.player1Bench[1]]
@@ -741,7 +788,7 @@ export default function PokemonBattleSimulator() {
               onTogglePokemonInBench={togglePokemonInBench}
               onRemoveFromBox={handleRemovePokemonFromBox}
               onAddBox={boxManager.addBox}
-              onClearBox={boxManager.clearBox}
+              onClearBox={handleClearBox}
               onRemoveBox={boxManager.removeBox}
               onImportOpen={() => ui.setImportModalOpen(true)}
               onToggleRemoveMode={() => ui.setRemoveMode(prev => !prev)}

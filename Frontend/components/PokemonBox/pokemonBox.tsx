@@ -18,7 +18,7 @@ type PokemonBoxProps = {
   isInBench: (pokemon: Pokemon, player: 1 | 2, boxKey?: string) => boolean;
   onDragStart: (pokemon: Pokemon, source: string) => void;
   onTogglePokemonInBench: (pokemon: Pokemon, player: 1 | 2, boxKey: string) => void;
-  onRemoveFromBox: (boxIndex: number, pokemonName: string) => Promise<void>;
+  onRemoveFromBox: (boxIndex: number, pokemonName: string, slotKey: string) => Promise<void>;
   onAddBox: () => void;
   onClearBox: () => void;
   onRemoveBox: () => void;
@@ -152,7 +152,7 @@ export default function PokemonBox({
                         isInBench={isInBench(pokemon, 1, slotKey)}
                         onDragStart={onDragStart}
                         onToggleInBench={() => onTogglePokemonInBench(pokemon, 1, slotKey)}
-                        onRemoveFromBox={() => onRemoveFromBox(boxIndex, pokemon.name)}
+                        onRemoveFromBox={() => onRemoveFromBox(boxIndex, pokemon.name, slotKey)}
                       />
                     );
                   })}
