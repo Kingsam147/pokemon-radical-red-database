@@ -230,4 +230,31 @@ test.describe('Guest starter Pikachu — removal persists across visits', () => 
     await expect(page.getByTestId('pokemon-card-Pikachu')).toHaveCount(0);
     await expect(page.getByLabel('Select Team 1')).not.toHaveValue('Example Pikachu Team');
   });
+
+  test('clearing box 0 keeps the starter gone after a reload', async ({ page }) => {
+    await stubBaseRoutes(page, 1);
+    let boxZeroCleared = false;
+    await page.route('**/myBoxes/0', route => {
+      if (route.request().method() === 'PUT') boxZeroCleared = true;
+      return route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ box: {} }) });
+    });
+    page.on('dialog', dialog => dialog.accept());
+
+    await page.goto('/');
+    await expect(page.getByTestId('pokemon-card-Pikachu')).toBeVisible({ timeout: 15000 });
+
+    await page.getByRole('button', { name: 'Clear Box' }).click();
+
+    await expect.poll(() => boxZeroCleared).toBe(true);
+    await expect(page.getByTestId('pokemon-card-Pikachu')).toHaveCount(0);
+    await expect
+      .poll(() => page.evaluate(() => window.localStorage.getItem('rr_guest_pikachu_removed')))
+      .toBe('true');
+
+    await page.reload();
+    await expect(page.getByRole('tab', { name: 'Starter Pikachu Box' })).toBeVisible({ timeout: 15000 });
+    await page.waitForLoadState('networkidle');
+    await expect(page.getByTestId('pokemon-card-Pikachu')).toHaveCount(0);
+    await expect(page.getByLabel('Select Team 1')).not.toHaveValue('Example Pikachu Team');
+  });
 });
