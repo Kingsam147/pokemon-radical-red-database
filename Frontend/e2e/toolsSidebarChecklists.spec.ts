@@ -2,6 +2,12 @@ import { test, expect } from '@playwright/test';
 
 test.describe('Tools sidebar TM/HM and Move Tutor checklists', () => {
   test.beforeEach(async ({ page }) => {
+    // These checklists (TM/HM, move tutor tiers, move-validity banner) only render
+    // while Restricted Mode is on, and Restricted Mode now defaults to off. Seed the
+    // persisted toggle before the app boots so the suite exercises that mode.
+    await page.addInitScript(() => {
+      window.localStorage.setItem('rr_restricted_mode', 'true');
+    });
     await page.goto('/');
     await page.waitForLoadState('networkidle');
   });
