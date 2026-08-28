@@ -26,11 +26,17 @@ const species2 = {
   },
 };
 
+// The real moves collection is keyed by normalized id (lowercased, non-alphanumerics
+// stripped) while learnsets carry display names, so key the fixture the same way to
+// exercise getMove's normalization rather than masking it.
 const movesList = {};
 [
   'Pre Evo Low Level Move', 'Pre Evo High Level Move', 'Shared Level Move',
   'Pre Evo TM Move', 'Shared TM Move', 'Pre Evo Tutor Move', 'Own Level Move',
-].forEach((name) => { movesList[name] = { name, type: 'Normal', category: 'Physical' }; });
+].forEach((name) => {
+  const key = name.toLowerCase().replace(/[^a-z0-9]/g, '');
+  movesList[key] = { name, type: 'Normal', category: 'Physical' };
+});
 
 jest.mock('../../../game-data/loadModels', () => ({
   getModels: () => ({ species2, movesList, abilities: {} }),
