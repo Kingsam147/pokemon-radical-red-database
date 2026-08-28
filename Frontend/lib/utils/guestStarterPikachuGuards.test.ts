@@ -74,16 +74,11 @@ describe("markGuestPikachuRemoved", () => {
 })
 
 describe("shouldInjectGuestStarterPikachu", () => {
-  test("injects for a guest who has not removed the starter", () => {
-    expect(shouldInjectGuestStarterPikachu(false, false)).toBe(true)
+  test("injects while the starter has not been removed", () => {
+    expect(shouldInjectGuestStarterPikachu(false)).toBe(true)
   })
 
-  test("does not inject once the guest has removed it", () => {
-    expect(shouldInjectGuestStarterPikachu(false, true)).toBe(false)
-  })
-
-  test("never injects for an authenticated user", () => {
-    expect(shouldInjectGuestStarterPikachu(true, false)).toBe(false)
-    expect(shouldInjectGuestStarterPikachu(true, true)).toBe(false)
+  test("does not inject once the starter has been removed", () => {
+    expect(shouldInjectGuestStarterPikachu(true)).toBe(false)
   })
 })
