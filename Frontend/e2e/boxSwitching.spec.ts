@@ -187,3 +187,47 @@ test.describe('Guest starter Pikachu — box and team placement', () => {
     await expect(page.getByTestId('pokemon-card-Pikachu')).toBeVisible();
   });
 });
+
+test.describe('Guest starter Pikachu — removal persists across visits', () => {
+  test('removing the starter from box 0 keeps it gone after a reload', async ({ page }) => {
+    await stubBaseRoutes(page, 1);
+    let starterDeleteRequested = false;
+    await page.route('**/myBoxes/0/**', route => {
+      if (route.request().method() === 'DELETE') starterDeleteRequested = true;
+      return route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ updatedBox: {} }) });
+    });
+    page.on('dialog', dialog => dialog.accept());
+
+    await page.goto('/');
+    await expect(page.getByTestId('pokemon-card-Pikachu')).toBeVisible({ timeout: 15000 });
+
+    await page.getByRole('button', { name: 'Remove Pokemon' }).click();
+    await page.getByTestId('pokemon-card-Pikachu').click();
+
+    await expect(page.getByTestId('pokemon-card-Pikachu')).toHaveCount(0);
+    expect(starterDeleteRequested).toBe(false);
+    await expect
+      .poll(() => page.evaluate(() => window.localStorage.getItem('rr_guest_pikachu_removed')))
+      .toBe('true');
+
+    await page.reload();
+    await expect(page.getByRole('tab', { name: 'Starter Pikachu Box' })).toBeVisible({ timeout: 15000 });
+    await page.waitForLoadState('networkidle');
+    await expect(page.getByTestId('pokemon-card-Pikachu')).toHaveCount(0);
+    await expect(page.getByLabel('Select Team 1')).not.toHaveValue('Example Pikachu Team');
+  });
+
+  test('a guest whose removal flag is already set never sees the starter injected', async ({ page }) => {
+    await stubBaseRoutes(page, 1);
+    await page.addInitScript(() => {
+      window.localStorage.setItem('rr_guest_pikachu_removed', 'true');
+    });
+
+    await page.goto('/');
+    await expect(page.getByRole('tab', { name: 'Starter Pikachu Box' })).toBeVisible({ timeout: 15000 });
+    await page.waitForLoadState('networkidle');
+
+    await expect(page.getByTestId('pokemon-card-Pikachu')).toHaveCount(0);
+    await expect(page.getByLabel('Select Team 1')).not.toHaveValue('Example Pikachu Team');
+  });
+});

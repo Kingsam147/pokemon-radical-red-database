@@ -95,8 +95,8 @@ export function useBoxManager({ abilityOptions, itemOptions, natureOptions, move
     }
   }
 
-  const clearBox = async () => {
-    if (!window.confirm(`Clear all Pokemon from Box ${activeBoxIndex + 1}? This cannot be undone.`)) return
+  const clearBox = async (): Promise<boolean> => {
+    if (!window.confirm(`Clear all Pokemon from Box ${activeBoxIndex + 1}? This cannot be undone.`)) return false
     try {
       await fetchClearBox(String(activeBoxIndex))
       setP1Boxes(prev => {
@@ -104,8 +104,10 @@ export function useBoxManager({ abilityOptions, itemOptions, natureOptions, move
         updated[activeBoxIndex] = {}
         return updated
       })
+      return true
     } catch (err) {
       toast.error(`Failed to clear box: ${err}`)
+      return false
     }
   }
 
