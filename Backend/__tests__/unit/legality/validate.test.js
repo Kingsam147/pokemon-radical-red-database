@@ -46,14 +46,24 @@ const baseEntity = (overrides = {}) => ({
 });
 
 describe('validate move-legality gating', () => {
-  test('restrictedMode true (default) rejects a move not in the persisted allMoves', () => {
+  test('restrictedMode true rejects a move not in the persisted allMoves', () => {
+    const entity = baseEntity({
+      move_ids: ['Hyper Beam'],
+      allMoves: [{ name: 'Tackle' }],
+    });
+    const { valid, errors } = validate(entity, { restrictedMode: true });
+    expect(valid).toBe(false);
+    expect(errors).toContain('"Hyper Beam" is not in TestMon\'s legal move pool');
+  });
+
+  test('defaults to unrestricted: no options skips the movepool check entirely', () => {
     const entity = baseEntity({
       move_ids: ['Hyper Beam'],
       allMoves: [{ name: 'Tackle' }],
     });
     const { valid, errors } = validate(entity);
-    expect(valid).toBe(false);
-    expect(errors).toContain('"Hyper Beam" is not in TestMon\'s legal move pool');
+    expect(valid).toBe(true);
+    expect(errors).toEqual([]);
   });
 
   test('restrictedMode true accepts a move present in the persisted allMoves', () => {

@@ -248,9 +248,10 @@ export default function PokemonEditor({
 
     if (!pokemon) return null;
 
-    // Restricted Mode on: this Pokemon's own precomputed pool (yellow-highlighted where
-    // fromPreEvolution). Off: every move in the game, ignoring allMoves entirely.
-    const moveSelectorOptions = restrictedMode
+    // Restricted Mode only ever applies to player 1. On (and player 1): this Pokemon's
+    // own precomputed pool (yellow-highlighted where fromPreEvolution). Off, or player 2:
+    // every move in the game, ignoring allMoves entirely.
+    const moveSelectorOptions = restrictedMode && player === 1
         ? pokemon.allMoves
         : Object.values(allMoveOptions).sort((a, b) => a.name.localeCompare(b.name));
 

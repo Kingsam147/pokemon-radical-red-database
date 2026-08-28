@@ -15,9 +15,9 @@ describe('guestStarterService', () => {
     expect(GUEST_STARTER_PIKACHU.EVs).toEqual({ HP: 0, Atk: 252, Def: 0, SpA: 0, SpD: 0, Spe: 252 });
     expect(GUEST_STARTER_PIKACHU.finalStats).toEqual({ HP: 26, Atk: 23, Def: 13, SpA: 15, SpD: 13, Spe: 26 });
     expect(GUEST_STARTER_PIKACHU.moveset.map((m) => m.name)).toEqual([
-      'Volt Tackle', 'Thunderbolt', 'Iron Tail', 'Quick Attack',
+      'Thunder Shock', 'Fake Out', 'Baby-Doll Eyes', 'Tail Whip',
     ]);
-    expect(GUEST_STARTER_PIKACHU.moveset[0]).toMatchObject({ basePower: 120, category: 'Physical', type: 'Electric' });
+    expect(GUEST_STARTER_PIKACHU.moveset[0]).toMatchObject({ basePower: 40, category: 'Special', type: 'Electric' });
     expect(GUEST_STARTER_PIKACHU.forms.Pikachu.formName).toBe('Pikachu');
   });
 

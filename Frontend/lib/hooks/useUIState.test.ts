@@ -68,14 +68,14 @@ describe("readStoredTutorTier", () => {
 })
 
 describe("readStoredRestrictedMode", () => {
-  test("defaults to true when window is unavailable", () => {
+  test("defaults to false when window is unavailable", () => {
     vi.stubGlobal("window", undefined)
-    expect(readStoredRestrictedMode()).toBe(true)
+    expect(readStoredRestrictedMode()).toBe(false)
   })
 
-  test("defaults to true for a first-time visitor with nothing stored", () => {
+  test("defaults to false for a first-time visitor with nothing stored", () => {
     stubLocalStorage({})
-    expect(readStoredRestrictedMode()).toBe(true)
+    expect(readStoredRestrictedMode()).toBe(false)
   })
 
   test("parses a previously stored false value", () => {
@@ -88,8 +88,8 @@ describe("readStoredRestrictedMode", () => {
     expect(readStoredRestrictedMode()).toBe(true)
   })
 
-  test("defaults to true when the stored value is malformed", () => {
+  test("defaults to false when the stored value is malformed", () => {
     stubLocalStorage({ rr_restricted_mode: "{not json" })
-    expect(readStoredRestrictedMode()).toBe(true)
+    expect(readStoredRestrictedMode()).toBe(false)
   })
 })

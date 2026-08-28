@@ -48,10 +48,10 @@ export function hydrateAllMoves(pokemon: Pokemon, movesList: PokemonMoves): Poke
 }
 
 const MOVESET = [
-  { name: "Volt Tackle", num: 344, accuracy: 100, basePower: 120, category: "Physical", pp: 15, priority: 0, type: "Electric", target: "normal", secondary: { chance: 10, status: "par" }, shortDesc: "Has 33% recoil. 10% chance to paralyze target." },
-  { name: "Thunderbolt", num: 85, accuracy: 100, basePower: 90, category: "Special", pp: 15, priority: 0, type: "Electric", target: "normal", secondary: { chance: 10, status: "par" }, shortDesc: "10% chance to paralyze the target." },
-  { name: "Iron Tail", num: 231, accuracy: 75, basePower: 100, category: "Physical", pp: 15, priority: 0, type: "Steel", target: "normal", secondary: { chance: 30, boosts: { def: -1 } }, shortDesc: "30% chance to lower the target's Defense by 1." },
-  { name: "Quick Attack", num: 98, accuracy: 100, basePower: 40, category: "Physical", pp: 30, priority: 1, type: "Normal", target: "normal", secondary: null, shortDesc: "Usually goes first." },
+  { name: "Thunder Shock", num: 84, accuracy: 100, basePower: 40, category: "Special", pp: 30, priority: 0, type: "Electric", target: "normal", secondary: { chance: 10, status: "par" }, shortDesc: "10% chance to paralyze the target." },
+  { name: "Fake Out", num: 252, accuracy: 100, basePower: 40, category: "Physical", pp: 5, priority: 3, type: "Normal", target: "normal", secondary: { chance: 100, volatileStatus: "flinch" }, shortDesc: "Hits first. First turn out only. 100% flinch chance." },
+  { name: "Baby-Doll Eyes", num: 608, accuracy: 100, basePower: 0, category: "Status", pp: 30, priority: 1, type: "Fairy", target: "normal", boosts: { atk: -1 }, secondary: null, shortDesc: "Lowers the target's Attack by 1." },
+  { name: "Tail Whip", num: 39, accuracy: 100, basePower: 0, category: "Status", pp: 30, priority: 0, type: "Normal", target: "allAdjacentFoes", boosts: { def: -1 }, secondary: null, shortDesc: "Lowers the foe(s) Defense by 1." },
 ] as PokemonMove[]
 
 const BASE_STATS = { HP: 35, Atk: 55, Def: 40, SpA: 50, SpD: 50, Spe: 90 }

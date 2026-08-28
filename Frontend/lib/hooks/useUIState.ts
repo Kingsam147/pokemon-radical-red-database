@@ -30,13 +30,13 @@ export function readStoredTutorTier(): number | null {
 
 export function readStoredRestrictedMode(): boolean {
   if (typeof window === "undefined") {
-    return true
+    return false
   }
   try {
     const stored = window.localStorage.getItem(RESTRICTED_MODE_STORAGE_KEY)
-    return stored === null ? true : JSON.parse(stored)
+    return stored === null ? false : JSON.parse(stored)
   } catch {
-    return true
+    return false
   }
 }
 

@@ -23,9 +23,9 @@ describe("GUEST_STARTER_PIKACHU_FIXTURE", () => {
 
   test("moveset is the equipped 4-move set, already fully resolved", () => {
     expect(GUEST_STARTER_PIKACHU_FIXTURE.moveset.map((m) => m.name)).toEqual([
-      "Volt Tackle", "Thunderbolt", "Iron Tail", "Quick Attack",
+      "Thunder Shock", "Fake Out", "Baby-Doll Eyes", "Tail Whip",
     ])
-    expect(GUEST_STARTER_PIKACHU_FIXTURE.moveset[0]).toMatchObject({ basePower: 120, category: "Physical" })
+    expect(GUEST_STARTER_PIKACHU_FIXTURE.moveset[0]).toMatchObject({ basePower: 40, category: "Special" })
   })
 })
 

@@ -14,7 +14,7 @@ const legalMovesFilter = require('./legalMoves');
 const legalAbilityFilter = require('./legalAbilities');
 const { STAT_KEYS } = require('../pokemon/PokemonEntity');
 
-const validate = (entity, { restrictedMode = true } = {}) => {
+const validate = (entity, { restrictedMode = false } = {}) => {
   const { species2, natures, items } = getModels();
   const { name, form, nature, item, ability_id, move_ids, EVs, IVs, player, level, allMoves } = entity;
   const errors = [];
@@ -41,8 +41,9 @@ const validate = (entity, { restrictedMode = true } = {}) => {
     errors.push(`"${ability_id}" is not a legal ability for ${name}`);
   }
 
-  // Restricted Mode off is the user's explicit escape hatch: any move can be saved on
-  // any Pokemon, matching what the resolver/dropdown already showed as available.
+  // Restricted Mode is off by default: any move can be saved on any Pokemon, matching
+  // what the resolver/dropdown already showed as available. Callers opt back in to the
+  // legal-pool check by passing { restrictedMode: true }.
   if (restrictedMode) {
     // allMoves is computed once at box->bench placement (see game-data/moveAvailabilityController.js)
     // and persisted on the entity -- fall back to the old static computation only for
