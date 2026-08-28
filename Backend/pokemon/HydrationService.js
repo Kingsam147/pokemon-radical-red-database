@@ -23,7 +23,13 @@ const load = () => {
   abilitiesMap = new Map(Object.entries(abilities));
 };
 
-const getMove = (moveName) => movesMap.get(moveName) ?? null;
+// The moves collection is keyed by normalized id ("thunderbolt", "babydolleyes"),
+// but callers pass display names straight off a species' learnsets ("Thunderbolt",
+// "Baby-Doll Eyes"), so normalize before the lookup — the same key transform the
+// frontend applies when it reads movesList. (abilities is keyed by display name,
+// so getAbility needs no equivalent.)
+const normalizeMoveKey = (moveName) => String(moveName).toLowerCase().replace(/[^a-z0-9]/g, '');
+const getMove = (moveName) => movesMap.get(normalizeMoveKey(moveName)) ?? null;
 const getAbility = (abilityName) => abilitiesMap.get(abilityName) ?? null;
 
 const buildFormEntry = (formData, abilityIndex, activeSpeciesAbilityCount, EVs, IVs, nature, level, player) => {
