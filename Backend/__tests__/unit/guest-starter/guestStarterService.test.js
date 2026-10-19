@@ -21,8 +21,8 @@ describe('guestStarterService', () => {
     expect(GUEST_STARTER_PIKACHU.forms.Pikachu.formName).toBe('Pikachu');
   });
 
-  test('sprite is the S3 pokemon/{ID}.png convention, not a third-party URL', () => {
-    expect(GUEST_STARTER_PIKACHU.sprite).toBe('https://pokemon-radical-red.s3.us-east-2.amazonaws.com/pokemon/25.png');
+  test('sprite is the Cloudinary pokemon/{ID}.png convention', () => {
+    expect(GUEST_STARTER_PIKACHU.sprite).toBe('https://res.cloudinary.com/dqfuunqw/image/upload/pokemon/25.png');
     expect(GUEST_STARTER_PIKACHU.forms.Pikachu.sprite).toBe(GUEST_STARTER_PIKACHU.sprite);
   });
 

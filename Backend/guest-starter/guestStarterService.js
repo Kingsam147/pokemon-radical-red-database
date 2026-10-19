@@ -3,13 +3,13 @@
 // fixture (not real trainer/team data), so there is nothing to look up from a
 // database and nothing to keep synced with a resolver pipeline.
 // Sprite and allMoves are built the same way the frontend's own hydration
-// paths build them: sprite is the S3 pokemon/{ID}.png convention (see
+// paths build them: sprite is the Cloudinary pokemon/{ID}.png convention (see
 // Frontend/lib/utils/sprites.ts POKEMON_SPRITES), and allMoves is the real
 // level-5 legal movepool computed via allAvaliableMoves + legalMoves — the
 // same functions Backend/pokemon/HydrationService.js calls for player 1 —
 // against the Pikachu species entry, then hardcoded here since this fixture
 // has nothing to resolve against at request time.
-const PIKACHU_SPRITE = 'https://pokemon-radical-red.s3.us-east-2.amazonaws.com/pokemon/25.png';
+const PIKACHU_SPRITE = 'https://res.cloudinary.com/dqfuunqw/image/upload/pokemon/25.png';
 const PIKACHU_ALL_MOVES = [
   'Baby-Doll Eyes', 'Brick Break', 'Dig', 'Electroweb', 'Facade', 'Fake Out',
   'Flash', 'Growl', 'Iron Tail', 'Light Screen', 'Play Rough', 'Reflect',

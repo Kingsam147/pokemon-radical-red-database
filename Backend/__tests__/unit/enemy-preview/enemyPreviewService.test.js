@@ -80,7 +80,7 @@ describe('enemyPreviewService', () => {
     expect(result.team.Bulbasaur.forms.Bulbasaur.formName).toBe('Bulbasaur');
   });
 
-  test('Bulbasaur sprite is the S3 pokemon/{ID}.png convention, not a third-party URL', async () => {
+  test('Bulbasaur sprite is the Cloudinary pokemon/{ID}.png convention', async () => {
     redis.get.mockResolvedValue(null);
     TeamRepository.loadAllTeams.mockResolvedValue({
       Team1: asStoredTeam({ Bulbasaur: { name: 'Bulbasaur' } }),
@@ -88,7 +88,7 @@ describe('enemyPreviewService', () => {
 
     const result = await getHydratedEnemyPreview();
 
-    expect(result.team.Bulbasaur.sprite).toBe('https://pokemon-radical-red.s3.us-east-2.amazonaws.com/pokemon/1.png');
+    expect(result.team.Bulbasaur.sprite).toBe('https://res.cloudinary.com/dqfuunqw/image/upload/pokemon/1.png');
     expect(result.team.Bulbasaur.forms.Bulbasaur.sprite).toBe(result.team.Bulbasaur.sprite);
   });
 

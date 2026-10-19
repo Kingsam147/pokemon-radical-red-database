@@ -42,18 +42,18 @@ function buildRawTeam(): RawTeam {
 }
 
 describe("resolveEnemyTeam", () => {
-  test("sets the top-level sprite from the S3 pokemon/{ID}.png convention", () => {
+  test("sets the top-level sprite from the Cloudinary pokemon/{ID}.png convention", () => {
     const resolved = resolveEnemyTeam(buildRawTeam(), {}, {}, {}, {}, {})
     const bulbasaur = resolved.Bulbasaur as { sprite: string }
 
-    expect(bulbasaur.sprite).toBe("https://pokemon-radical-red.s3.us-east-2.amazonaws.com/pokemon/1.png")
+    expect(bulbasaur.sprite).toBe("https://res.cloudinary.com/dqfuunqw/image/upload/pokemon/1.png")
   })
 
   test("sets each alternate form's sprite too, keyed by that form's own ID", () => {
     const resolved = resolveEnemyTeam(buildRawTeam(), {}, {}, {}, {}, {})
     const bulbasaur = resolved.Bulbasaur as { forms: Record<string, { sprite: string }> }
 
-    expect(bulbasaur.forms.Bulbasaur.sprite).toBe("https://pokemon-radical-red.s3.us-east-2.amazonaws.com/pokemon/1.png")
-    expect(bulbasaur.forms.BulbasaurMega.sprite).toBe("https://pokemon-radical-red.s3.us-east-2.amazonaws.com/pokemon/1001.png")
+    expect(bulbasaur.forms.Bulbasaur.sprite).toBe("https://res.cloudinary.com/dqfuunqw/image/upload/pokemon/1.png")
+    expect(bulbasaur.forms.BulbasaurMega.sprite).toBe("https://res.cloudinary.com/dqfuunqw/image/upload/pokemon/1001.png")
   })
 })
