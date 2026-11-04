@@ -88,7 +88,7 @@ describe('enemyPreviewService', () => {
 
     const result = await getHydratedEnemyPreview();
 
-    expect(result.team.Bulbasaur.sprite).toBe('https://pokemon-radical-red.s3.us-east-2.amazonaws.com/pokemon/1.png');
+    expect(result.team.Bulbasaur.sprite).toBe('https://pub-2fd2f404c7e245579c617852a1983848.r2.dev/pokemon/1.png');
     expect(result.team.Bulbasaur.forms.Bulbasaur.sprite).toBe(result.team.Bulbasaur.sprite);
   });
 

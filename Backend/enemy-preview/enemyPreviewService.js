@@ -12,7 +12,7 @@ const ENEMY_PREVIEW_TTL = 86400; // 24 hours — matches P2_TEAMS_TTL convention
 // goes through HydrationService in teamControllers.js.
 // Sprite is the S3 pokemon/{ID}.png convention (see Frontend/lib/utils/sprites.ts
 // POKEMON_SPRITES) — matches how every other Pokemon in the app resolves its sprite.
-const BULBASAUR_SPRITE = 'https://pokemon-radical-red.s3.us-east-2.amazonaws.com/pokemon/1.png';
+const BULBASAUR_SPRITE = 'https://pub-2fd2f404c7e245579c617852a1983848.r2.dev/pokemon/1.png';
 
 const HARDCODED_BULBASAUR = {
   name: 'Bulbasaur',

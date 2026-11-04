@@ -21,7 +21,7 @@ Supports both guest sessions (no account required) and Auth0-authenticated accou
 |---|---|
 | Backend | Node.js - Express 5 - TypeScript - MongoDB - Mongoose |
 | Auth | Auth0 (express-oauth2-jwt-bearer) - Guest cookie sessions |
-| Infrastructure | Redis (rate limiting) - AWS S3 (asset storage) - Sentry (error monitoring) |
+| Infrastructure | Redis (rate limiting) - Cloudflare R2 (image asset storage) - Sentry (error monitoring) |
 | Frontend | Next.js 16 - React 19 - TypeScript - Tailwind CSS - shadcn/ui |
 | Testing | Jest - Supertest - mongodb-memory-server - Playwright (E2E) |
 | Deployment | Docker - Vercel - Cloudflare |
@@ -51,7 +51,7 @@ The backend separates concerns across four explicit layers:
 
 **Domain** - pure game logic with no framework dependencies. Move legality checking, stat calculations, type interaction matrices, and text parsing all live here. None of these functions import from Express, Mongoose, or any infrastructure library. This makes them trivially testable and replaceable.
 
-**Infrastructure** - everything that talks to an external system: the Redis client, MongoDB repositories, Auth0 JWT verification, the S3 uploader, and the structured logger. Each concern is isolated to its own module. The rest of the application depends on interfaces, not concrete implementations.
+**Infrastructure** - everything that talks to an external system: the Redis client, MongoDB repositories, Auth0 JWT verification, and the structured logger. Each concern is isolated to its own module. The rest of the application depends on interfaces, not concrete implementations.
 
 **Controllers** - thin handlers that delegate to domain functions or infrastructure calls. They do not contain business logic. A controller's job is to validate the incoming shape, call the right function, and return the right status code.
 
@@ -96,7 +96,7 @@ Two auth strategies coexist:
 - MongoDB instance (local or Atlas)
 - Redis instance
 - Auth0 account (for authenticated routes)
-- AWS S3 bucket (for asset storage)
+- Cloudflare R2 bucket with public `r2.dev` access (for image assets)
 
 ### Backend setup
 
@@ -118,10 +118,12 @@ GUEST_COOKIE_SECRET=your-cookie-secret
 AUTH0_AUDIENCE=your-auth0-api-audience
 AUTH0_ISSUER_BASE_URL=https://your-tenant.auth0.com
 
-AWS_ACCESS_KEY_ID=your-access-key
-AWS_SECRET_ACCESS_KEY=your-secret-key
-AWS_REGION=us-east-1
-AWS_BUCKET_NAME=your-bucket-name
+# Only needed to upload images: node scripts/migrateImagesToR2.js <image-folder>
+R2_ENDPOINT=https://<account-id>.r2.cloudflarestorage.com
+R2_BUCKET=your-bucket-name
+R2_ACCESS_KEY_ID=your-r2-access-key-id
+R2_SECRET_ACCESS_KEY=your-r2-secret-access-key
+R2_PUBLIC_URL=https://pub-<id>.r2.dev
 
 SENTRY_DSN=your-sentry-dsn
 NODE_ENV=development
