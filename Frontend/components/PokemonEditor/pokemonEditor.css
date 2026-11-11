@@ -59,7 +59,7 @@
 }
 /* Doubles header is always one row; columns shrink with ellipses instead of wrapping. */
 .pokemon-editor-header-row-doubles {
-  @apply flex flex-nowrap items-center justify-start gap-x-3;
+  @apply flex flex-nowrap items-center justify-start gap-x-1;
 }
 .pokemon-editor-header-row-singles {
   @apply flex items-center justify-between mb-3;
@@ -80,13 +80,13 @@
    (with an ellipsis) when the one row is actually full: the Form dropdown gives
    way first, then the name; the pills keep their width up to a safety cap. */
 .pokemon-editor-header-sticky .pokemon-editor-header-left {
-  @apply flex-shrink-[0.001] min-w-0;
+  @apply flex-shrink-[0.00001] min-w-0;
 }
 .pokemon-editor-header-sticky .pokemon-editor-form-gender-grid {
   @apply flex-shrink min-w-24;
 }
 .pokemon-editor-header-sticky .pokemon-editor-pills-column {
-  @apply flex-shrink-0 max-w-52 ml-auto;
+  @apply flex-shrink-0 max-w-52 ml-auto mr-4 pl-2 box-content;
 }
 .pokemon-editor-header-text {
   @apply min-w-0;
