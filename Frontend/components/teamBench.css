@@ -49,7 +49,7 @@
 
 /* Active pokemon area */
 .team-bench-active-area {
-  @apply flex flex-col rounded-lg p-2 min-h-[200px] w-[630px];
+  @apply flex flex-col rounded-lg p-1 min-h-[200px] w-[662px];
 }
 .team-bench-active-area-p1 {
   @apply border-3 border-secondary/30 bg-secondary/5;

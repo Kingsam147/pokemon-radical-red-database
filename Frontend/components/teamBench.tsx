@@ -125,12 +125,12 @@ export default function TeamBench({
 
   return (
     <Card className={isP1 ? "" : "team-bench-card-p2"}>
-      <CardHeader>
+      <CardHeader className="px-2">
         <CardTitle className={isP1 ? "team-bench-title-p1" : "team-bench-title-p2"}>
           {isP1 ? "Player 1 Team" : "Player 2 Team"}
         </CardTitle>
       </CardHeader>
-      <CardContent className="space-y-4">
+      <CardContent className="space-y-4 px-2">
         <div className="team-bench-selector-row">
           <div className="team-bench-selector-controls">
             {!isP1 && (

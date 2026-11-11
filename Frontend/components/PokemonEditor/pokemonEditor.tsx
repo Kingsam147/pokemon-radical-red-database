@@ -331,8 +331,8 @@ export default function PokemonEditor({
                                     alt={pokemon.name}
                                     className="pokemon-editor-sprite"
                                 />
-                                <div>
-                                    <h3 className="pokemon-editor-pokemon-name">{pokemon.name}</h3>
+                                <div className="pokemon-editor-header-text">
+                                    <h3 className="pokemon-editor-pokemon-name" title={pokemon.name}>{pokemon.name}</h3>
                                     <div className="pokemon-editor-level-row">
                                         <label htmlFor={`pokemon-level-${player}-${slotIndex}`} className="pokemon-editor-level-label">Lv.</label>
                                         <Input
@@ -403,12 +403,16 @@ export default function PokemonEditor({
                             </>
 
                             <div className="pokemon-editor-pills-column">
-                                <span className="pokemon-editor-nature-pill">{pokemon.nature.name}</span>
-                                <span className="pokemon-editor-item-pill">
-                                    {pokemon.item?.name ?? "None"}
+                                <span className="pokemon-editor-nature-pill" title={pokemon.nature.name}>
+                                    <span className="pokemon-editor-pill-text">{pokemon.nature.name}</span>
+                                </span>
+                                <span className="pokemon-editor-item-pill" title={pokemon.item?.name ?? "None"}>
+                                    <span className="pokemon-editor-pill-text">{pokemon.item?.name ?? "None"}</span>
                                     <img className="pokemon-editor-item-pill-sprite" src={ITEM_SPRITE(pokemon.item?.name ?? "")} alt={`${pokemon.item?.name ?? "no item"} icon`} />
                                 </span>
-                                <span className="pokemon-editor-ability-pill">{pokemon.ability.name}</span>
+                                <span className="pokemon-editor-ability-pill" title={pokemon.ability.name}>
+                                    <span className="pokemon-editor-pill-text">{pokemon.ability.name}</span>
+                                </span>
                                 {isDoubles && (
                                     <div className="pokemon-editor-target-row">
                                         <Label className="pokemon-editor-target-label">Target:</Label>
