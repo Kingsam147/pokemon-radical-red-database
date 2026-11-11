@@ -12,7 +12,7 @@ vi.mock("@/lib/api/misc", async (importOriginal) => {
   }
 })
 
-import { runCalc, runAllCalcs } from "@/lib/api/runCalcs"
+import { runCalc, runAllCalcs, resolveDefenderSlot } from "@/lib/api/runCalcs"
 import { postDamageCalc, fetchCalculateDamageBatch } from "@/lib/api/misc"
 
 const stats: PokemonStats = { HP: 100, Atk: 100, Def: 100, SpA: 100, SpD: 100, Spe: 100 }
@@ -84,7 +84,7 @@ describe("runCalc", () => {
     const result = fakeResult("first calc")
     vi.mocked(postDamageCalc).mockResolvedValue({ calculation: result })
 
-    await runCalc(1, 0, 0, p1, args.player1Bench, args.player2Bench, args.p1Hazards, args.p2Hazards, args.activeEffects, args.battleMode, args.abilityToggles, args.moveCrits, args.moveZPowered, setDamageResults, setCalcLoadingKeys)
+    await runCalc(1, 0, 0, p1, 0, args.player1Bench, args.player2Bench, args.p1Hazards, args.p2Hazards, args.activeEffects, args.battleMode, args.abilityToggles, args.moveCrits, args.moveZPowered, setDamageResults, setCalcLoadingKeys)
 
     expect(postDamageCalc).toHaveBeenCalledTimes(1)
     expect(setDamageResults).toHaveBeenCalled()
@@ -92,7 +92,7 @@ describe("runCalc", () => {
     expect(updater({})).toEqual({ "p1-0-move0": result })
 
     // Second call with the identical matchup must hit the cache, not the network.
-    await runCalc(1, 0, 0, p1, args.player1Bench, args.player2Bench, args.p1Hazards, args.p2Hazards, args.activeEffects, args.battleMode, args.abilityToggles, args.moveCrits, args.moveZPowered, setDamageResults, setCalcLoadingKeys)
+    await runCalc(1, 0, 0, p1, 0, args.player1Bench, args.player2Bench, args.p1Hazards, args.p2Hazards, args.activeEffects, args.battleMode, args.abilityToggles, args.moveCrits, args.moveZPowered, setDamageResults, setCalcLoadingKeys)
     expect(postDamageCalc).toHaveBeenCalledTimes(1)
   })
 
@@ -101,10 +101,52 @@ describe("runCalc", () => {
     const args = commonArgs(p1, p1)
     args.player2Bench = [null, null, null, null, null, null]
 
-    await runCalc(1, 0, 0, p1, args.player1Bench, args.player2Bench, args.p1Hazards, args.p2Hazards, args.activeEffects, args.battleMode, args.abilityToggles, args.moveCrits, args.moveZPowered, setDamageResults, setCalcLoadingKeys)
+    await runCalc(1, 0, 0, p1, 0, args.player1Bench, args.player2Bench, args.p1Hazards, args.p2Hazards, args.activeEffects, args.battleMode, args.abilityToggles, args.moveCrits, args.moveZPowered, setDamageResults, setCalcLoadingKeys)
 
     expect(postDamageCalc).not.toHaveBeenCalled()
     expect(setDamageResults).not.toHaveBeenCalled()
+  })
+})
+
+describe("resolveDefenderSlot", () => {
+  const enemyLeft = buildPokemon("Resolve-Enemy-Left", ["None"])
+  const enemyRight = buildPokemon("Resolve-Enemy-Right", ["None"])
+
+  test("doubles targets the chosen enemy active slot", () => {
+    expect(resolveDefenderSlot([enemyLeft, enemyRight, null], "doubles", 1)).toBe(1)
+    expect(resolveDefenderSlot([enemyLeft, enemyRight, null], "doubles", 0)).toBe(0)
+  })
+
+  test("doubles falls back to the other active slot when the chosen one is empty", () => {
+    expect(resolveDefenderSlot([enemyLeft, null, null], "doubles", 1)).toBe(0)
+    expect(resolveDefenderSlot([null, enemyRight, null], "doubles", 0)).toBe(1)
+  })
+
+  test("doubles never targets a benched Pokemon outside the two active slots", () => {
+    expect(resolveDefenderSlot([null, null, enemyLeft], "doubles", 0)).toBe(-1)
+  })
+
+  test("singles ignores the target and keeps targeting the first occupied enemy slot", () => {
+    expect(resolveDefenderSlot([null, null, enemyRight], "singles", 1)).toBe(2)
+    expect(resolveDefenderSlot([enemyLeft, enemyRight], "singles", 1)).toBe(0)
+  })
+})
+
+describe("runCalc doubles targeting", () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+  })
+
+  test("the payload defender is the enemy picked in the target dropdown", async () => {
+    const attacker = buildPokemon("Target-Attacker", ["Tackle"])
+    const enemyLeft = buildPokemon("Target-Enemy-Left", ["None"])
+    const enemyRight = buildPokemon("Target-Enemy-Right", ["None"])
+    const args = commonArgs(attacker, enemyLeft)
+    vi.mocked(postDamageCalc).mockResolvedValue({ calculation: fakeResult("right target") })
+
+    await runCalc(1, 0, 0, attacker, 1, args.player1Bench, [enemyLeft, enemyRight, null, null, null, null], args.p1Hazards, args.p2Hazards, args.activeEffects, "doubles", args.abilityToggles, args.moveCrits, args.moveZPowered, vi.fn(), vi.fn())
+
+    expect(vi.mocked(postDamageCalc).mock.calls[0][0].defender.name).toBe("Target-Enemy-Right")
   })
 })
 
@@ -118,23 +160,38 @@ describe("runAllCalcs", () => {
     setCalcLoadingKeys = vi.fn()
   })
 
-  test("bundles every move on both sides into a single batch request", async () => {
+  test("bundles every move of the editor's own attacker into a single batch request, ignoring the opposing side", async () => {
     const p1 = buildPokemon("Runallcalcs-Attacker-A", ["Flamethrower", "Air Slash"])
     const p2 = buildPokemon("Runallcalcs-Defender-A", ["Surf", "Ice Beam"])
     const args = commonArgs(p1, p2)
     vi.mocked(fetchCalculateDamageBatch).mockResolvedValue([
       { key: "p1-0-move0", calculation: fakeResult("p1 move0") },
       { key: "p1-0-move1", calculation: fakeResult("p1 move1") },
-      { key: "p2-0-move0", calculation: fakeResult("p2 move0") },
-      { key: "p2-0-move1", calculation: fakeResult("p2 move1") },
     ])
 
-    await runAllCalcs(args.player1Bench, args.player2Bench, args.p1Hazards, args.p2Hazards, args.activeEffects, args.battleMode, args.abilityToggles, args.moveCrits, args.moveZPowered, setDamageResults, setCalcLoadingKeys)
+    await runAllCalcs(1, 0, p1, 0, args.player1Bench, args.player2Bench, args.p1Hazards, args.p2Hazards, args.activeEffects, args.battleMode, args.abilityToggles, args.moveCrits, args.moveZPowered, setDamageResults, setCalcLoadingKeys)
 
     expect(fetchCalculateDamageBatch).toHaveBeenCalledTimes(1)
     const batchItems = vi.mocked(fetchCalculateDamageBatch).mock.calls[0][0]
-    expect(batchItems.map(item => item.key)).toEqual(["p1-0-move0", "p1-0-move1", "p2-0-move0", "p2-0-move1"])
+    expect(batchItems.map(item => item.key)).toEqual(["p1-0-move0", "p1-0-move1"])
     expect(postDamageCalc).not.toHaveBeenCalled()
+  })
+
+  test("a second active slot in doubles gets its own auto-calculated results keyed by its slot", async () => {
+    const leftAttacker = buildPokemon("Doubles-Left-Attacker", ["Tackle"])
+    const rightAttacker = buildPokemon("Doubles-Right-Attacker", ["Scratch"])
+    const enemyLeft = buildPokemon("Doubles-Enemy-Left-A", ["None"])
+    const enemyRight = buildPokemon("Doubles-Enemy-Right-A", ["None"])
+    const args = commonArgs(leftAttacker, enemyLeft)
+    const player1Bench = [leftAttacker, rightAttacker, null, null, null, null]
+    const player2Bench = [enemyLeft, enemyRight, null, null, null, null]
+    vi.mocked(fetchCalculateDamageBatch).mockResolvedValue([{ key: "p1-1-move0", calculation: fakeResult("right") }])
+
+    await runAllCalcs(1, 1, rightAttacker, 0, player1Bench, player2Bench, args.p1Hazards, args.p2Hazards, args.activeEffects, "doubles", args.abilityToggles, args.moveCrits, args.moveZPowered, setDamageResults, setCalcLoadingKeys)
+
+    const batchItems = vi.mocked(fetchCalculateDamageBatch).mock.calls[0][0]
+    expect(batchItems.map(item => item.key)).toEqual(["p1-1-move0"])
+    expect(batchItems[0].payload.attacker.name).toBe("Doubles-Right-Attacker")
   })
 
   test("a matchup already resolved by runCalc is served from cache with no batch request", async () => {
@@ -143,9 +200,9 @@ describe("runAllCalcs", () => {
     const args = commonArgs(p1, p2)
     vi.mocked(postDamageCalc).mockResolvedValue({ calculation: fakeResult("prewarmed") })
 
-    await runCalc(1, 0, 0, p1, args.player1Bench, args.player2Bench, args.p1Hazards, args.p2Hazards, args.activeEffects, args.battleMode, args.abilityToggles, args.moveCrits, args.moveZPowered, setDamageResults, setCalcLoadingKeys)
+    await runCalc(1, 0, 0, p1, 0, args.player1Bench, args.player2Bench, args.p1Hazards, args.p2Hazards, args.activeEffects, args.battleMode, args.abilityToggles, args.moveCrits, args.moveZPowered, setDamageResults, setCalcLoadingKeys)
 
-    await runAllCalcs(args.player1Bench, args.player2Bench, args.p1Hazards, args.p2Hazards, args.activeEffects, args.battleMode, args.abilityToggles, args.moveCrits, args.moveZPowered, setDamageResults, setCalcLoadingKeys)
+    await runAllCalcs(1, 0, p1, 0, args.player1Bench, args.player2Bench, args.p1Hazards, args.p2Hazards, args.activeEffects, args.battleMode, args.abilityToggles, args.moveCrits, args.moveZPowered, setDamageResults, setCalcLoadingKeys)
 
     expect(fetchCalculateDamageBatch).not.toHaveBeenCalled()
   })
@@ -159,7 +216,7 @@ describe("runAllCalcs", () => {
       { key: "p1-0-move1", error: "Move \"Bad Move\" not found in database" },
     ])
 
-    await runAllCalcs(args.player1Bench, args.player2Bench, args.p1Hazards, args.p2Hazards, args.activeEffects, args.battleMode, args.abilityToggles, args.moveCrits, args.moveZPowered, setDamageResults, setCalcLoadingKeys)
+    await runAllCalcs(1, 0, p1, 0, args.player1Bench, args.player2Bench, args.p1Hazards, args.p2Hazards, args.activeEffects, args.battleMode, args.abilityToggles, args.moveCrits, args.moveZPowered, setDamageResults, setCalcLoadingKeys)
 
     const lastUpdater = setDamageResults.mock.calls[setDamageResults.mock.calls.length - 1][0] as (prev: Record<string, DamageResult | null>) => Record<string, DamageResult | null>
     const applied = lastUpdater({})

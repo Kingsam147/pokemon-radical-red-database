@@ -7,7 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Button } from "@/components/ui/button"
-import { runCalc, runAllCalcs } from "@/lib/api/runCalcs"
+import { runCalc, runAllCalcs, resolveDefenderSlot } from "@/lib/api/runCalcs"
 import EffectivenessTooltip from "@/components/PokemonEditor/typePopup";
 import {
     PokemonStats,
@@ -61,6 +61,18 @@ type Props = {
     updatePokemonLevel: (player: 1 | 2, slotIndex: number, level: string) => void
 }
 
+const DOUBLES_ACTIVE_SLOTS = [0, 1]
+
+// Every Pokemon field that changes a damage calc, as one stable string for effect deps.
+const calcInputSignature = (pokemon: Pokemon | null | undefined): string => {
+    if (!pokemon) return "none"
+    return JSON.stringify([
+        pokemon.name, pokemon.level, pokemon.nature?.name, pokemon.item?.name, pokemon.ability?.name,
+        pokemon.currentHp, pokemon.status, pokemon.gender, pokemon.form?.formName,
+        pokemon.EVs, pokemon.IVs, pokemon.statBoosts,
+    ])
+}
+
 export default function PokemonEditor({
     pokemon, player, slotIndex,
     battleMode, doublesType,
@@ -88,6 +100,16 @@ export default function PokemonEditor({
     const [selectedMove, setSelectedMove] = useState<{ player: number, slot: number, moveIdx: number } | null>(null)
     const [damageResults, setDamageResults] = useState<Record<string, DamageResult | null>>({});
     const [calcLoadingKeys, setCalcLoadingKeys] = useState<Set<string>>(new Set());
+
+    // The target choice is tied to the Pokemon that made it, so a new Pokemon entering
+    // this slot starts back on opposing slot 1 without needing a reset effect.
+    const [targetSelection, setTargetSelection] = useState<{ pokemonName: string | undefined, slot: number }>({ pokemonName: undefined, slot: 0 });
+    const targetSlot = targetSelection.pokemonName === pokemon?.name ? targetSelection.slot : 0;
+    const calcBattleMode = battleMode as "singles" | "doubles";
+    const defenderBench = player === 1 ? player2Bench : player1Bench;
+    const defenderSlot = resolveDefenderSlot(defenderBench, calcBattleMode, targetSlot);
+    const defender = defenderBench[defenderSlot] ?? null;
+    const ownKey = `p${player}-${slotIndex}`;
 
     const [sessionId, setSessionId] = useState<string | null>(null);
     const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
@@ -176,74 +198,59 @@ export default function PokemonEditor({
             .catch(() => console.error("Error fetching type interactions"));
     }, [pokemon?.types]);
 
+    // Each editor shows only its own slot's damage, so it only calculates its own moves
+    // against its resolved target, and re-runs when either side of that matchup changes.
     useEffect(() => {
         if (!pokemon) return;
-        runAllCalcs(player1Bench, player2Bench, p1Hazards, p2Hazards, activeEffects, battleMode as "singles" | "doubles", abilityToggles, moveCrits, moveZPowered, setDamageResults, setCalcLoadingKeys)
+        runAllCalcs(player, slotIndex, pokemon, targetSlot, player1Bench, player2Bench, p1Hazards, p2Hazards, activeEffects, calcBattleMode, abilityToggles, moveCrits, moveZPowered, setDamageResults, setCalcLoadingKeys)
     }, [
-        player1Bench[0]?.name, player2Bench[0]?.name,
-        player1Bench[0]?.level, player2Bench[0]?.level,
-        player1Bench[0]?.nature?.name, player2Bench[0]?.nature?.name,
-        player1Bench[0]?.item?.name, player2Bench[0]?.item?.name,
-        player1Bench[0]?.ability?.name, player2Bench[0]?.ability?.name,
-        player1Bench[0]?.currentHp, player2Bench[0]?.currentHp,
-        player1Bench[0]?.status, player2Bench[0]?.status,
-        player1Bench[0]?.gender, player2Bench[0]?.gender,
-        player1Bench[0]?.form?.formName, player2Bench[0]?.form?.formName,
-        JSON.stringify(player1Bench[0]?.EVs), JSON.stringify(player2Bench[0]?.EVs),
-        JSON.stringify(player1Bench[0]?.IVs), JSON.stringify(player2Bench[0]?.IVs),
-        JSON.stringify(player1Bench[0]?.statBoosts), JSON.stringify(player2Bench[0]?.statBoosts),
+        calcInputSignature(pokemon),
+        calcInputSignature(defender),
+        defenderSlot,
         JSON.stringify(abilityToggles),
         JSON.stringify(activeEffects),
         fieldRecalcSignature,
         battleMode,
     ]);
 
-    const prevMoveStateRef = useRef<Record<"p1" | "p2", {
+    const prevMoveStateRef = useRef<{
         name?: string;
         moveset?: PokemonMove[];
         crits?: boolean[];
         zPowered?: boolean[];
-    }>>({ p1: {}, p2: {} });
+    }>({});
 
     useEffect(() => {
         if (!pokemon) return;
+        const previous = prevMoveStateRef.current;
+        const currentCrits = moveCrits[ownKey] ?? [];
+        const currentZPowered = moveZPowered[ownKey] ?? [];
 
-        const recalcChangedMoves = (side: 1 | 2, current: Pokemon | null) => {
-            if (!current) return;
-            const sideKey = side === 1 ? "p1" : "p2";
-            const prev = prevMoveStateRef.current[sideKey];
-            const currentCrits = moveCrits[`p${side}-0`] ?? [];
-            const currentZPowered = moveZPowered[`p${side}-0`] ?? [];
+        if (previous.name === pokemon.name && previous.moveset) {
+            pokemon.moveset.forEach((move, idx) => {
+                const movesetChanged = JSON.stringify(move) !== JSON.stringify(previous.moveset?.[idx]);
+                const critChanged = (previous.crits?.[idx] ?? false) !== (currentCrits[idx] ?? false);
+                const zChanged = (previous.zPowered?.[idx] ?? false) !== (currentZPowered[idx] ?? false);
+                if (movesetChanged || critChanged || zChanged) {
+                    runCalc(
+                        player, slotIndex, idx, pokemon, targetSlot, player1Bench, player2Bench,
+                        p1Hazards, p2Hazards, activeEffects, calcBattleMode,
+                        abilityToggles, moveCrits, moveZPowered, setDamageResults, setCalcLoadingKeys
+                    );
+                }
+            });
+        }
 
-            if (prev.name === current.name && prev.moveset) {
-                current.moveset.forEach((move, idx) => {
-                    const movesetChanged = JSON.stringify(move) !== JSON.stringify(prev.moveset?.[idx]);
-                    const critChanged = (prev.crits?.[idx] ?? false) !== (currentCrits[idx] ?? false);
-                    const zChanged = (prev.zPowered?.[idx] ?? false) !== (currentZPowered[idx] ?? false);
-                    if (movesetChanged || critChanged || zChanged) {
-                        runCalc(
-                            side, 0, idx, current, player1Bench, player2Bench,
-                            p1Hazards, p2Hazards, activeEffects, battleMode as "singles" | "doubles",
-                            abilityToggles, moveCrits, moveZPowered, setDamageResults, setCalcLoadingKeys
-                        );
-                    }
-                });
-            }
-
-            prevMoveStateRef.current[sideKey] = {
-                name: current.name,
-                moveset: current.moveset,
-                crits: currentCrits,
-                zPowered: currentZPowered,
-            };
+        prevMoveStateRef.current = {
+            name: pokemon.name,
+            moveset: pokemon.moveset,
+            crits: currentCrits,
+            zPowered: currentZPowered,
         };
-
-        recalcChangedMoves(1, player1Bench[0]);
-        recalcChangedMoves(2, player2Bench[0]);
     }, [
-        JSON.stringify(player1Bench[0]?.moveset), JSON.stringify(player2Bench[0]?.moveset),
-        JSON.stringify(moveCrits["p1-0"]), JSON.stringify(moveCrits["p2-0"]),
-        JSON.stringify(moveZPowered["p1-0"]), JSON.stringify(moveZPowered["p2-0"]),
+        JSON.stringify(pokemon?.moveset),
+        JSON.stringify(moveCrits[ownKey]),
+        JSON.stringify(moveZPowered[ownKey]),
     ]);
 
     if (!pokemon) return null;
@@ -546,6 +553,29 @@ export default function PokemonEditor({
                                 </div>
 
                                 <div className="pokemon-editor-moves-container">
+                                    {isDoubles && (
+                                        <div className="pokemon-editor-target-row">
+                                            <Label className="pokemon-editor-target-label">Target</Label>
+                                            <Select
+                                                value={defenderSlot >= 0 ? String(defenderSlot) : ""}
+                                                onValueChange={(value) => setTargetSelection({ pokemonName: pokemon.name, slot: Number(value) })}
+                                            >
+                                                <SelectTrigger className="pokemon-editor-target-trigger" title="Choose which opposing active Pokemon these damage numbers are for">
+                                                    <SelectValue placeholder="No opposing Pokemon" />
+                                                </SelectTrigger>
+                                                <SelectContent position="popper" side="bottom">
+                                                    {DOUBLES_ACTIVE_SLOTS.map((slot) => {
+                                                        const opponent = defenderBench[slot];
+                                                        return (
+                                                            <SelectItem key={slot} value={String(slot)} disabled={!opponent} className="pokemon-editor-target-option">
+                                                                {`Slot ${slot + 1}: ${opponent ? opponent.name : "(empty)"}`}
+                                                            </SelectItem>
+                                                        );
+                                                    })}
+                                                </SelectContent>
+                                            </Select>
+                                        </div>
+                                    )}
                                     <Label className="pokemon-editor-moves-label">Moves</Label>
                                     {pokemon.moveset.map((move, moveIdx) => {
                                         const accuracy = move.accuracy;
@@ -575,7 +605,7 @@ export default function PokemonEditor({
                                                 onClick={async () => {
                                                     const isSame = isSelected;
                                                     setSelectedMove(isSame ? null : { player, slot: slotIndex, moveIdx });
-                                                    await runCalc(player, slotIndex, moveIdx, pokemon, player1Bench, player2Bench, p1Hazards, p2Hazards, activeEffects, battleMode as "singles" | "doubles", abilityToggles, moveCrits, moveZPowered, setDamageResults, setCalcLoadingKeys);
+                                                    await runCalc(player, slotIndex, moveIdx, pokemon, targetSlot, player1Bench, player2Bench, p1Hazards, p2Hazards, activeEffects, calcBattleMode, abilityToggles, moveCrits, moveZPowered, setDamageResults, setCalcLoadingKeys);
                                                 }}
                                                 className={`pokemon-editor-move-button ${isSelected ? "pokemon-editor-move-button-selected" : `pokemon-editor-move-button-unselected ${accuracyClass}`}`}
                                             >

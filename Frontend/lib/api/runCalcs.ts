@@ -45,11 +45,26 @@ interface CalcCandidate {
   payload: DamageCalcPayload;
 }
 
+// Bench index of the Pokemon an attacker's moves are calculated against, or -1 if none.
+// Doubles: the chosen enemy active slot (0 or 1), falling back to the other active slot
+// when the chosen one is empty. Singles: the first occupied enemy slot, as before.
+export const resolveDefenderSlot = (
+  defenderBench: (Pokemon | null)[],
+  battleMode: "singles" | "doubles",
+  targetSlot: number,
+): number => {
+  if (battleMode === "singles") return defenderBench.findIndex(p => p !== null);
+  if (defenderBench[targetSlot]) return targetSlot;
+  const otherActiveSlot = targetSlot === 0 ? 1 : 0;
+  return defenderBench[otherActiveSlot] ? otherActiveSlot : -1;
+};
+
 const buildCalcCandidate = (
   player: 1 | 2,
   slotIndex: number,
   idx: number,
   pokemon: Pokemon,
+  targetSlot: number,
   player1Bench: (Pokemon | null)[],
   player2Bench: (Pokemon | null)[],
   p1Hazards: Hazards,
@@ -61,7 +76,7 @@ const buildCalcCandidate = (
   moveZPowered: Record<string, boolean[]>,
 ): CalcCandidate | null => {
   const defenderBench = player === 1 ? player2Bench : player1Bench;
-  const defenderIdx = defenderBench.findIndex(p => p !== null);
+  const defenderIdx = resolveDefenderSlot(defenderBench, battleMode, targetSlot);
   const defender = defenderBench[defenderIdx] ?? null;
   if (!defender || !pokemon.moveset[idx] || pokemon.moveset[idx].name === "None") return null;
 
@@ -86,6 +101,7 @@ export const runCalc = async (
   slotIndex: number,
   idx: number,
   pokemon: Pokemon,
+  targetSlot: number,
   player1Bench: (Pokemon | null)[],
   player2Bench: (Pokemon | null)[],
   p1Hazards: Hazards,
@@ -99,7 +115,7 @@ export const runCalc = async (
   setCalcLoadingKeys?: React.Dispatch<React.SetStateAction<Set<string>>>
 ) => {
   const candidate = buildCalcCandidate(
-    player, slotIndex, idx, pokemon, player1Bench, player2Bench,
+    player, slotIndex, idx, pokemon, targetSlot, player1Bench, player2Bench,
     p1Hazards, p2Hazards, activeEffects, battleMode,
     abilityToggles, moveCrits, moveZPowered
   );
@@ -130,6 +146,10 @@ export const runCalc = async (
 };
 
 export const runAllCalcs = async (
+  player: 1 | 2,
+  slotIndex: number,
+  pokemon: Pokemon,
+  targetSlot: number,
   player1Bench: (Pokemon | null)[],
   player2Bench: (Pokemon | null)[],
   p1Hazards: Hazards,
@@ -142,19 +162,12 @@ export const runAllCalcs = async (
   setDamageResults: React.Dispatch<React.SetStateAction<Record<string, DamageResult | null>>>,
   setCalcLoadingKeys?: React.Dispatch<React.SetStateAction<Set<string>>>
 ) => {
-  const p1 = player1Bench[0];
-  const p2 = player2Bench[0];
-  if (!p1 || !p2) return;
-
-  const candidateArgs = [player1Bench, player2Bench, p1Hazards, p2Hazards, activeEffects, battleMode, abilityToggles, moveCrits, moveZPowered] as const;
-
   const candidates: CalcCandidate[] = [];
-  for (let idx = 0; idx < p1.moveset.length; idx++) {
-    const candidate = buildCalcCandidate(1, 0, idx, p1, ...candidateArgs);
-    if (candidate) candidates.push(candidate);
-  }
-  for (let idx = 0; idx < p2.moveset.length; idx++) {
-    const candidate = buildCalcCandidate(2, 0, idx, p2, ...candidateArgs);
+  for (let idx = 0; idx < pokemon.moveset.length; idx++) {
+    const candidate = buildCalcCandidate(
+      player, slotIndex, idx, pokemon, targetSlot, player1Bench, player2Bench,
+      p1Hazards, p2Hazards, activeEffects, battleMode, abilityToggles, moveCrits, moveZPowered
+    );
     if (candidate) candidates.push(candidate);
   }
 

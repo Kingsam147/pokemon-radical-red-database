@@ -247,6 +247,18 @@
 .pokemon-editor-moves-label {
   @apply text-sm font-semibold mb-1 block;
 }
+.pokemon-editor-target-row {
+  @apply flex flex-col gap-1 mb-2;
+}
+.pokemon-editor-target-label {
+  @apply text-sm font-semibold;
+}
+.pokemon-editor-target-trigger {
+  @apply text-sm border rounded-md bg-background h-8 w-full border-slate-300 cursor-pointer transition-colors duration-200 hover:border-blue-400 focus:ring-2 focus:ring-blue-300 outline-none;
+}
+.pokemon-editor-target-option {
+  @apply text-sm cursor-pointer;
+}
 .pokemon-editor-move-button {
   @apply flex items-center justify-between w-full rounded border px-3 py-1.5 text-base transition-all cursor-pointer;
 }
