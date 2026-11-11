@@ -139,6 +139,16 @@ describe('TeamRepository placeholder seed data', () => {
     const teams = await TeamRepository.loadAllTeams(2, null);
     expect(teams).toEqual({});
   });
+
+  test('loadAllTeams(2, ...) marks seeded enemy Pokemon with no stored player as player 2', async () => {
+    // Seeded trainer teams carry no `player` field; defaulting them to player 1 made
+    // HydrationService apply Player 1's banned-ability substitutions to enemy Pokemon.
+    const seededEntry = makePokemon('Pelipper', { ability_id: 'Drizzle' }).toJSON();
+    delete seededEntry.player;
+    await client.db('test').collection('enemyTeamSets').insertOne({ 'Leader Brock': { Pelipper: seededEntry } });
+    const teams = await TeamRepository.loadAllTeams(2, null);
+    expect(teams['Leader Brock'].getPokemon('Pelipper').toJSON().player).toBe(2);
+  });
 });
 
 describe('TeamRepository.reassignOwner', () => {

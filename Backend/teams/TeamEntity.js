@@ -86,11 +86,11 @@ class TeamEntity {
     return json;
   }
 
-  static fromStoredDoc(doc, models) {
+  static fromStoredDoc(doc, models, player) {
     const source = doc === undefined || doc === null ? {} : doc;
     const entities = Object.keys(source)
       .filter((name) => name !== 'trainerInfo')
-      .map((name) => PokemonEntity.fromStoredDoc(source[name], models));
+      .map((name) => PokemonEntity.fromStoredDoc(source[name], models, player));
     return new TeamEntity(entities, source.trainerInfo);
   }
 }
