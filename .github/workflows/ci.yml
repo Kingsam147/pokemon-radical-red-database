@@ -111,6 +111,7 @@ jobs:
         working-directory: Backend
         run: npm run test:integration
         env:
+          NODE_OPTIONS: --experimental-vm-modules
           NODE_ENV: test
           MONGODB_URI: mongodb://localhost:27017/pokemon_test
           REDIS_URL: redis://localhost:6379
