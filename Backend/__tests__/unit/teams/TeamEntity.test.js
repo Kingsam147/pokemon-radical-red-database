@@ -141,6 +141,20 @@ describe('TeamEntity', () => {
     expect(team.trainerInfo).toEqual({ name: 'Blue' });
   });
 
+  test('fromStoredDoc assigns the loading player to seeded entries that have no stored player', () => {
+    const models = { natures: {}, items: {} };
+    const seededEntry = makePokemon('Ditto').toJSON();
+    delete seededEntry.player;
+    const team = TeamEntity.fromStoredDoc({ Ditto: seededEntry }, models, 2);
+    expect(team.getPokemon('Ditto').toJSON().player).toBe(2);
+  });
+
+  test('fromStoredDoc keeps an explicitly stored player over the loading player', () => {
+    const models = { natures: {}, items: {} };
+    const team = TeamEntity.fromStoredDoc({ Ditto: makePokemon('Ditto').toJSON() }, models, 2);
+    expect(team.getPokemon('Ditto').toJSON().player).toBe(1);
+  });
+
   test('fromStoredDoc handles a null/undefined doc as an empty team', () => {
     const team = TeamEntity.fromStoredDoc(undefined, { natures: {}, items: {} });
     expect(team.size).toBe(0);

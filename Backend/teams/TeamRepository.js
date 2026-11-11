@@ -37,7 +37,7 @@ const loadAllTeams = async (player, userId) => {
   const models = getModels();
   const teams = {};
   for (const [teamName, rawTeam] of Object.entries(rawTeams)) {
-    teams[teamName] = Array.isArray(rawTeam) ? rawTeam : TeamEntity.fromStoredDoc(rawTeam, models);
+    teams[teamName] = Array.isArray(rawTeam) ? rawTeam : TeamEntity.fromStoredDoc(rawTeam, models, player);
   }
   return teams;
 };
