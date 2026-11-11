@@ -34,7 +34,7 @@ describe("loadGuestStarterPikachu", () => {
     expect(pokemon!.level).toBe(8)
     expect(pokemon!.currentHp).toBe(26)
     expect(pokemon!.moveset[0].name).toBe("Volt Tackle")
-    expect(pokemon!.sprite).toBe("https://pokemon-radical-red.s3.us-east-2.amazonaws.com/pokemon/25.png")
+    expect(pokemon!.sprite).toBe("https://pub-2fd2f404c7e245579c617852a1983848.r2.dev/pokemon/25.png")
     expect(pokemon!.allMoves).toEqual([{ name: "Thunderbolt", basePower: 90, category: "Special", type: "Electric" }])
   })
 

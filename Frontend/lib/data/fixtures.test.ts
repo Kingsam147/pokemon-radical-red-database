@@ -8,7 +8,7 @@ describe("GUEST_STARTER_PIKACHU_FIXTURE", () => {
     expect(GUEST_STARTER_PIKACHU_FIXTURE.name).toBe("Pikachu")
     expect(GUEST_STARTER_PIKACHU_FIXTURE.ID).toBe("25")
     expect(GUEST_STARTER_PIKACHU_FIXTURE.level).toBe(5)
-    expect(GUEST_STARTER_PIKACHU_FIXTURE.sprite).toBe("https://pokemon-radical-red.s3.us-east-2.amazonaws.com/pokemon/25.png")
+    expect(GUEST_STARTER_PIKACHU_FIXTURE.sprite).toBe("https://pub-2fd2f404c7e245579c617852a1983848.r2.dev/pokemon/25.png")
     expect(GUEST_STARTER_PIKACHU_FIXTURE.currentHp).toBe(26)
   })
 
@@ -56,7 +56,7 @@ describe("ENEMY_PREVIEW_FIXTURE", () => {
     const bulbasaur = ENEMY_PREVIEW_FIXTURE.team.Bulbasaur as typeof GUEST_STARTER_PIKACHU_FIXTURE
     expect(bulbasaur.name).toBe("Bulbasaur")
     expect(bulbasaur.ID).toBe("1")
-    expect(bulbasaur.sprite).toBe("https://pokemon-radical-red.s3.us-east-2.amazonaws.com/pokemon/1.png")
+    expect(bulbasaur.sprite).toBe("https://pub-2fd2f404c7e245579c617852a1983848.r2.dev/pokemon/1.png")
     expect(bulbasaur.moveset.map((m) => m.name)).toEqual(["Tackle", "Growl"])
   })
 

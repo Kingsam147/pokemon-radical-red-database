@@ -22,7 +22,7 @@ describe('guestStarterService', () => {
   });
 
   test('sprite is the S3 pokemon/{ID}.png convention, not a third-party URL', () => {
-    expect(GUEST_STARTER_PIKACHU.sprite).toBe('https://pokemon-radical-red.s3.us-east-2.amazonaws.com/pokemon/25.png');
+    expect(GUEST_STARTER_PIKACHU.sprite).toBe('https://pub-2fd2f404c7e245579c617852a1983848.r2.dev/pokemon/25.png');
     expect(GUEST_STARTER_PIKACHU.forms.Pikachu.sprite).toBe(GUEST_STARTER_PIKACHU.sprite);
   });
 

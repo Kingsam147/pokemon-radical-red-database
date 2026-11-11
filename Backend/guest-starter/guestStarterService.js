@@ -9,7 +9,7 @@
 // same functions Backend/pokemon/HydrationService.js calls for player 1 —
 // against the Pikachu species entry, then hardcoded here since this fixture
 // has nothing to resolve against at request time.
-const PIKACHU_SPRITE = 'https://pokemon-radical-red.s3.us-east-2.amazonaws.com/pokemon/25.png';
+const PIKACHU_SPRITE = 'https://pub-2fd2f404c7e245579c617852a1983848.r2.dev/pokemon/25.png';
 const PIKACHU_ALL_MOVES = [
   'Baby-Doll Eyes', 'Brick Break', 'Dig', 'Electroweb', 'Facade', 'Fake Out',
   'Flash', 'Growl', 'Iron Tail', 'Light Screen', 'Play Rough', 'Reflect',
