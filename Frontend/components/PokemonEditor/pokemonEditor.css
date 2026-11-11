@@ -59,7 +59,7 @@
 }
 /* Doubles header is always one row; columns shrink with ellipses instead of wrapping. */
 .pokemon-editor-header-row-doubles {
-  @apply flex flex-nowrap items-center justify-between gap-x-3;
+  @apply flex flex-nowrap items-center justify-start gap-x-3;
 }
 .pokemon-editor-header-row-singles {
   @apply flex items-center justify-between mb-3;
@@ -86,7 +86,7 @@
   @apply flex-shrink min-w-24;
 }
 .pokemon-editor-header-sticky .pokemon-editor-pills-column {
-  @apply flex-shrink-0 max-w-52;
+  @apply flex-shrink-0 max-w-52 ml-auto;
 }
 .pokemon-editor-header-text {
   @apply min-w-0;
