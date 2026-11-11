@@ -409,6 +409,29 @@ export default function PokemonEditor({
                                     <img className="pokemon-editor-item-pill-sprite" src={ITEM_SPRITE(pokemon.item?.name ?? "")} alt={`${pokemon.item?.name ?? "no item"} icon`} />
                                 </span>
                                 <span className="pokemon-editor-ability-pill">{pokemon.ability.name}</span>
+                                {isDoubles && (
+                                    <div className="pokemon-editor-target-row">
+                                        <Label className="pokemon-editor-target-label">Target:</Label>
+                                        <Select
+                                            value={defenderSlot >= 0 ? String(defenderSlot) : ""}
+                                            onValueChange={(value) => setTargetSelection({ pokemonName: pokemon.name, slot: Number(value) })}
+                                        >
+                                            <SelectTrigger className="pokemon-editor-target-trigger" title="Choose which opposing active Pokemon these damage numbers are for">
+                                                <SelectValue placeholder="No opposing Pokemon" />
+                                            </SelectTrigger>
+                                            <SelectContent position="popper" side="bottom">
+                                                {DOUBLES_ACTIVE_SLOTS.map((slot) => {
+                                                    const opponent = defenderBench[slot];
+                                                    return (
+                                                        <SelectItem key={slot} value={String(slot)} disabled={!opponent} className="pokemon-editor-target-option">
+                                                            {`Slot ${slot + 1}: ${opponent ? opponent.name : "(empty)"}`}
+                                                        </SelectItem>
+                                                    );
+                                                })}
+                                            </SelectContent>
+                                        </Select>
+                                    </div>
+                                )}
                                 {player === 1 && isAuthenticated && teamName && sessionId && (
                                     <Button
                                         type="button"
@@ -553,29 +576,6 @@ export default function PokemonEditor({
                                 </div>
 
                                 <div className="pokemon-editor-moves-container">
-                                    {isDoubles && (
-                                        <div className="pokemon-editor-target-row">
-                                            <Label className="pokemon-editor-target-label">Target</Label>
-                                            <Select
-                                                value={defenderSlot >= 0 ? String(defenderSlot) : ""}
-                                                onValueChange={(value) => setTargetSelection({ pokemonName: pokemon.name, slot: Number(value) })}
-                                            >
-                                                <SelectTrigger className="pokemon-editor-target-trigger" title="Choose which opposing active Pokemon these damage numbers are for">
-                                                    <SelectValue placeholder="No opposing Pokemon" />
-                                                </SelectTrigger>
-                                                <SelectContent position="popper" side="bottom">
-                                                    {DOUBLES_ACTIVE_SLOTS.map((slot) => {
-                                                        const opponent = defenderBench[slot];
-                                                        return (
-                                                            <SelectItem key={slot} value={String(slot)} disabled={!opponent} className="pokemon-editor-target-option">
-                                                                {`Slot ${slot + 1}: ${opponent ? opponent.name : "(empty)"}`}
-                                                            </SelectItem>
-                                                        );
-                                                    })}
-                                                </SelectContent>
-                                            </Select>
-                                        </div>
-                                    )}
                                     <Label className="pokemon-editor-moves-label">Moves</Label>
                                     {pokemon.moveset.map((move, moveIdx) => {
                                         const accuracy = move.accuracy;
