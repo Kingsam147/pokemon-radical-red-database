@@ -14,7 +14,7 @@
   @apply mx-auto text-xl font-bold;
 }
 .pokemon-editor-scroll-wrapper-doubles {
-  @apply overflow-y-auto flex-1 p-1;
+  @apply overflow-y-auto flex-1 px-1 pb-1 pt-0;
   scrollbar-width: thin;
   scrollbar-color: rgba(0, 0, 0, 0.2) transparent;
   &::-webkit-scrollbar {
@@ -47,26 +47,33 @@
 }
 
 /* ── Pokemon header ─────────────────────────────────────── */
+/* Pinned while the doubles card scrolls: spans the card's full width (negative
+   margins cover CardContent's p-4 gutters) and a box-shadow fills the strip above,
+   so no scrolled content shows around it. */
 .pokemon-editor-header-sticky {
-  @apply sticky top-0 z-10 bg-white p-1.5;
+  @apply sticky top-0 z-20 bg-card -mx-4 px-5 py-1.5;
+  box-shadow: 0 -1rem 0 0 var(--card);
 }
 .pokemon-editor-header-standard {
   @apply p-3;
 }
 .pokemon-editor-header-row-doubles {
-  @apply flex items-center justify-between gap-2;
+  @apply flex flex-wrap items-center justify-between gap-x-3 gap-y-2;
 }
 .pokemon-editor-header-row-singles {
   @apply flex items-center justify-between mb-3;
 }
 .pokemon-editor-header-left {
-  @apply flex items-center gap-2;
+  @apply flex items-center gap-2 flex-shrink-0;
 }
 .pokemon-editor-sprite {
   @apply w-25 h-25;
 }
+.pokemon-editor-header-sticky .pokemon-editor-sprite {
+  @apply w-20 h-20;
+}
 .pokemon-editor-pokemon-name {
-  @apply font-bold text-lg;
+  @apply font-bold text-lg whitespace-nowrap;
 }
 .pokemon-editor-level-row {
   @apply flex items-center gap-1;
@@ -90,7 +97,7 @@
   @apply bg-white/95 backdrop-blur-md border shadow-xl p-0;
 }
 .pokemon-editor-form-gender-grid {
-  @apply grid grid-cols-[auto,1fr] gap-x-4 gap-y-2 items-center;
+  @apply grid grid-cols-[auto,1fr] gap-x-4 gap-y-2 items-center flex-shrink-0;
 }
 .pokemon-editor-select-label {
   @apply font-semibold mt-2.5;
@@ -104,7 +111,7 @@
 
 /* ── Info pills ─────────────────────────────────────────── */
 .pokemon-editor-pills-column {
-  @apply flex flex-col gap-1 mr-7;
+  @apply flex flex-col gap-1 flex-shrink-0;
 }
 .pokemon-editor-nature-pill {
   @apply inline-flex items-center justify-center whitespace-nowrap w-fit px-2 py-1 bg-cyan-600 text-primary-foreground rounded-full;
@@ -201,7 +208,7 @@
   @apply flex flex-col gap-3 border-t pt-2 mb-2;
 }
 .pokemon-editor-stats-moves-row {
-  @apply flex gap-6 items-center;
+  @apply flex flex-wrap gap-x-4 gap-y-3 items-center;
 }
 .pokemon-editor-stats-container {
   @apply flex-shrink-0;
@@ -242,7 +249,7 @@
 
 /* ── Move display buttons ───────────────────────────────── */
 .pokemon-editor-moves-container {
-  @apply flex-1 space-y-1 max-w-[225px];
+  @apply flex-1 basis-48 min-w-48 space-y-1 max-w-[225px];
 }
 .pokemon-editor-moves-label {
   @apply text-sm font-semibold mb-1 block;
@@ -254,7 +261,7 @@
   @apply text-xs font-semibold whitespace-nowrap;
 }
 .pokemon-editor-target-trigger {
-  @apply text-xs border rounded-md bg-background h-7 w-40 border-slate-300 cursor-pointer transition-colors duration-200 hover:border-blue-400 focus:ring-2 focus:ring-blue-300 outline-none;
+  @apply text-xs border rounded-md bg-background h-7 w-36 border-slate-300 cursor-pointer transition-colors duration-200 hover:border-blue-400 focus:ring-2 focus:ring-blue-300 outline-none;
 }
 .pokemon-editor-target-option {
   @apply text-xs cursor-pointer;
@@ -295,7 +302,7 @@
 
 /* ── Dropdown section ───────────────────────────────────── */
 .pokemon-editor-dropdowns-row {
-  @apply flex items-start border-t pt-2;
+  @apply flex flex-wrap gap-x-2 gap-y-2 items-start border-t pt-2;
 }
 .pokemon-editor-dropdowns-left {
   @apply flex-shrink-0 space-y-1 w-42;
@@ -354,7 +361,7 @@
   @apply flex items-center gap-1;
 }
 .pokemon-editor-move-name-trigger {
-  @apply h-7 text-sm border-slate-300 w-37 flex-shrink-0;
+  @apply h-7 text-sm border-slate-300 w-34 flex-shrink-0;
 }
 .pokemon-editor-move-none-option {
   @apply text-sm text-muted-foreground;
