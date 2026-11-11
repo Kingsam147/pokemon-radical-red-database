@@ -57,23 +57,56 @@
 .pokemon-editor-header-standard {
   @apply p-3;
 }
+/* Singles and doubles headers are always one row; columns shrink with ellipses instead of wrapping. */
 .pokemon-editor-header-row-doubles {
-  @apply flex flex-wrap items-center justify-between gap-x-3 gap-y-2;
+  @apply flex flex-nowrap items-center justify-between gap-x-3;
 }
 .pokemon-editor-header-row-singles {
-  @apply flex items-center justify-between mb-3;
+  @apply flex flex-nowrap items-center justify-between gap-x-3 mb-3;
 }
 .pokemon-editor-header-left {
   @apply flex items-center gap-2 flex-shrink-0;
 }
 .pokemon-editor-sprite {
-  @apply w-25 h-25;
+  @apply w-25 h-25 flex-shrink-0;
 }
 .pokemon-editor-header-sticky .pokemon-editor-sprite {
-  @apply w-20 h-20;
+  @apply w-20 h-20 flex-shrink-0;
 }
 .pokemon-editor-pokemon-name {
   @apply font-bold text-lg whitespace-nowrap;
+}
+/* Each header column (singles and doubles) keeps its natural width and only gives
+   up space (with an ellipsis) when the one row is actually full: the Form dropdown
+   gives way first, then the name; the pills keep their width up to a safety cap.
+   The Form column is nudged 8px left visually (no layout cost, so the name-to-Form
+   gap never drops below 4px) and the pills sit 16px in from the right edge. */
+:is(.pokemon-editor-header-sticky, .pokemon-editor-header-standard) .pokemon-editor-header-left {
+  @apply flex-shrink min-w-0;
+}
+:is(.pokemon-editor-header-sticky, .pokemon-editor-header-standard) .pokemon-editor-form-gender-grid {
+  @apply shrink-[100000] min-w-24 relative -left-2 grid-cols-[minmax(0,1fr)];
+}
+:is(.pokemon-editor-header-sticky, .pokemon-editor-header-standard) .pokemon-editor-pills-column {
+  @apply flex-shrink-0 max-w-52 mr-4;
+}
+.pokemon-editor-header-text {
+  @apply min-w-0;
+}
+:is(.pokemon-editor-header-sticky, .pokemon-editor-header-standard) .pokemon-editor-pokemon-name {
+  @apply truncate;
+}
+:is(.pokemon-editor-header-sticky, .pokemon-editor-header-standard) .pokemon-editor-form-trigger {
+  @apply min-w-0;
+}
+:is(.pokemon-editor-header-sticky, .pokemon-editor-header-standard) .pokemon-editor-nature-pill,
+:is(.pokemon-editor-header-sticky, .pokemon-editor-header-standard) .pokemon-editor-item-pill,
+:is(.pokemon-editor-header-sticky, .pokemon-editor-header-standard) .pokemon-editor-ability-pill,
+:is(.pokemon-editor-header-sticky, .pokemon-editor-header-standard) .pokemon-editor-target-trigger {
+  @apply max-w-full;
+}
+.pokemon-editor-pill-text {
+  @apply truncate min-w-0;
 }
 .pokemon-editor-level-row {
   @apply flex items-center gap-1;
@@ -120,7 +153,7 @@
   @apply inline-flex items-center justify-center whitespace-nowrap gap-1 w-fit px-2 py-1 bg-primary text-primary-foreground rounded-full;
 }
 .pokemon-editor-item-pill-sprite {
-  @apply h-10 w-10;
+  @apply h-10 w-10 flex-shrink-0;
 }
 .pokemon-editor-ability-pill {
   @apply inline-flex items-center justify-center whitespace-nowrap w-fit px-2 py-1 bg-emerald-700 text-primary-foreground rounded-full;
@@ -255,7 +288,7 @@
   @apply text-sm font-semibold mb-1 block;
 }
 .pokemon-editor-target-row {
-  @apply flex items-center gap-1;
+  @apply flex flex-col gap-0.5;
 }
 .pokemon-editor-target-label {
   @apply text-xs font-semibold whitespace-nowrap;
