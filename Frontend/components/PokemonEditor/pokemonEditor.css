@@ -14,7 +14,7 @@
   @apply mx-auto text-xl font-bold;
 }
 .pokemon-editor-scroll-wrapper-doubles {
-  @apply overflow-y-auto flex-1 p-1;
+  @apply overflow-y-auto flex-1 px-1 pb-1 pt-0;
   scrollbar-width: thin;
   scrollbar-color: rgba(0, 0, 0, 0.2) transparent;
   &::-webkit-scrollbar {
@@ -208,7 +208,7 @@
   @apply flex flex-col gap-3 border-t pt-2 mb-2;
 }
 .pokemon-editor-stats-moves-row {
-  @apply flex flex-wrap gap-x-6 gap-y-3 items-center;
+  @apply flex flex-wrap gap-x-4 gap-y-3 items-center;
 }
 .pokemon-editor-stats-container {
   @apply flex-shrink-0;
@@ -249,7 +249,7 @@
 
 /* ── Move display buttons ───────────────────────────────── */
 .pokemon-editor-moves-container {
-  @apply flex-1 space-y-1 max-w-[225px];
+  @apply flex-1 basis-48 min-w-48 space-y-1 max-w-[225px];
 }
 .pokemon-editor-moves-label {
   @apply text-sm font-semibold mb-1 block;
@@ -302,7 +302,7 @@
 
 /* ── Dropdown section ───────────────────────────────────── */
 .pokemon-editor-dropdowns-row {
-  @apply flex flex-wrap gap-x-3 gap-y-2 items-start border-t pt-2;
+  @apply flex flex-wrap gap-x-2 gap-y-2 items-start border-t pt-2;
 }
 .pokemon-editor-dropdowns-left {
   @apply flex-shrink-0 space-y-1 w-42;
@@ -361,7 +361,7 @@
   @apply flex items-center gap-1;
 }
 .pokemon-editor-move-name-trigger {
-  @apply h-7 text-sm border-slate-300 w-37 flex-shrink-0;
+  @apply h-7 text-sm border-slate-300 w-34 flex-shrink-0;
 }
 .pokemon-editor-move-none-option {
   @apply text-sm text-muted-foreground;
