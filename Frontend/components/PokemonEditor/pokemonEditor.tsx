@@ -116,6 +116,23 @@ export default function PokemonEditor({
     const [sessionId, setSessionId] = useState<string | null>(null);
     const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
     const patchTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+    const [percentDraft, setPercentDraft] = useState<{ pokemonName: string, text: string } | null>(null);
+    const percentTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+    const activePercentDraft = percentDraft && percentDraft.pokemonName === pokemon?.name ? percentDraft.text : null;
+
+    useEffect(() => {
+        return () => {
+            if (percentTimerRef.current) clearTimeout(percentTimerRef.current);
+        };
+    }, [pokemon?.name]);
+
+    const commitPercentDraft = (text: string) => {
+        if (percentTimerRef.current) clearTimeout(percentTimerRef.current);
+        setPercentDraft(null);
+        if (!pokemon) return;
+        const percent = Math.max(0, Math.min(Number(text) || 0, 100));
+        updatePokemonHp(player, slotIndex, Math.round((percent / 100) * pokemon.maxHp));
+    };
     const [typeInteractions, setTypeInteractions] = useState({
         "immunities": [],
         "doubleResistances": [],
@@ -495,11 +512,15 @@ export default function PokemonEditor({
                                         type="number"
                                         title="HP Percentage (0-100)"
                                         placeholder="%"
-                                        value={Math.round((pokemon.currentHp / pokemon.maxHp) * 100)}
+                                        value={activePercentDraft ?? Math.round((pokemon.currentHp / pokemon.maxHp) * 100)}
                                         onChange={(e) => {
-                                            const percent = Math.max(0, Math.min(Number(e.target.value) || 0, 100));
-                                            const calculatedHp = Math.round((percent / 100) * pokemon.maxHp);
-                                            updatePokemonHp(player, slotIndex, calculatedHp);
+                                            const text = e.target.value;
+                                            setPercentDraft({ pokemonName: pokemon.name, text });
+                                            if (percentTimerRef.current) clearTimeout(percentTimerRef.current);
+                                            percentTimerRef.current = setTimeout(() => commitPercentDraft(text), EDIT_DEBOUNCE_MS);
+                                        }}
+                                        onBlur={() => {
+                                            if (activePercentDraft !== null) commitPercentDraft(activePercentDraft);
                                         }}
                                         className="pokemon-editor-hp-percent-input"
                                     />
