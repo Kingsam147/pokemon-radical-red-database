@@ -28,6 +28,8 @@ import { useAuth0 } from "@auth0/auth0-react";
 import { activateSession, patchSession, saveSession } from "@/lib/api/session";
 import "./pokemonEditor.css"
 
+const EDIT_DEBOUNCE_MS = 500;
+
 type Props = {
     pokemon: Pokemon | null
     player: 1 | 2
@@ -175,7 +177,7 @@ export default function PokemonEditor({
         if (patchTimerRef.current) clearTimeout(patchTimerRef.current);
         patchTimerRef.current = setTimeout(() => {
             patchSession(sessionId, changes).catch(() => {});
-        }, 400);
+        }, EDIT_DEBOUNCE_MS);
     };
 
     const handleSave = async () => {
@@ -200,9 +202,20 @@ export default function PokemonEditor({
 
     // Each editor shows only its own slot's damage, so it only calculates its own moves
     // against its resolved target, and re-runs when either side of that matchup changes.
+    const lastCalcPokemonNameRef = useRef<string | undefined>(undefined);
+
     useEffect(() => {
         if (!pokemon) return;
-        runAllCalcs(player, slotIndex, pokemon, targetSlot, player1Bench, player2Bench, p1Hazards, p2Hazards, activeEffects, calcBattleMode, abilityToggles, moveCrits, moveZPowered, setDamageResults, setCalcLoadingKeys)
+        const runCalcsNow = () => {
+            lastCalcPokemonNameRef.current = pokemon.name;
+            runAllCalcs(player, slotIndex, pokemon, targetSlot, player1Bench, player2Bench, p1Hazards, p2Hazards, activeEffects, calcBattleMode, abilityToggles, moveCrits, moveZPowered, setDamageResults, setCalcLoadingKeys)
+        };
+        if (lastCalcPokemonNameRef.current !== pokemon.name) {
+            runCalcsNow();
+            return;
+        }
+        const timer = setTimeout(runCalcsNow, EDIT_DEBOUNCE_MS);
+        return () => clearTimeout(timer);
     }, [
         calcInputSignature(pokemon),
         calcInputSignature(defender),
